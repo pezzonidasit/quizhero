@@ -331,10 +331,16 @@ async function adminDeleteRiddle(riddleId, groupCode) {
 
 // ── Admin Global ──
 
-/** Set current user as global admin */
+/** Set current user as global admin. Only works if NO admin exists yet. */
 async function setGlobalAdmin() {
-  if (!firebaseUid) return;
+  if (!firebaseUid) return false;
+  // Check if any admin already exists
+  const snap = await db.ref('admin_uid').once('value');
+  if (snap.exists()) return false; // admin already set
+  // Set this user as the global admin
+  await db.ref('admin_uid').set(firebaseUid);
   await db.ref('players/' + firebaseUid + '/isAdmin').set(true);
+  return true;
 }
 
 /** Check if current user is global admin */
@@ -388,4 +394,72 @@ async function adminDeleteAnyRiddle(riddleId) {
 async function adminBanFromGroup(groupCode, targetUid) {
   await db.ref('groups/' + groupCode + '/banned/' + targetUid).set(true);
   await db.ref('groups/' + groupCode + '/members/' + targetUid).remove();
+}
+
+// ── Profile Backup/Restore ──
+
+/** Backup full profile data to Firebase */
+async function backupProfile(profileId) {
+  if (!firebaseUid) return;
+  const pm = ProfileManager;
+  const fields = ['xp', 'coins', 'gamesPlayed', 'goodGamesStreak', 'records', 'badges',
+    'catStats', 'ownedThemes', 'activeTheme', 'ownedStickers', 'boosts', 'chestsOpened',
+    'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames'];
+
+  const data = {};
+  fields.forEach(f => {
+    data[f] = pm._getData(profileId, f, null);
+  });
+
+  // Also save profile metadata
+  const profile = pm.getAll().find(p => p.id === profileId);
+  if (profile) {
+    data._meta = { name: profile.name, theme: profile.theme, createdAt: profile.createdAt };
+  }
+
+  data.backedUpAt = firebase.database.ServerValue.TIMESTAMP;
+
+  try {
+    await db.ref('players/' + firebaseUid + '/backup').set(data);
+  } catch(e) {
+    console.warn('Backup failed:', e.message);
+  }
+}
+
+/** Restore profile from Firebase backup. Returns true if restored. */
+async function restoreProfile() {
+  if (!firebaseUid) return false;
+  try {
+    const snap = await db.ref('players/' + firebaseUid + '/backup').once('value');
+    if (!snap.exists()) return false;
+
+    const data = snap.val();
+    if (!data._meta || !data._meta.name) return false;
+
+    const pm = ProfileManager;
+
+    // Check if this profile already exists locally
+    const existing = pm.getAll();
+    const alreadyExists = existing.some(p => p.name === data._meta.name);
+    if (alreadyExists) return false; // don't duplicate
+
+    // Create the profile
+    const profile = pm.create(data._meta.name, data._meta.theme || 'nuit');
+
+    // Restore all fields
+    const fields = ['xp', 'coins', 'gamesPlayed', 'goodGamesStreak', 'records', 'badges',
+      'catStats', 'ownedThemes', 'activeTheme', 'ownedStickers', 'boosts', 'chestsOpened',
+      'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames'];
+
+    fields.forEach(f => {
+      if (data[f] !== null && data[f] !== undefined) {
+        pm._setData(profile.id, f, data[f]);
+      }
+    });
+
+    return true;
+  } catch(e) {
+    console.warn('Restore failed:', e.message);
+    return false;
+  }
 }

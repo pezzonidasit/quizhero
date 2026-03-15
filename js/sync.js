@@ -90,11 +90,30 @@ const MQSync = {
     }
 
     ProfileManager.set('pendingSync', false);
+
+    // Backup profile to Firebase
+    const activeId = ProfileManager.getActiveId();
+    if (activeId) {
+      await backupProfile(activeId);
+    }
   },
 
   /** Called on app launch. Sign in + sync pending + refresh cache. */
   async syncOnLaunch() {
     await firebaseSignIn();
+
+    // Restore profile from backup if no local profiles exist
+    if (firebaseUid && ProfileManager.getAll().length === 0) {
+      try {
+        const restored = await restoreProfile();
+        if (restored) {
+          console.log('Profile restored from Firebase backup');
+          // Reload the app to pick up restored profile
+          window.location.reload();
+          return;
+        }
+      } catch(e) { console.warn('Restore check failed:', e.message); }
+    }
 
     // Check for pending coins from riddle plays
     if (firebaseUid) {

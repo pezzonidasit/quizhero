@@ -1404,6 +1404,9 @@ function renderProfileDetail() {
       <button class="btn-primary" id="btn-profile-groups" style="flex:1;font-size:0.85rem">👥 Mes Groupes</button>
       <button class="btn-secondary" id="btn-profile-riddle" style="flex:1;font-size:0.85rem">📝 Créer une énigme</button>
     </div>
+    <div style="margin-top:0.75rem;font-size:0.6rem;color:var(--text-secondary);word-break:break-all;text-align:center;opacity:0.5">
+      ID : ${firebaseUid || 'non connecté'}
+    </div>
   `;
 
   // Theme selector click handlers
@@ -2560,7 +2563,11 @@ document.getElementById('btn-admin').addEventListener('click', async () => {
   } else {
     const pin = prompt('Code parent pour activer le mode admin :');
     if (pin === PIN_CODE) {
-      await setGlobalAdmin();
+      const success = await setGlobalAdmin();
+      if (!success) {
+        alert('Un admin existe déjà. Contacte l\'admin pour ajouter ton appareil.');
+        return;
+      }
       document.getElementById('btn-admin').style.display = '';
       showScreen('screen-admin');
       renderAdminDashboard();
