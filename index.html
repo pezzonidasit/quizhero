@@ -72,6 +72,7 @@
         </div>
       </div>
       <div class="profile-actions">
+        <button id="btn-leaderboard" class="btn-icon" title="Classement">🏆</button>
         <button id="btn-shop" class="btn-icon" title="Boutique">🛒</button>
         <div class="coins-display">🪙 <span id="home-coins">0</span></div>
       </div>
@@ -310,7 +311,95 @@
     <button id="btn-no-contract" class="btn-secondary btn-no-contract">Jouer sans contrat</button>
   </div>
 
+  <!-- ÉCRAN CLASSEMENT -->
+  <div id="screen-leaderboard" class="screen">
+    <div class="lb-header">
+      <button id="btn-lb-back" class="btn-back">← Retour</button>
+      <h2>🏆 Classement</h2>
+    </div>
+    <div id="lb-tabs" class="lb-tabs">
+      <button class="lb-tab active" data-tab="global">🌍 Global</button>
+    </div>
+    <div id="lb-list" class="lb-list"></div>
+    <div id="lb-me" class="lb-me"></div>
+  </div>
+
+  <!-- ÉCRAN GROUPES -->
+  <div id="screen-groups" class="screen">
+    <button id="btn-groups-back" class="btn-back">← Retour</button>
+    <h2>👥 Mes Groupes</h2>
+    <div id="groups-list" class="groups-list"></div>
+    <div class="groups-actions">
+      <button id="btn-join-group" class="btn-primary">Rejoindre un groupe</button>
+      <button id="btn-create-group" class="btn-secondary">Créer un groupe</button>
+    </div>
+  </div>
+
+  <!-- ÉCRAN DÉTAIL GROUPE -->
+  <div id="screen-group-detail" class="screen">
+    <button id="btn-gd-back" class="btn-back">← Retour</button>
+    <div id="gd-header" class="gd-header"></div>
+    <div id="gd-leaderboard" class="lb-list"></div>
+    <div id="gd-actions" class="gd-actions"></div>
+  </div>
+
+  <!-- ÉCRAN DASHBOARD PARENT -->
+  <div id="screen-dashboard" class="screen">
+    <button id="btn-dash-back" class="btn-back">← Retour</button>
+    <h2>📊 Dashboard</h2>
+    <div id="dash-content" class="dash-content"></div>
+  </div>
+
+  <!-- ÉCRAN CRÉER ÉNIGME -->
+  <div id="screen-create-riddle" class="screen">
+    <button id="btn-riddle-back" class="btn-back">← Retour</button>
+    <h2>📝 Créer une énigme</h2>
+    <div class="create-riddle-form">
+      <div class="setting-group">
+        <label>Catégorie</label>
+        <select id="riddle-category" class="answer-input" style="width:100%">
+          <option value="calcul">🧮 Calcul</option>
+          <option value="logique">🧩 Logique</option>
+          <option value="geometrie">📐 Géométrie</option>
+          <option value="fractions">🍕 Fractions</option>
+          <option value="mesures">📏 Mesures</option>
+          <option value="ouvert">💡 Problèmes ouverts</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label>Question</label>
+        <textarea id="riddle-text" class="answer-input" rows="3" placeholder="Ta question..." style="width:100%;resize:vertical"></textarea>
+      </div>
+      <div class="setting-group">
+        <label>Réponse (nombre)</label>
+        <input type="number" id="riddle-answer" class="answer-input" placeholder="La bonne réponse" style="width:100%">
+      </div>
+      <div class="setting-group">
+        <label>Indice</label>
+        <input type="text" id="riddle-hint" class="answer-input" placeholder="Un indice..." style="width:100%">
+      </div>
+      <div class="setting-group">
+        <label>Explication</label>
+        <input type="text" id="riddle-explanation" class="answer-input" placeholder="Explication de la réponse..." style="width:100%">
+      </div>
+      <div class="setting-group">
+        <label>Partager avec</label>
+        <select id="riddle-share" class="answer-input" style="width:100%">
+          <option value="">🌍 Tout le monde</option>
+        </select>
+      </div>
+      <button id="btn-submit-riddle" class="btn-primary" style="width:100%;margin-top:1rem">Publier l'énigme !</button>
+    </div>
+  </div>
+
   <canvas id="confetti-canvas"></canvas>
+
+  <!-- Firebase SDK (compat mode) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="js/firebase.js"></script>
+  <script src="js/sync.js"></script>
 
   <script src="js/themes.js"></script>
   <script src="js/bosses-svg.js"></script>

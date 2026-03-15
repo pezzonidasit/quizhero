@@ -1069,6 +1069,11 @@ function endGame() {
     state.contractGameResult = null;
   }
 
+  // V4: Sync to Firebase
+  const gameElapsed = Math.round((Date.now() - state.gameStartTime) / 1000);
+  ProfileManager.set('weeklyTimeSpent', (ProfileManager.get('weeklyTimeSpent', 0)) + gameElapsed);
+  MQSync.syncAfterGame(rewards.xp).catch(() => {});
+
   showScreen('screen-end');
 
   // V3: Track games since boss
@@ -1385,6 +1390,14 @@ function renderProfileDetail() {
   themeHtml += '</div>';
   document.getElementById('profile-card').innerHTML += themeHtml;
 
+  // V4: Groups + Riddle creation buttons
+  document.getElementById('profile-card').innerHTML += `
+    <div style="display:flex;gap:0.5rem;margin-top:1rem;width:100%">
+      <button class="btn-primary" id="btn-profile-groups" style="flex:1;font-size:0.85rem">👥 Mes Groupes</button>
+      <button class="btn-secondary" id="btn-profile-riddle" style="flex:1;font-size:0.85rem">📝 Créer une énigme</button>
+    </div>
+  `;
+
   // Theme selector click handlers
   document.querySelectorAll('.theme-select-item').forEach(item => {
     item.addEventListener('click', () => {
@@ -1395,6 +1408,12 @@ function renderProfileDetail() {
       renderProfileDetail();
     });
   });
+
+  // V4: Groups + Riddle nav from profile
+  const groupsBtn = document.getElementById('btn-profile-groups');
+  if (groupsBtn) groupsBtn.addEventListener('click', () => renderGroupsScreen());
+  const riddleBtn = document.getElementById('btn-profile-riddle');
+  if (riddleBtn) riddleBtn.addEventListener('click', () => showCreateRiddleScreen());
 
   const allBadges = [...BADGE_DEFS, {id:'collector',name:'Collectionneur',icon:'🏅',category:'hidden',hidden:true}, {id:'lucky',name:'Chanceux',icon:'🍀',category:'hidden',hidden:true}];
 
@@ -1604,6 +1623,16 @@ if (activeId && ProfileManager.getActive()) {
   renderProfilesList();
   showScreen('screen-profiles');
 }
+
+// V4: Firebase sync on launch
+MQSync.syncOnLaunch().then(() => {
+  // Show coin notification if earned from riddles
+  const coinNotif = ProfileManager.get('coinNotification', 0);
+  if (coinNotif > 0) {
+    ProfileManager.set('coinNotification', 0);
+    showCoinToast(coinNotif);
+  }
+}).catch(() => {});
 
 // ══════════════════════════════════════════════════════════════════════
 // V3 — BOSS FIGHT SYSTEM
@@ -2107,7 +2136,383 @@ function checkContractBadges(stats) {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// V4 — LEADERBOARD
+// ══════════════════════════════════════════════════════════════════════
+
+let currentLbTab = 'global';
+let lbGroups = [];
+
+document.getElementById('btn-leaderboard').addEventListener('click', async () => {
+  showScreen('screen-leaderboard');
+  await renderLeaderboard();
+});
+
+document.getElementById('btn-lb-back').addEventListener('click', () => {
+  updateProfileHeader();
+  showScreen('screen-home');
+});
+
+async function renderLeaderboard() {
+  // Build tabs
+  lbGroups = [];
+  try { lbGroups = await getMyGroups(); } catch(e) {}
+
+  const tabsEl = document.getElementById('lb-tabs');
+  let tabsHtml = '<button class="lb-tab ' + (currentLbTab === 'global' ? 'active' : '') + '" data-tab="global">🌍 Global</button>';
+  lbGroups.forEach(g => {
+    tabsHtml += '<button class="lb-tab ' + (currentLbTab === g.code ? 'active' : '') + '" data-tab="' + g.code + '">' + g.name + '</button>';
+  });
+  tabsEl.innerHTML = tabsHtml;
+
+  tabsEl.querySelectorAll('.lb-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      currentLbTab = tab.dataset.tab;
+      renderLeaderboard();
+    });
+  });
+
+  // Fetch entries
+  let entries = [];
+  const listEl = document.getElementById('lb-list');
+  const meEl = document.getElementById('lb-me');
+
+  listEl.innerHTML = '<div class="lb-empty">Chargement...</div>';
+
+  try {
+    if (currentLbTab === 'global') {
+      entries = isOnline() ? await getWeeklyLeaderboard(50) : MQSync.getCachedLeaderboard();
+    } else {
+      entries = await getGroupLeaderboard(currentLbTab);
+    }
+  } catch(e) {
+    entries = MQSync.getCachedLeaderboard();
+  }
+
+  if (entries.length === 0) {
+    listEl.innerHTML = '<div class="lb-empty">Pas encore de joueurs cette semaine !</div>';
+    meEl.innerHTML = '';
+    return;
+  }
+
+  const rankIcons = { bronze: '🥉', argent: '🥈', or: '🥇', diamant: '💎', maitre: '👑', legende: '⭐' };
+
+  listEl.innerHTML = entries.map((e, i) => {
+    const isMe = e.uid === firebaseUid;
+    const isChampion = i === 0;
+    const rankNum = i + 1;
+    const rankDisplay = rankNum <= 3 ? ['👑', '🥈', '🥉'][i] : rankNum;
+    return '<div class="lb-entry ' + (isMe ? 'me' : '') + ' ' + (isChampion ? 'champion' : '') + '">' +
+      '<span class="lb-rank">' + rankDisplay + '</span>' +
+      '<span class="lb-rank-icon">' + (rankIcons[e.rank] || '🥉') + '</span>' +
+      '<div class="lb-info"><div class="lb-name">' + (e.name || 'Joueur') + '</div>' +
+      '<div class="lb-stats">Streak: ' + (e.bestStreak || 0) + ' | Boss: ' + (e.bossesDefeated || 0) + '</div></div>' +
+      '<span class="lb-xp">' + (e.xp || 0) + ' XP</span>' +
+      '</div>';
+  }).join('');
+
+  // Show my position
+  const myIndex = entries.findIndex(e => e.uid === firebaseUid);
+  if (myIndex >= 0) {
+    meEl.innerHTML = '📊 Toi : #' + (myIndex + 1) + ' — ' + entries[myIndex].xp + ' XP';
+  } else {
+    const weeklyXP = ProfileManager.get('weeklyXP', 0);
+    meEl.innerHTML = '📊 Toi : ' + weeklyXP + ' XP cette semaine';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// V4 — GROUPS
+// ══════════════════════════════════════════════════════════════════════
+
+let currentGroupCode = null;
+
+document.getElementById('btn-groups-back').addEventListener('click', () => { showScreen('screen-profile-detail'); });
+document.getElementById('btn-gd-back').addEventListener('click', () => { renderGroupsScreen(); showScreen('screen-groups'); });
+document.getElementById('btn-dash-back').addEventListener('click', () => { showScreen('screen-group-detail'); });
+
+async function renderGroupsScreen() {
+  const listEl = document.getElementById('groups-list');
+  listEl.innerHTML = '<div class="groups-empty">Chargement...</div>';
+  showScreen('screen-groups');
+
+  let groups = [];
+  try { groups = await getMyGroups(); } catch(e) {}
+
+  if (groups.length === 0) {
+    listEl.innerHTML = '<div class="groups-empty">Aucun groupe. Rejoins ou crée un groupe !</div>';
+  } else {
+    listEl.innerHTML = groups.map(g => {
+      return '<div class="group-card" data-code="' + g.code + '">' +
+        '<span class="group-icon">👥</span>' +
+        '<div class="group-info">' +
+        '<div class="group-name">' + g.name + '</div>' +
+        '<div class="group-code">Code : ' + g.code + '</div>' +
+        '</div></div>';
+    }).join('');
+
+    listEl.querySelectorAll('.group-card').forEach(card => {
+      card.addEventListener('click', () => {
+        currentGroupCode = card.dataset.code;
+        renderGroupDetail(currentGroupCode);
+      });
+    });
+  }
+}
+
+document.getElementById('btn-join-group').addEventListener('click', async () => {
+  const code = prompt('Entre le code du groupe (6 caractères) :');
+  if (!code) return;
+  try {
+    const result = await joinGroup(code);
+    alert('Groupe "' + result.name + '" rejoint !');
+    renderGroupsScreen();
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
+});
+
+document.getElementById('btn-create-group').addEventListener('click', async () => {
+  const name = prompt('Nom du groupe :');
+  if (!name) return;
+  try {
+    const result = await createGroup(name);
+    alert('Groupe créé ! Code à partager : ' + result.code);
+    renderGroupsScreen();
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
+});
+
+async function renderGroupDetail(code) {
+  showScreen('screen-group-detail');
+  const headerEl = document.getElementById('gd-header');
+  const lbEl = document.getElementById('gd-leaderboard');
+  const actionsEl = document.getElementById('gd-actions');
+
+  headerEl.innerHTML = '<div class="gd-group-name">Chargement...</div>';
+  lbEl.innerHTML = '';
+  actionsEl.innerHTML = '';
+
+  try {
+    const group = await getGroupInfo(code);
+    if (!group) { alert('Groupe introuvable'); return; }
+
+    const isAdmin = group.createdBy === firebaseUid;
+    const memberCount = group.membersList ? group.membersList.length : 0;
+
+    headerEl.innerHTML = '<div class="gd-group-name">' + group.name + '</div>' +
+      '<div class="gd-group-code">' + code + '</div>' +
+      '<div class="gd-member-count">' + memberCount + ' membre' + (memberCount > 1 ? 's' : '') + '</div>';
+
+    // Group leaderboard
+    const entries = await getGroupLeaderboard(code);
+    const rankIcons = { bronze: '🥉', argent: '🥈', or: '🥇', diamant: '💎', maitre: '👑', legende: '⭐' };
+
+    if (entries.length > 0) {
+      lbEl.innerHTML = '<h3 style="width:100%;text-align:center">🏆 Classement du groupe</h3>' +
+        entries.map((e, i) => {
+          const isMe = e.uid === firebaseUid;
+          const rankNum = i + 1;
+          const rankDisplay = rankNum <= 3 ? ['👑', '🥈', '🥉'][i] : rankNum;
+          return '<div class="lb-entry ' + (isMe ? 'me' : '') + ' ' + (i === 0 ? 'champion' : '') + '">' +
+            '<span class="lb-rank">' + rankDisplay + '</span>' +
+            '<span class="lb-rank-icon">' + (rankIcons[e.rank] || '🥉') + '</span>' +
+            '<div class="lb-info"><div class="lb-name">' + (e.name || 'Joueur') + '</div></div>' +
+            '<span class="lb-xp">' + (e.xp || 0) + ' XP</span>' +
+            '</div>';
+        }).join('');
+    }
+
+    // Actions
+    let actHtml = '<button class="btn-secondary" onclick="leaveGroupAction(\'' + code + '\')">Quitter le groupe</button>';
+
+    if (isAdmin) {
+      actHtml = '<button class="btn-primary" onclick="showDashboard(\'' + code + '\')">📊 Dashboard parent</button>' + actHtml;
+      actHtml += '<button class="btn-danger" style="margin-top:0.5rem" onclick="regenerateCodeAction(\'' + code + '\')">🔄 Régénérer le code</button>';
+    }
+
+    actionsEl.innerHTML = actHtml;
+  } catch(e) {
+    headerEl.innerHTML = '<div class="gd-group-name">Erreur : ' + e.message + '</div>';
+  }
+}
+
+async function leaveGroupAction(code) {
+  if (!confirm('Quitter ce groupe ?')) return;
+  try {
+    await leaveGroup(code);
+    renderGroupsScreen();
+    showScreen('screen-groups');
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+async function regenerateCodeAction(oldCode) {
+  if (!confirm('Régénérer le code ? L\'ancien code ne fonctionnera plus.')) return;
+  try {
+    const newCode = await regenerateGroupCode(oldCode);
+    alert('Nouveau code : ' + newCode);
+    currentGroupCode = newCode;
+    renderGroupDetail(newCode);
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// V4 — DASHBOARD PARENT
+// ══════════════════════════════════════════════════════════════════════
+
+async function showDashboard(code) {
+  showScreen('screen-dashboard');
+  const contentEl = document.getElementById('dash-content');
+  contentEl.innerHTML = '<p style="text-align:center;color:var(--text-secondary)">Chargement...</p>';
+
+  try {
+    const group = await getGroupInfo(code);
+    const dashData = await getGroupDashboard(code);
+    const catLabels = { calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes' };
+    const allCats = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert'];
+
+    let html = '<h3 style="text-align:center">' + group.name + '</h3>';
+
+    for (const member of group.membersList) {
+      const data = dashData[member.uid];
+      if (!data) {
+        html += '<div class="dash-member"><div class="dash-member-name">👤 ' + member.name + '</div><p style="color:var(--text-secondary);font-size:0.8rem">Pas de données</p></div>';
+        continue;
+      }
+
+      const catStats = data.catStats || {};
+      const timeMin = Math.round((data.timeSpent || 0) / 60);
+      const contracts = data.contractsCompleted || {};
+
+      html += '<div class="dash-member">';
+      html += '<div class="dash-member-name">👤 ' + member.name + '</div>';
+
+      // Stats row
+      html += '<div class="dash-stats-row">';
+      html += '<div class="dash-stat"><div class="dash-stat-value">' + (data.weeklyGames || 0) + '</div><div class="dash-stat-label">Parties</div></div>';
+      html += '<div class="dash-stat"><div class="dash-stat-value">' + timeMin + 'min</div><div class="dash-stat-label">Temps</div></div>';
+      html += '<div class="dash-stat"><div class="dash-stat-value">' + Math.round((data.recentRate || 0) * 100) + '%</div><div class="dash-stat-label">Réussite</div></div>';
+      html += '<div class="dash-stat"><div class="dash-stat-value">' + ((contracts.gold || 0) + (contracts.silver || 0) + (contracts.bronze || 0)) + '</div><div class="dash-stat-label">Contrats</div></div>';
+      html += '</div>';
+
+      // Category bars
+      html += '<div class="dash-cat-bars">';
+      allCats.forEach(cat => {
+        const stat = catStats[cat];
+        const pct = stat && stat.total > 0 ? Math.round(stat.correct / stat.total * 100) : 0;
+        const played = stat && stat.total > 0;
+        const isWeak = !played || pct < 50;
+        const barColor = pct >= 70 ? 'var(--accent-green)' : pct >= 50 ? 'var(--accent-orange)' : 'var(--accent-red)';
+
+        html += '<div class="dash-cat-row">';
+        html += '<span class="dash-cat-name">' + (catLabels[cat] || cat) + '</span>';
+        html += '<div class="dash-cat-bar"><div class="dash-cat-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div>';
+        html += '<span class="dash-cat-pct ' + (isWeak ? 'dash-weak' : '') + '">' + (played ? pct + '%' : '—') + '</span>';
+        if (isWeak) html += '<span class="dash-cat-warning">⚠️</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+
+      // Admin actions for this member
+      if (member.uid !== firebaseUid) {
+        html += '<div style="margin-top:0.5rem;text-align:right"><button class="btn-danger" style="font-size:0.75rem;padding:0.3rem 0.75rem" onclick="banMemberAction(\'' + code + '\',\'' + member.uid + '\',\'' + member.name + '\')">Bannir</button></div>';
+      }
+
+      html += '</div>';
+    }
+
+    contentEl.innerHTML = html;
+  } catch(e) {
+    contentEl.innerHTML = '<p style="text-align:center;color:var(--accent-red)">Erreur : ' + e.message + '</p>';
+  }
+}
+
+async function banMemberAction(code, uid, name) {
+  if (!confirm('Bannir ' + name + ' du groupe ?')) return;
+  try {
+    await banMember(code, uid);
+    alert(name + ' a été banni.');
+    showDashboard(code);
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// V4 — CREATE RIDDLE
+// ══════════════════════════════════════════════════════════════════════
+
+document.getElementById('btn-riddle-back').addEventListener('click', () => { showScreen('screen-home'); });
+
+async function showCreateRiddleScreen() {
+  // Populate group dropdown
+  const select = document.getElementById('riddle-share');
+  select.innerHTML = '<option value="">🌍 Tout le monde</option>';
+  try {
+    const groups = await getMyGroups();
+    groups.forEach(g => {
+      select.innerHTML += '<option value="' + g.code + '">👥 ' + g.name + '</option>';
+    });
+  } catch(e) {}
+
+  // Clear form
+  document.getElementById('riddle-text').value = '';
+  document.getElementById('riddle-answer').value = '';
+  document.getElementById('riddle-hint').value = '';
+  document.getElementById('riddle-explanation').value = '';
+
+  showScreen('screen-create-riddle');
+}
+
+document.getElementById('btn-submit-riddle').addEventListener('click', async () => {
+  const text = document.getElementById('riddle-text').value.trim();
+  const answer = parseFloat(document.getElementById('riddle-answer').value);
+  const hint = document.getElementById('riddle-hint').value.trim();
+  const explanation = document.getElementById('riddle-explanation').value.trim();
+  const category = document.getElementById('riddle-category').value;
+  const groupCode = document.getElementById('riddle-share').value || null;
+
+  if (!text) { alert('Écris une question !'); return; }
+  if (isNaN(answer)) { alert('La réponse doit être un nombre !'); return; }
+  if (!hint) { alert('Ajoute un indice !'); return; }
+
+  const profile = ProfileManager.getActive();
+
+  try {
+    await createRiddle({
+      category,
+      text,
+      answer,
+      hint,
+      explanation: explanation || 'Pas d\'explication fournie.',
+      creatorName: profile ? profile.name : 'Anonyme',
+      groupCode,
+    });
+    alert('Énigme publiée ! 🎉');
+    showScreen('screen-home');
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// V4 — COIN TOAST
+// ══════════════════════════════════════════════════════════════════════
+
+function showCoinToast(amount) {
+  const toast = document.createElement('div');
+  toast.className = 'coin-toast';
+  toast.textContent = '🪙 Tes énigmes ont rapporté +' + amount + ' pièces !';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+// Expose V4 functions for inline onclick handlers
+window.leaveGroupAction = leaveGroupAction;
+window.regenerateCodeAction = regenerateCodeAction;
+window.banMemberAction = banMemberAction;
+window.showDashboard = showDashboard;
+
 // Debug helper — accessible from browser console
-window._debug = { triggerBoss, state, showBossAppear, BOSS_POOL };
+window._debug = { triggerBoss, state, showBossAppear, BOSS_POOL, renderLeaderboard, renderGroupsScreen, showCreateRiddleScreen };
 
 } // end initApp()

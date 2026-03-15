@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mathquiz-v8';
+const CACHE_NAME = 'mathquiz-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,8 @@ const ASSETS = [
   './js/questions.js',
   './js/progression.js',
   './js/app.js',
+  './js/firebase.js',
+  './js/sync.js',
 ];
 
 self.addEventListener('install', e => {
