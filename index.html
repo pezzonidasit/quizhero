@@ -10,6 +10,8 @@
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -80,22 +82,22 @@
       <div class="setting-group">
         <label>Catégorie</label>
         <div class="pill-group" data-setting="category">
-          <button class="pill active" data-value="all">Toutes</button>
-          <button class="pill" data-value="calcul">Calcul</button>
-          <button class="pill" data-value="logique">Logique</button>
-          <button class="pill" data-value="geometrie">Géométrie</button>
-          <button class="pill" data-value="fractions">Fractions</button>
-          <button class="pill" data-value="mesures">Mesures</button>
-          <button class="pill" data-value="ouvert">Problèmes ouverts</button>
+          <button class="pill active" data-value="all">🎯 Toutes</button>
+          <button class="pill" data-value="calcul">🧮 Calcul</button>
+          <button class="pill" data-value="logique">🧩 Logique</button>
+          <button class="pill" data-value="geometrie">📐 Géométrie</button>
+          <button class="pill" data-value="fractions">🍕 Fractions</button>
+          <button class="pill" data-value="mesures">📏 Mesures</button>
+          <button class="pill" data-value="ouvert">💡 Problèmes ouverts</button>
         </div>
       </div>
 
       <div class="setting-group">
         <label>Difficulté</label>
         <div class="pill-group" data-setting="difficulty">
-          <button class="pill" data-value="easy">Facile</button>
-          <button class="pill active" data-value="medium">Moyen</button>
-          <button class="pill" data-value="hard">Difficile</button>
+          <button class="pill" data-value="easy">😊 Facile</button>
+          <button class="pill active" data-value="medium">💪 Moyen</button>
+          <button class="pill" data-value="hard">🔥 Difficile</button>
         </div>
       </div>
 
@@ -117,7 +119,7 @@
       </div>
     </div>
 
-    <button id="btn-play" class="btn-primary">Jouer !</button>
+    <button id="btn-play" class="btn-primary btn-play-main">⚔️ Jouer !</button>
 
     <div id="records-display" class="records-section"></div>
   </div>
@@ -166,7 +168,7 @@
 
   <!-- ÉCRAN FIN -->
   <div id="screen-end" class="screen">
-    <h2>Partie terminée !</h2>
+    <h2>🎉 Partie terminée !</h2>
     <div id="final-score" class="final-score"></div>
     <div id="new-record" class="new-record" style="display:none">🏆 Nouveau record !</div>
     <div id="badges-unlocked" class="badges-unlocked"></div>
@@ -189,7 +191,7 @@
   <div id="screen-chest" class="screen">
     <h2>Coffre trouvé !</h2>
     <div class="chest-container">
-      <div id="chest-box" class="chest-box">🎁</div>
+      <div id="chest-box" class="chest-box">📦</div>
     </div>
     <div id="chest-items" class="chest-items"></div>
     <button id="btn-chest-close" class="btn-primary" style="display:none">Continuer</button>
@@ -199,7 +201,7 @@
   <div id="screen-shop" class="screen">
     <div class="shop-header">
       <button id="btn-shop-back" class="btn-back">← Retour</button>
-      <h2>Boutique</h2>
+      <h2>🛍️ Boutique</h2>
       <div class="coins-display">🪙 <span id="shop-coins">0</span></div>
     </div>
     <div id="shop-grid" class="shop-grid"></div>
