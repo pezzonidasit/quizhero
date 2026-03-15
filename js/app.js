@@ -205,6 +205,19 @@ document.getElementById('btn-cancel-profile').addEventListener('click', () => {
   showScreen('screen-profiles');
 });
 
+document.getElementById('btn-recover-profile').addEventListener('click', async () => {
+  const code = prompt('Entre ton code de récupération (ex: LIAM-4829) :');
+  if (!code) return;
+  try {
+    if (!firebaseUid) await firebaseSignIn();
+    const profile = await restoreFromCode(code);
+    alert('Profil de ' + profile.name + ' restauré !');
+    selectProfile(profile.id);
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
+});
+
 function renderThemePicker() {
   const container = document.getElementById('theme-picker');
   container.innerHTML = FREE_THEMES.map(id => {
@@ -229,6 +242,13 @@ document.getElementById('btn-create-profile').addEventListener('click', () => {
   if (!name) return;
   const profile = ProfileManager.create(name, selectedTheme);
   selectProfile(profile.id);
+
+  // V4: Generate and save recovery code
+  if (typeof generateRecoveryCode === 'function') {
+    const code = generateRecoveryCode(name);
+    ProfileManager._setData(profile.id, 'recoveryCode', code);
+    saveRecoveryCode(code).catch(() => {});
+  }
 });
 
 // ── Select Profile (entry point to home) ──────────────────────────
@@ -1404,7 +1424,10 @@ function renderProfileDetail() {
       <button class="btn-primary" id="btn-profile-groups" style="flex:1;font-size:0.85rem">👥 Mes Groupes</button>
       <button class="btn-secondary" id="btn-profile-riddle" style="flex:1;font-size:0.85rem">📝 Créer une énigme</button>
     </div>
-    <div style="margin-top:0.75rem;font-size:0.6rem;color:var(--text-secondary);word-break:break-all;text-align:center;opacity:0.5">
+    <div style="margin-top:0.75rem;font-size:0.75rem;color:var(--text-secondary);text-align:center">
+      Code de récupération : <strong style="color:var(--accent-yellow);letter-spacing:1px">${ProfileManager.get('recoveryCode', '...')}</strong>
+    </div>
+    <div style="margin-top:0.25rem;font-size:0.6rem;color:var(--text-secondary);word-break:break-all;text-align:center;opacity:0.5">
       ID : ${firebaseUid || 'non connecté'}
     </div>
   `;

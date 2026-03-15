@@ -404,7 +404,7 @@ async function backupProfile(profileId) {
   const pm = ProfileManager;
   const fields = ['xp', 'coins', 'gamesPlayed', 'goodGamesStreak', 'records', 'badges',
     'catStats', 'ownedThemes', 'activeTheme', 'ownedStickers', 'boosts', 'chestsOpened',
-    'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames'];
+    'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames', 'recoveryCode'];
 
   const data = {};
   fields.forEach(f => {
@@ -424,6 +424,68 @@ async function backupProfile(profileId) {
   } catch(e) {
     console.warn('Backup failed:', e.message);
   }
+}
+
+// ── Recovery Code ──
+
+/** Generate a recovery code: NAME-4digits */
+function generateRecoveryCode(name) {
+  const cleanName = name.trim().toUpperCase().replace(/[^A-Z]/g, '').substring(0, 6);
+  const digits = String(Math.floor(1000 + Math.random() * 9000));
+  return cleanName + '-' + digits;
+}
+
+/** Save recovery code mapping in Firebase */
+async function saveRecoveryCode(code) {
+  if (!firebaseUid) return;
+  await db.ref('recovery/' + code).set({ uid: firebaseUid, createdAt: firebase.database.ServerValue.TIMESTAMP });
+}
+
+/** Restore profile using a recovery code. Returns the created profile. */
+async function restoreFromCode(code) {
+  code = code.trim().toUpperCase();
+  const snap = await db.ref('recovery/' + code).once('value');
+  if (!snap.exists()) throw new Error('Code introuvable');
+
+  const { uid } = snap.val();
+
+  // Fetch backup from that UID
+  const backupSnap = await db.ref('players/' + uid + '/backup').once('value');
+  if (!backupSnap.exists()) throw new Error('Aucun backup trouvé pour ce code');
+
+  const data = backupSnap.val();
+  if (!data._meta || !data._meta.name) throw new Error('Backup corrompu');
+
+  const pm = ProfileManager;
+
+  // Check if profile already exists locally
+  const existing = pm.getAll();
+  if (existing.some(p => p.name === data._meta.name)) {
+    throw new Error('Ce profil existe déjà sur cet appareil');
+  }
+
+  // Create the profile
+  const profile = pm.create(data._meta.name, data._meta.theme || 'nuit');
+
+  // Restore all fields
+  const fields = ['xp', 'coins', 'gamesPlayed', 'goodGamesStreak', 'records', 'badges',
+    'catStats', 'ownedThemes', 'activeTheme', 'ownedStickers', 'boosts', 'chestsOpened',
+    'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames'];
+
+  fields.forEach(f => {
+    if (data[f] !== null && data[f] !== undefined) {
+      pm._setData(profile.id, f, data[f]);
+    }
+  });
+
+  // Update recovery code to point to NEW uid (this device)
+  if (firebaseUid && firebaseUid !== uid) {
+    await db.ref('recovery/' + code).update({ uid: firebaseUid });
+    // Copy backup to new uid
+    await db.ref('players/' + firebaseUid + '/backup').set(data);
+  }
+
+  return profile;
 }
 
 /** Restore profile from Firebase backup. Returns true if restored. */
