@@ -671,34 +671,33 @@ const BADGE_DEFS = [
     }},
 
   // ═══ BADGES VRAIE VIE ═══
-  // Débloqués uniquement quand une catégorie de badges est 100% complétée
-  // isCategoryComplete checks if all non-reallife, non-hidden badges in a category are unlocked
-  { id: 'rl_gaming', name: '🎮 30 min de jeux', icon: '🎮', category: 'reallife', reallife: true,
-    reward: '30 minutes de jeux vidéo',
+  // Débloqués quand catégorie complétée + achetés avec des pièces. Usage unique.
+  { id: 'rl_gaming', name: '30 min de jeux', icon: '🎮', category: 'reallife', reallife: true,
+    reward: '30 minutes de jeux vidéo', price: 100,
     requires: 'debut',
     check: () => isCategoryComplete('debut') },
-  { id: 'rl_movie', name: '🎬 Choix du film', icon: '🎬', category: 'reallife', reallife: true,
-    reward: 'Choisir le film du soir',
+  { id: 'rl_movie', name: 'Choix du film', icon: '🎬', category: 'reallife', reallife: true,
+    reward: 'Choisir le film du soir', price: 150,
     requires: 'explore',
     check: () => isCategoryComplete('explore') },
-  { id: 'rl_snack', name: '🛒 Petit plaisir', icon: '🛒', category: 'reallife', reallife: true,
-    reward: 'Choix d\'un snack au magasin',
+  { id: 'rl_snack', name: 'Petit plaisir', icon: '🛒', category: 'reallife', reallife: true,
+    reward: 'Choix d\'un snack au magasin', price: 250,
     requires: 'total',
     check: () => isCategoryComplete('total') },
-  { id: 'rl_outing', name: '🎢 Sortie spéciale', icon: '🎢', category: 'reallife', reallife: true,
-    reward: 'Sortie au choix (parc, ciné, bowling...)',
+  { id: 'rl_outing', name: 'Sortie spéciale', icon: '🎢', category: 'reallife', reallife: true,
+    reward: 'Sortie au choix (parc, ciné, bowling...)', price: 500,
     requires: 'perf',
     check: () => isCategoryComplete('perf') },
-  { id: 'rl_bedtime', name: '🌙 Coucher tard', icon: '🌙', category: 'reallife', reallife: true,
-    reward: '+30 min avant de dormir',
+  { id: 'rl_bedtime', name: 'Coucher tard', icon: '🌙', category: 'reallife', reallife: true,
+    reward: '+30 min avant de dormir', price: 300,
     requires: 'xp',
     check: () => isCategoryComplete('xp') },
-  { id: 'rl_gift', name: '🎁 Surprise', icon: '🎁', category: 'reallife', reallife: true,
-    reward: 'Cadeau surprise',
+  { id: 'rl_gift', name: 'Surprise', icon: '🎁', category: 'reallife', reallife: true,
+    reward: 'Cadeau surprise', price: 750,
     requires: 'master',
     check: () => isCategoryComplete('master') },
-  { id: 'rl_legend', name: '⭐ Légende vivante', icon: '⭐', category: 'reallife', reallife: true,
-    reward: 'Gros privilège au choix',
+  { id: 'rl_legend', name: 'Légende vivante', icon: '⭐', category: 'reallife', reallife: true,
+    reward: 'Gros privilège au choix', price: 1000,
     requires: 'ALL',
     check: () => ['debut','explore','total','perf','xp','master'].every(c => isCategoryComplete(c)) },
 ];
@@ -995,10 +994,24 @@ function renderProfileDetail() {
     secBadges.forEach(b => {
       const unlocked = badges.includes(b.id);
       const isRL = b.reallife;
-      const rewardText = isRL ? `<span class="badge-reward">${unlocked ? b.reward : ''}</span>` : '';
-      const usedUp = isRL && unlocked && (ProfileManager.get('used_' + b.id, false));
+      const purchased = isRL && ProfileManager.get('purchased_' + b.id, false);
+      const usedUp = isRL && ProfileManager.get('used_' + b.id, false);
+      const categoryDone = isRL && b.check();
+      const rewardText = isRL ? `<span class="badge-reward">${b.reward}</span>` : '';
       const usedLabel = usedUp ? '<span class="badge-used">Utilisé ✓</span>' : '';
-      const requiresLabel = isRL && !unlocked && b.requires ? `<span class="badge-reward">Complète "${sections.find(s=>s.key===b.requires)?.title || b.requires}"</span>` : '';
+      let rlStatusLabel = '';
+      if (isRL) {
+        if (usedUp) {
+          rlStatusLabel = '';
+        } else if (purchased) {
+          rlStatusLabel = '<span class="badge-hint" style="color:var(--accent-green)">Cliquer pour utiliser</span>';
+        } else if (categoryDone) {
+          rlStatusLabel = `<span class="badge-hint" style="color:var(--accent-yellow)">🪙 ${b.price} pièces pour acheter</span>`;
+        } else {
+          rlStatusLabel = `<span class="badge-hint">Complète "${sections.find(s=>s.key===b.requires)?.title || b.requires}" + 🪙 ${b.price}</span>`;
+        }
+      }
+      const rlUnlockState = isRL ? (usedUp ? 'spent' : purchased ? 'owned' : categoryDone ? 'buyable' : 'locked') : '';
       // Progress bar for locked badges
       let progressHtml = '';
       if (!unlocked && b.progress && !isRL) {
@@ -1009,10 +1022,14 @@ function renderProfileDetail() {
         }
       }
       const hintHtml = !unlocked && b.hint && !isRL ? `<span class="badge-hint">${b.hint}</span>` : '';
-      badgesHtml += `<div class="badge-item ${isRL ? 'badge-reallife' : ''} ${usedUp ? 'badge-spent' : ''}" style="${unlocked ? '' : 'opacity:0.5;filter:grayscale(0.8)'}" ${isRL && unlocked && !usedUp ? `data-badge-id="${b.id}"` : ''}>
+      const isLocked = isRL ? (rlUnlockState === 'locked') : !unlocked;
+      const badgeClasses = `badge-item ${isRL ? 'badge-reallife' : ''} ${usedUp ? 'badge-spent' : ''} ${isRL && rlUnlockState === 'buyable' ? 'badge-buyable' : ''}`;
+      const badgeStyle = isLocked ? 'opacity:0.4;filter:grayscale(0.8)' : (usedUp ? 'opacity:0.4' : '');
+      const dataAttr = isRL && !usedUp ? `data-badge-id="${b.id}" data-rl-state="${rlUnlockState}" data-price="${b.price || 0}"` : '';
+      badgesHtml += `<div class="${badgeClasses}" style="${badgeStyle}" ${dataAttr}>
         <span class="badge-icon">${b.icon}</span>
-        <span class="badge-name">${unlocked ? b.name : b.name}</span>
-        ${progressHtml}${hintHtml}${rewardText}${requiresLabel}${usedLabel}
+        <span class="badge-name">${b.name}</span>
+        ${progressHtml}${hintHtml}${rewardText}${rlStatusLabel}${usedLabel}
       </div>`;
     });
     badgesHtml += '</div>';
@@ -1020,13 +1037,29 @@ function renderProfileDetail() {
 
   document.getElementById('profile-badges-list').innerHTML = badgesHtml;
 
-  // Click to "use" real-life badges
+  // Click handler for real-life badges: buy or use
   document.querySelectorAll('.badge-reallife[data-badge-id]').forEach(el => {
     el.addEventListener('click', () => {
       const bid = el.dataset.badgeId;
-      if (confirm('Utiliser cette récompense ? Elle disparaîtra après utilisation.')) {
-        ProfileManager.set('used_' + bid, true);
-        renderProfileDetail();
+      const rlState = el.dataset.rlState;
+      const price = parseInt(el.dataset.price || '0');
+      const coins = ProfileManager.get('coins', 0);
+
+      if (rlState === 'buyable') {
+        if (coins < price) {
+          alert(`Pas assez de pièces ! Tu as ${coins} 🪙, il en faut ${price}.`);
+          return;
+        }
+        if (confirm(`Acheter cette récompense pour ${price} 🪙 ?`)) {
+          ProfileManager.set('coins', coins - price);
+          ProfileManager.set('purchased_' + bid, true);
+          renderProfileDetail();
+        }
+      } else if (rlState === 'owned') {
+        if (confirm('Utiliser cette récompense ? Elle disparaîtra après utilisation.')) {
+          ProfileManager.set('used_' + bid, true);
+          renderProfileDetail();
+        }
       }
     });
   });

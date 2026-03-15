@@ -870,6 +870,12 @@ h2 {
   box-shadow: none;
 }
 
+.badge-buyable {
+  border-color: var(--accent-yellow);
+  animation: pulse 2s ease infinite;
+  cursor: pointer;
+}
+
 /* Next Goals Widget (Home Screen) */
 .next-goals {
   width: 100%;
