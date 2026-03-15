@@ -308,14 +308,14 @@ function updateProfileHeader() {
       // Admin can create, others can only join
       checkIsGlobalAdmin().then(isAdmin => {
         let html = '<p>👥 Rejoins un groupe pour commencer à jouer !</p>' +
-          '<button class="btn-primary" onclick="renderGroupsScreen()" style="font-size:0.85rem">Rejoindre un groupe</button>';
+          '<button class="btn-primary" onclick="renderGroupsScreen(&quot;screen-home&quot;)" style="font-size:0.85rem">Rejoindre un groupe</button>';
         if (isAdmin) {
           html += '<br><button class="btn-secondary" onclick="quickCreateGroup()" style="font-size:0.85rem;margin-top:0.5rem">Créer un groupe (admin)</button>';
         }
         noGroupBanner.innerHTML = html;
       }).catch(() => {
         noGroupBanner.innerHTML = '<p>👥 Rejoins un groupe pour commencer à jouer !</p>' +
-          '<button class="btn-primary" onclick="renderGroupsScreen()" style="font-size:0.85rem">Rejoindre un groupe</button>';
+          '<button class="btn-primary" onclick="renderGroupsScreen(&quot;screen-home&quot;)" style="font-size:0.85rem">Rejoindre un groupe</button>';
       });
       noGroupBanner.style.display = '';
       document.getElementById('btn-play').style.display = 'none';
@@ -1456,7 +1456,7 @@ function renderProfileDetail() {
 
   // V4: Groups + Riddle nav from profile
   const groupsBtn = document.getElementById('btn-profile-groups');
-  if (groupsBtn) groupsBtn.addEventListener('click', () => renderGroupsScreen());
+  if (groupsBtn) groupsBtn.addEventListener('click', () => renderGroupsScreen('screen-profile-detail'));
   const riddleBtn = document.getElementById('btn-profile-riddle');
   if (riddleBtn) riddleBtn.addEventListener('click', () => showCreateRiddleScreen());
 
@@ -2272,11 +2272,18 @@ async function renderLeaderboard() {
 
 let currentGroupCode = null;
 
-document.getElementById('btn-groups-back').addEventListener('click', () => { showScreen('screen-profile-detail'); });
+let groupsBackTarget = 'screen-home';
+document.getElementById('btn-groups-back').addEventListener('click', () => {
+  if (groupsBackTarget === 'screen-home') {
+    updateProfileHeader();
+  }
+  showScreen(groupsBackTarget);
+});
 document.getElementById('btn-gd-back').addEventListener('click', () => { renderGroupsScreen(); showScreen('screen-groups'); });
 document.getElementById('btn-dash-back').addEventListener('click', () => { showScreen('screen-group-detail'); });
 
-async function renderGroupsScreen() {
+async function renderGroupsScreen(backTo) {
+  if (backTo) groupsBackTarget = backTo;
   const listEl = document.getElementById('groups-list');
   listEl.innerHTML = '<div class="groups-empty">Chargement...</div>';
   showScreen('screen-groups');
