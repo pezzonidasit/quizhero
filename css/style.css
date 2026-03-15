@@ -1761,16 +1761,15 @@ h2 {
 }
 
 /* Boss Fight — VS Split Screen Layout */
-#screen-boss-fight {
+#screen-boss-fight.active {
   display: flex;
   flex-direction: column;
   height: 100vh;
   padding: 0;
   overflow: hidden;
-}
-
-#screen-boss-fight.active {
-  display: flex;
+  align-items: stretch;
+  gap: 0;
+  animation: none;
 }
 
 .boss-zone {
