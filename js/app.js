@@ -2365,7 +2365,7 @@ async function renderGroupDetail(code) {
     let actHtml = '<button class="btn-secondary" onclick="leaveGroupAction(\'' + code + '\')">Quitter le groupe</button>';
 
     if (isAdmin) {
-      actHtml = '<button class="btn-primary" onclick="showDashboard(\'' + code + '\')">📊 Dashboard parent</button>' + actHtml;
+      actHtml = '<button class="btn-primary" onclick="showDashboard(\'' + code + '\')">📊 Dashboard</button>' + actHtml;
       actHtml += '<button class="btn-danger" style="margin-top:0.5rem" onclick="regenerateCodeAction(\'' + code + '\')">🔄 Régénérer le code</button>';
       actHtml += '<button class="btn-primary" style="margin-top:0.5rem;font-size:0.85rem" onclick="addRewardToGroup(\'' + code + '\')">🎁 Ajouter une récompense</button>';
     }
