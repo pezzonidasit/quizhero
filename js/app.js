@@ -305,7 +305,11 @@ function updateProfileHeader() {
 
   getMyGroups().then(groups => {
     if (groups.length === 0) {
-      noGroupBanner.innerHTML = '<p>👥 Rejoins un groupe pour commencer à jouer !</p><button class="btn-primary" onclick="renderGroupsScreen()" style="font-size:0.85rem">Rejoindre un groupe</button>';
+      noGroupBanner.innerHTML = '<p>👥 Rejoins ou crée un groupe pour jouer !</p>' +
+        '<div style="display:flex;gap:0.5rem;justify-content:center">' +
+        '<button class="btn-primary" onclick="renderGroupsScreen()" style="font-size:0.85rem">Rejoindre</button>' +
+        '<button class="btn-secondary" onclick="quickCreateGroup()" style="font-size:0.85rem">Créer un groupe</button>' +
+        '</div>';
       noGroupBanner.style.display = '';
       document.getElementById('btn-play').style.display = 'none';
     } else {
@@ -2749,6 +2753,20 @@ window.banMemberAction = banMemberAction;
 window.showDashboard = showDashboard;
 window.adminDeleteRiddleAction = adminDeleteRiddleAction;
 window.renderGroupsScreen = renderGroupsScreen;
+
+async function quickCreateGroup() {
+  const name = prompt('Nom du groupe :');
+  if (!name) return;
+  try {
+    if (!firebaseUid) await firebaseSignIn();
+    const result = await createGroup(name);
+    alert('Groupe créé ! Code à partager : ' + result.code);
+    updateProfileHeader();
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
+}
+window.quickCreateGroup = quickCreateGroup;
 
 // Debug helper — accessible from browser console
 window._debug = { triggerBoss, state, showBossAppear, BOSS_POOL, renderLeaderboard, renderGroupsScreen, showCreateRiddleScreen, renderAdminDashboard };
