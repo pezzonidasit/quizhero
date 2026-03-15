@@ -2328,3 +2328,64 @@ h2 {
   background: rgba(255,255,255,0.05);
   color: var(--text-secondary);
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   PROFILE — THEME SELECTOR
+   ══════════════════════════════════════════════════════════════════════ */
+
+.theme-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.5rem;
+  margin: 0.75rem 0 1.5rem;
+}
+
+.theme-select-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.6rem 0.4rem;
+  background: var(--bg-card-hover);
+  border-radius: 10px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s, transform 0.15s;
+  position: relative;
+}
+
+.theme-select-item:hover {
+  border-color: var(--accent-blue);
+  transform: translateY(-2px);
+}
+
+.theme-select-item.theme-active {
+  border-color: var(--accent-green);
+  background: rgba(78, 205, 196, 0.1);
+}
+
+.theme-select-icon {
+  font-size: 1.5rem;
+}
+
+.theme-select-name {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.theme-select-badge {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 0.6rem;
+}
+
+.theme-select-check {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 0.6rem;
+  color: var(--accent-green);
+  font-weight: 700;
+}

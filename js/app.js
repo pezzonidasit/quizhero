@@ -1117,47 +1117,38 @@ function renderShop() {
   document.getElementById('shop-coins').textContent = coins;
   const container = document.getElementById('shop-grid');
 
-  // === SECTION 1: Thèmes (paid + boss themes if owned) ===
+  // === SECTION 1: Thèmes (only unpurchased) ===
   const paidThemes = getThemeList().filter(t => t.price > 0);
-  const bossThemes = getThemeList().filter(t => t.price === -1 && ownedThemes.includes(t.id));
-  let html = '<h3 class="shop-section-title">🎨 Thèmes</h3>';
-  if (bossThemes.length > 0) {
-    html += bossThemes.map(t => {
-      const isActive = t.id === activeTheme;
-      return `<div class="shop-item shop-theme owned ${isActive ? 'active-theme' : ''}" data-theme="${t.id}" style="border:1px solid var(--accent-yellow)">
+  const unboughtThemes = paidThemes.filter(t => !ownedThemes.includes(t.id));
+  let html = '';
+  if (unboughtThemes.length > 0) {
+    html += '<h3 class="shop-section-title">🎨 Thèmes</h3>';
+    html += unboughtThemes.map(t => {
+      return `<div class="shop-item shop-theme" data-theme="${t.id}">
         <span class="shop-icon">${t.preview}</span>
         <span class="shop-name">${t.name}</span>
-        <span class="shop-price">${isActive ? '✓ Actif' : '⚔️ Boss'}</span>
+        <span class="shop-price">🪙 ${t.price}</span>
       </div>`;
     }).join('');
   }
-  html += paidThemes.map(t => {
-    const isOwned = ownedThemes.includes(t.id);
-    const isActive = t.id === activeTheme;
-    return `<div class="shop-item shop-theme ${isOwned ? 'owned' : ''} ${isActive ? 'active-theme' : ''}" data-theme="${t.id}">
-      <span class="shop-icon">${t.preview}</span>
-      <span class="shop-name">${t.name}</span>
-      <span class="shop-price">${isOwned ? (isActive ? '✓ Actif' : '✓ Possédé') : '🪙 ' + t.price}</span>
-    </div>`;
-  }).join('');
 
-  const allThemesOwned = paidThemes.every(t => ownedThemes.includes(t.id));
+  const allThemesOwned = unboughtThemes.length === 0;
 
-  // === SECTION 2: Stickers saisonniers ===
-  if (STICKERS.length > 0) {
+  // === SECTION 2: Stickers saisonniers (only unpurchased) ===
+  const unboughtStickers = STICKERS.filter(s => !ownedStickers.includes(s.id));
+  if (unboughtStickers.length > 0) {
     const currentSeason = STICKERS[0].season;
     html += `<h3 class="shop-section-title">🏷️ Stickers — ${currentSeason}</h3>`;
-    STICKERS.forEach(s => {
-      const isOwned = ownedStickers.includes(s.id);
-      html += `<div class="shop-item shop-sticker ${isOwned ? 'owned' : ''}" data-sticker="${s.id}">
+    unboughtStickers.forEach(s => {
+      html += `<div class="shop-item shop-sticker" data-sticker="${s.id}">
         <span class="shop-icon">${s.icon}</span>
         <span class="shop-name">${s.name}</span>
-        <span class="shop-price">${isOwned ? '✓ Collecté' : '🪙 ' + s.price}</span>
+        <span class="shop-price">🪙 ${s.price}</span>
       </div>`;
     });
   }
 
-  const allStickersOwned = STICKERS.every(s => ownedStickers.includes(s.id));
+  const allStickersOwned = unboughtStickers.length === 0;
   const boostsUnlocked = allThemesOwned && allStickersOwned;
 
   // === SECTION 3: Boosts (verrouillés tant que tout n'est pas acheté) ===
@@ -1186,8 +1177,8 @@ function renderShop() {
   container.innerHTML = html;
 
   // === Event handlers ===
-  // Theme buy/activate
-  container.querySelectorAll('.shop-theme:not(.owned)').forEach(item => {
+  // Theme buy (shop only shows unbought)
+  container.querySelectorAll('.shop-theme').forEach(item => {
     item.addEventListener('click', () => {
       const themeId = item.dataset.theme;
       const theme = THEMES[themeId];
@@ -1198,24 +1189,16 @@ function renderShop() {
           const o = ProfileManager.get('ownedThemes', []);
           o.push(themeId);
           ProfileManager.set('ownedThemes', o);
-          // Don't auto-activate — just buy
           renderShop();
         }
+      } else {
+        alert(`Pas assez de pièces ! (${c}/${theme.price})`);
       }
     });
   });
-  container.querySelectorAll('.shop-theme.owned').forEach(item => {
-    item.addEventListener('click', () => {
-      const themeId = item.dataset.theme;
-      ProfileManager.set('activeTheme', themeId);
-      ProfileManager.updateMeta(ProfileManager.getActiveId(), { theme: themeId });
-      applyTheme(themeId);
-      renderShop();
-    });
-  });
 
-  // Sticker buy
-  container.querySelectorAll('.shop-sticker:not(.owned)').forEach(item => {
+  // Sticker buy (shop only shows unbought)
+  container.querySelectorAll('.shop-sticker').forEach(item => {
     item.addEventListener('click', () => {
       const stickerId = item.dataset.sticker;
       const sticker = STICKERS.find(s => s.id === stickerId);
@@ -1333,6 +1316,40 @@ function renderProfileDetail() {
       <div class="stat-box"><span class="stat-value">\uD83E\uDE99 ${coins}</span><span class="stat-label">Pièces</span></div>
       <div class="stat-box"><span class="stat-value">${gamesPlayed}</span><span class="stat-label">Parties</span></div>
     </div>`;
+
+  // === Theme selector ===
+  const ownedThemeIds = ProfileManager.get('ownedThemes', []);
+  const activeThemeId = ProfileManager.get('activeTheme', 'nuit');
+  // All owned themes: free + bought + boss
+  const allOwnedThemes = [...FREE_THEMES, ...ownedThemeIds]
+    .filter((id, i, arr) => arr.indexOf(id) === i) // dedupe
+    .map(id => THEMES[id])
+    .filter(Boolean);
+
+  let themeHtml = '<h3>🎨 Mes Thèmes</h3><div class="theme-selector">';
+  allOwnedThemes.forEach(t => {
+    const isActive = t.id === activeThemeId;
+    const isBoss = t.price === -1;
+    themeHtml += `<div class="theme-select-item ${isActive ? 'theme-active' : ''}" data-theme="${t.id}">
+      <span class="theme-select-icon">${t.preview}</span>
+      <span class="theme-select-name">${t.name}</span>
+      ${isBoss ? '<span class="theme-select-badge">⚔️</span>' : ''}
+      ${isActive ? '<span class="theme-select-check">✓</span>' : ''}
+    </div>`;
+  });
+  themeHtml += '</div>';
+  document.getElementById('profile-card').innerHTML += themeHtml;
+
+  // Theme selector click handlers
+  document.querySelectorAll('.theme-select-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const themeId = item.dataset.theme;
+      ProfileManager.set('activeTheme', themeId);
+      ProfileManager.updateMeta(ProfileManager.getActiveId(), { theme: themeId });
+      applyTheme(themeId);
+      renderProfileDetail();
+    });
+  });
 
   const allBadges = [...BADGE_DEFS, {id:'collector',name:'Collectionneur',icon:'🏅',category:'hidden',hidden:true}, {id:'lucky',name:'Chanceux',icon:'🍀',category:'hidden',hidden:true}];
 
