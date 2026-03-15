@@ -65,6 +65,7 @@ const state = {
   badges: [],
   categoryStats: {},
   pendingChests: [],
+  activeBoost: null,
 };
 
 // ── Difficulty ─────────────────────────────────────────────────────
@@ -135,7 +136,7 @@ document.querySelectorAll('.pill-group').forEach(group => {
     const value = pill.dataset.value;
 
     if (setting === 'category') state.category = value;
-    else if (setting === 'difficulty') state.difficulty = value;
+    else if (setting === 'difficulty') { state.difficulty = value; renderBoostSelector(); }
     else if (setting === 'count') state.questionCount = parseInt(value, 10);
   });
 });
@@ -268,6 +269,48 @@ function updateProfileHeader() {
 
   // Render next goals widget
   renderNextGoals();
+  // Render boost selector
+  renderBoostSelector();
+}
+
+function renderBoostSelector() {
+  const container = document.getElementById('boost-selector');
+  if (!container) return;
+  const boosts = ProfileManager.get('boosts', {});
+  const hasBoosts = Object.values(boosts).some(v => v > 0);
+
+  if (!hasBoosts) {
+    container.innerHTML = '';
+    state.activeBoost = null;
+    return;
+  }
+
+  let html = '<div class="boost-bar">';
+  html += '<span class="boost-label">Boost :</span>';
+  html += `<button class="boost-chip ${!state.activeBoost ? 'active' : ''}" data-boost="">Aucun</button>`;
+  BOOSTS.forEach(b => {
+    const count = boosts[b.id] || 0;
+    if (count > 0) {
+      html += `<button class="boost-chip ${state.activeBoost === b.id ? 'active' : ''}" data-boost="${b.id}">${b.icon} ${b.name} ×${count}</button>`;
+    }
+  });
+  html += '</div>';
+
+  // Show difficulty warning
+  if (state.activeBoost) {
+    const mult = getBoostMultiplier(state.difficulty);
+    const pctLabel = mult === 0.5 ? '50%' : mult === 1 ? '100%' : '×2';
+    html += `<div class="boost-warning">⚠️ Effet ${pctLabel} en ${state.difficulty === 'easy' ? 'Facile' : state.difficulty === 'hard' ? 'Difficile' : 'Moyen'} — perdu si pas 100% correct !</div>`;
+  }
+
+  container.innerHTML = html;
+
+  container.querySelectorAll('.boost-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      state.activeBoost = chip.dataset.boost || null;
+      renderBoostSelector();
+    });
+  });
 }
 
 function renderNextGoals() {
@@ -346,6 +389,25 @@ function startGame() {
   state.badgesUnlocked = [];
   state.noHintCount = 0;
   state.gameStartTime = Date.now();
+
+  // Consume active boost from inventory
+  if (state.activeBoost) {
+    const inv = ProfileManager.get('boosts', {});
+    if (inv[state.activeBoost] > 0) {
+      inv[state.activeBoost]--;
+      ProfileManager.set('boosts', inv);
+    } else {
+      state.activeBoost = null;
+    }
+  }
+
+  // hint_pack boost: add free hints immediately
+  if (state.activeBoost === 'hint_pack') {
+    const current = ProfileManager.get('freeHints', 0);
+    const mult = getBoostMultiplier(state.difficulty);
+    const hintsToAdd = Math.round(3 * (mult === 0.5 ? 1 : mult === 2 ? 2 : 1)); // 3 hints base, 6 in hard
+    ProfileManager.set('freeHints', current + hintsToAdd);
+  }
 
   state.questions.push(generateQuestion(state.category, getSubLevel(), null));
 
@@ -592,6 +654,20 @@ function isCategoryComplete(catKey) {
   return catBadges.length > 0 && catBadges.every(b => state.badges.includes(b.id));
 }
 
+// ── Boosts System ───────────────────────────────────────────────
+const BOOSTS = [
+  { id: 'xp_boost', name: 'Boost XP', icon: '⚡', price: 50, desc: 'XP ×2 (×3 en difficile)', effect: 'xp' },
+  { id: 'coin_boost', name: 'Boost Pièces', icon: '💰', price: 60, desc: 'Pièces ×2 (×3 en difficile)', effect: 'coins' },
+  { id: 'score_boost', name: 'Boost Score', icon: '🎯', price: 40, desc: 'Score ×1.5 (×2 en difficile)', effect: 'score' },
+  { id: 'hint_pack', name: 'Pack Indices', icon: '💡', price: 30, desc: '3 indices gratuits pour cette partie', effect: 'hints' },
+];
+
+function getBoostMultiplier(difficulty) {
+  if (difficulty === 'easy') return 0.5;
+  if (difficulty === 'hard') return 2;
+  return 1; // medium
+}
+
 const BADGE_DEFS = [
   // ── Débuts ──
   { id: 'first_game', name: 'Première partie', icon: '⭐', category: 'debut', check: () => true, progress: () => ({ cur: Math.min(profileGames(), 1), max: 1 }) },
@@ -776,6 +852,46 @@ function endGame() {
   ProfileManager.set('coins', ProfileManager.get('coins', 0) + rewards.coins);
   if (xpBoost) ProfileManager.set('xpBoostActive', false);
 
+  // Apply boost if active AND perfect score
+  if (state.activeBoost) {
+    const isPerfect = state.bestStreakThisGame >= state.questionCount;
+    const boost = BOOSTS.find(b => b.id === state.activeBoost);
+    const mult = getBoostMultiplier(state.difficulty);
+
+    if (isPerfect && boost) {
+      if (boost.effect === 'xp') {
+        const bonusXP = Math.round(rewards.xp * mult);
+        rewards.xp += bonusXP;
+        ProfileManager.set('xp', ProfileManager.get('xp', 0) + bonusXP);
+      } else if (boost.effect === 'coins') {
+        const bonusCoins = Math.round(rewards.coins * mult);
+        rewards.coins += bonusCoins;
+        ProfileManager.set('coins', ProfileManager.get('coins', 0) + bonusCoins);
+      }
+    }
+
+    // Show boost result in rewards section
+    const boostResultEl = document.getElementById('boost-result');
+    if (boostResultEl) {
+      if (isPerfect && boost) {
+        boostResultEl.textContent = `${boost.icon} Boost ${boost.name} activé ! (×${1 + mult})`;
+        boostResultEl.style.display = '';
+        boostResultEl.style.color = 'var(--accent-green)';
+      } else if (boost) {
+        boostResultEl.textContent = `${boost.icon} Boost ${boost.name} perdu... (pas de score parfait)`;
+        boostResultEl.style.display = '';
+        boostResultEl.style.color = 'var(--error)';
+      }
+    }
+    state.activeBoost = null;
+  } else {
+    const boostResultEl = document.getElementById('boost-result');
+    if (boostResultEl) boostResultEl.style.display = 'none';
+  }
+
+  // Re-read XP after potential boost bonus
+  const finalXP = ProfileManager.get('xp', 0);
+
   // Game streak for chest milestones
   let gamesPlayed = ProfileManager.get('gamesPlayed', 0) + 1;
   ProfileManager.set('gamesPlayed', gamesPlayed);
@@ -792,11 +908,11 @@ function endGame() {
 
   // Check chests
   const chestsOpened = ProfileManager.get('chestsOpened', []);
-  state.pendingChests = checkChestMilestones(gamesPlayed, newXP, chestsOpened);
+  state.pendingChests = checkChestMilestones(gamesPlayed, finalXP, chestsOpened);
 
   // Check rank up
   const oldRank = getRank(oldXP);
-  const newRank = getRank(newXP);
+  const newRank = getRank(finalXP);
 
   // Display rewards
   document.getElementById('xp-earned').textContent = '+' + rewards.xp + ' XP';
@@ -809,7 +925,7 @@ function endGame() {
   } else {
     rankUpEl.style.display = 'none';
   }
-  const progress = getRankProgress(newXP);
+  const progress = getRankProgress(finalXP);
   document.getElementById('xp-bar-end-fill').style.width = (progress.progress * 100) + '%';
   document.getElementById('xp-bar-end-text').textContent = progress.next ? progress.xpInLevel + '/' + progress.xpNeeded + ' XP' : 'MAX';
 
@@ -875,6 +991,41 @@ function renderShop() {
         ProfileManager.updateMeta(ProfileManager.getActiveId(), { theme: themeId });
         applyTheme(themeId);
         renderShop();
+      }
+    });
+  });
+
+  // Add boosts section in shop
+  const boostsOwned = ProfileManager.get('boosts', {});
+  let boostsHtml = '<h3 style="width:100%;margin-top:16px">⚡ Boosts de partie</h3>';
+  BOOSTS.forEach(b => {
+    const count = boostsOwned[b.id] || 0;
+    boostsHtml += `<div class="shop-item shop-boost" data-boost="${b.id}">
+      <span class="shop-icon">${b.icon}</span>
+      <span class="shop-name">${b.name}</span>
+      <span class="shop-desc">${b.desc}</span>
+      <span class="shop-price">🪙 ${b.price}</span>
+      ${count > 0 ? `<span class="shop-owned-count">×${count} en stock</span>` : ''}
+    </div>`;
+  });
+  container.innerHTML += boostsHtml;
+
+  // Boost buy handlers
+  container.querySelectorAll('.shop-boost').forEach(item => {
+    item.addEventListener('click', () => {
+      const boostId = item.dataset.boost;
+      const boost = BOOSTS.find(b => b.id === boostId);
+      const currentCoins = ProfileManager.get('coins', 0);
+      if (currentCoins >= boost.price) {
+        if (confirm(`Acheter ${boost.name} pour ${boost.price} 🪙 ?`)) {
+          ProfileManager.set('coins', currentCoins - boost.price);
+          const inv = ProfileManager.get('boosts', {});
+          inv[boostId] = (inv[boostId] || 0) + 1;
+          ProfileManager.set('boosts', inv);
+          renderShop();
+        }
+      } else {
+        alert(`Pas assez de pièces ! (${currentCoins}/${boost.price})`);
       }
     });
   });
