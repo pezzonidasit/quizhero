@@ -1,5 +1,5 @@
 /**
- * MathQuiz V2 — Theme Engine
+ * QuizHero V2 — Theme Engine
  * 10 themes with CSS custom property injection
  */
 

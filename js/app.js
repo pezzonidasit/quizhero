@@ -1,4 +1,4 @@
-/* MathQuiz V2 — App Logic (profile-aware) */
+/* QuizHero V2 — App Logic (profile-aware) */
 
 // ── PIN Gate ──────────────────────────────────────────────────────
 const PIN_CODE = '2609';
@@ -2334,7 +2334,7 @@ async function renderGroupDetail(code) {
       '<div class="gd-member-count">' + memberCount + ' membre' + (memberCount > 1 ? 's' : '') + '</div>';
 
     // Generate QR code for joining
-    const joinUrl = 'https://pezzonidasit.github.io/mathquiz/?join=' + code;
+    const joinUrl = 'https://pezzonidasit.github.io/quizhero/?join=' + code;
     const qr = qrcode(0, 'M');
     qr.addData(joinUrl);
     qr.make();

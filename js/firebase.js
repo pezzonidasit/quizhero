@@ -1,5 +1,5 @@
 /**
- * MathQuiz V4 — Firebase Init & Helpers
+ * QuizHero V4 — Firebase Init & Helpers
  * Depends on: Firebase SDK loaded from CDN
  */
 

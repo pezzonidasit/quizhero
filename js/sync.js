@@ -1,5 +1,5 @@
 /**
- * MathQuiz V4 — Sync Engine
+ * QuizHero V4 — Sync Engine
  * Syncs local game stats to Firebase after each game.
  * Handles offline queue and startup refresh.
  * Depends on: firebase.js, profiles.js, progression.js

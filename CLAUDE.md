@@ -1,4 +1,4 @@
-# MathQuiz — Mathématiques & Énigmes
+# QuizHero — Jeu de Quiz Gamifié
 
 App web gamifiée de quiz mathématiques pour enfants (CM2, 10 ans).
 
@@ -7,7 +7,7 @@ App web gamifiée de quiz mathématiques pour enfants (CM2, 10 ans).
 - **HTML/CSS/JS** pur — zéro framework, zéro build
 - **localStorage** pour la persistance (namespacé par profil)
 - **PWA** — manifest + service worker, installable sur mobile
-- **GitHub Pages** — https://pezzonidasit.github.io/mathquiz/
+- **GitHub Pages** — https://pezzonidasit.github.io/quizhero/
 
 ## Structure
 
@@ -36,7 +36,7 @@ MathQuiz/
 - 6 catégories : Calcul, Logique, Géométrie, Fractions, Mesures, Problèmes ouverts
 - Questions algorithmiques (infinies) + banque artisanale (50 énigmes)
 - Difficulté adaptative (3 niveaux × 3 sous-paliers)
-- Score, streak 🔥, badges, records par catégorie
+- Score, streak, badges, records par catégorie
 - Chronomètre optionnel, indices, explications
 - Confettis, animations, dark theme responsive
 
@@ -50,8 +50,8 @@ MathQuiz/
 
 ## GitHub Repo
 
-- **Repo** : `pezzonidasit/mathquiz`
-- **Pages** : https://pezzonidasit.github.io/mathquiz/
+- **Repo** : `pezzonidasit/quizhero`
+- **Pages** : https://pezzonidasit.github.io/quizhero/
 - **Deploy** : push sur `main` → auto-deploy via GitHub Pages
 
 Pour mettre à jour le site après modification :

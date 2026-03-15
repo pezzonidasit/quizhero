@@ -1,4 +1,4 @@
-/* MathQuiz — Question Engine */
+/* QuizHero — Question Engine */
 
 // ── Categories ──────────────────────────────────────────────────────
 const CATEGORIES = {

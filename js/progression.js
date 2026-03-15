@@ -1,5 +1,5 @@
 /**
- * MathQuiz V2 — Progression Engine
+ * QuizHero V2 — Progression Engine
  * XP, ranks, coins, chest milestones, loot tables
  * Depends on: questions.js (rand, pick), themes.js (THEMES), profiles.js (ProfileManager)
  */

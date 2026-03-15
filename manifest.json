@@ -1,7 +1,7 @@
 {
-  "name": "Mathématiques & Énigmes",
-  "short_name": "MathQuiz",
-  "description": "Jeu de mathématiques et énigmes pour enfants",
+  "name": "QuizHero",
+  "short_name": "QuizHero",
+  "description": "QuizHero — jeu de quiz gamifié pour enfants",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1a1a2e",

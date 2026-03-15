@@ -1,5 +1,5 @@
 /**
- * MathQuiz V3 — Boss Pixel Art SVGs
+ * QuizHero V3 — Boss Pixel Art SVGs
  * Each boss has an SVG string that replaces the emoji in boss fights.
  * All bosses use viewBox="0 0 32 30" with crispEdges for pixel art look.
  */
