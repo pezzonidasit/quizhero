@@ -1631,6 +1631,8 @@ function startBossFight(boss) {
     currentStepIndex: 0, criticalHits: 0, answered: false,
     timerInterval: null, timerStart: 0, timerDuration: 0,
   };
+  // Apply boss zone color
+  document.getElementById('boss-zone').style.backgroundColor = boss.color || '#1a1a2e';
   showScreen('screen-boss-fight');
   updateBossHP();
   showBossPhaseLabel();
@@ -1639,12 +1641,23 @@ function startBossFight(boss) {
 
 function updateBossHP() {
   const bs = state.bossState;
-  document.getElementById('player-hp-fill').style.width = (bs.playerHP / bs.maxPlayerHP * 100) + '%';
-  document.getElementById('player-hp-text').textContent = bs.playerHP + '/' + bs.maxPlayerHP;
-  document.getElementById('boss-hp-fill').style.width = (Math.max(0, bs.bossHP) / bs.maxBossHP * 100) + '%';
+  // Boss HP bar
+  const bossPct = (Math.max(0, bs.bossHP) / bs.maxBossHP) * 100;
+  document.getElementById('boss-hp-fill').style.width = bossPct + '%';
   document.getElementById('boss-hp-text').textContent = Math.max(0, bs.bossHP) + '/' + bs.maxBossHP;
+  // Boss info
   document.getElementById('boss-fight-emoji').textContent = bs.boss.emoji;
   document.getElementById('boss-fight-name').textContent = bs.boss.name;
+  // Player HP bar
+  const playerPct = (bs.playerHP / bs.maxPlayerHP) * 100;
+  document.getElementById('player-hp-fill').style.width = playerPct + '%';
+  document.getElementById('player-hp-text').textContent = bs.playerHP + '/' + bs.maxPlayerHP;
+  // Player hearts
+  let hearts = '';
+  for (let i = 0; i < bs.maxPlayerHP; i++) {
+    hearts += i < bs.playerHP ? '❤️' : '🖤';
+  }
+  document.getElementById('player-hearts').innerHTML = hearts;
 }
 
 function showBossPhaseLabel() {
@@ -1749,9 +1762,26 @@ function handleBossAnswer(timedOut) {
     void emoji.offsetWidth;
     emoji.classList.add('hit');
     launchMiniConfetti();
+    // Flash boss HP bar
+    const bossFill = document.getElementById('boss-hp-fill');
+    bossFill.classList.remove('flash');
+    void bossFill.offsetWidth;
+    bossFill.classList.add('flash');
+    // Critical flash overlay
+    if (isCritical) {
+      const flash = document.getElementById('boss-critical-flash');
+      flash.classList.remove('active');
+      void flash.offsetWidth;
+      flash.classList.add('active');
+    }
   } else {
     if (bs.phase === 1) {
       bs.playerHP--;
+      // Shake player zone
+      const playerZone = document.querySelector('.player-zone');
+      playerZone.classList.remove('shake');
+      void playerZone.offsetWidth;
+      playerZone.classList.add('shake');
       emoji.classList.remove('attack');
       void emoji.offsetWidth;
       emoji.classList.add('attack');
@@ -1802,8 +1832,17 @@ document.getElementById('btn-boss-next').addEventListener('click', () => {
   if (bs.phase === 1) {
     bs.questionIndex++;
     if (bs.questionIndex >= 3) {
+      // Show COUP FATAL overlay, then transition to phase 2
       bs.phase = 2;
       bs.currentStepIndex = 0;
+      const overlay = document.getElementById('boss-fatal-overlay');
+      overlay.classList.add('active');
+      setTimeout(() => {
+        overlay.classList.remove('active');
+        showBossPhaseLabel();
+        showBossQuestion();
+      }, 1800);
+      return;
     }
   } else {
     bs.currentStepIndex++;

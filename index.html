@@ -236,45 +236,60 @@
 
   <!-- ÉCRAN COMBAT BOSS -->
   <div id="screen-boss-fight" class="screen">
-    <div class="boss-fight-header">
-      <div class="hp-bar-container hp-player">
-        <span class="hp-label">Toi</span>
-        <div class="hp-bar">
-          <div id="player-hp-fill" class="hp-fill hp-fill-player"></div>
-        </div>
-        <span id="player-hp-text" class="hp-text">3/3</span>
-      </div>
+    <div id="boss-zone" class="boss-zone">
       <div id="boss-fight-emoji" class="boss-fight-emoji"></div>
-      <div class="hp-bar-container hp-boss">
-        <span id="boss-fight-name" class="hp-label"></span>
-        <div class="hp-bar">
+      <div id="boss-fight-name" class="boss-fight-name"></div>
+      <div class="boss-hp-section">
+        <div class="hp-bar hp-bar-boss">
           <div id="boss-hp-fill" class="hp-fill hp-fill-boss"></div>
         </div>
-        <span id="boss-hp-text" class="hp-text">5/5</span>
+        <span id="boss-hp-text" class="hp-text-boss">5/5</span>
       </div>
     </div>
 
-    <div id="boss-phase-label" class="boss-phase-label">Phase 1 — Assaut</div>
+    <div class="boss-vs-divider">
+      <span class="vs-line"></span>
+      <span class="vs-text">⚔️ VS</span>
+      <span class="vs-line"></span>
+    </div>
 
-    <div id="boss-question-card" class="question-card">
-      <span id="boss-category-badge" class="category-badge"></span>
-      <p id="boss-question-text" class="question-text"></p>
-      <p id="boss-question-unit" class="question-unit"></p>
+    <div class="player-zone">
+      <div id="boss-phase-label" class="boss-phase-label">Phase 1 — Assaut</div>
 
-      <div id="boss-timer-bar" class="boss-timer-bar">
-        <div id="boss-timer-fill" class="boss-timer-fill"></div>
+      <div id="boss-question-card" class="question-card">
+        <span id="boss-category-badge" class="category-badge"></span>
+        <p id="boss-question-text" class="question-text"></p>
+        <p id="boss-question-unit" class="question-unit"></p>
+
+        <div id="boss-timer-bar" class="boss-timer-bar">
+          <div id="boss-timer-fill" class="boss-timer-fill"></div>
+        </div>
+
+        <div id="boss-answer-section" class="answer-section">
+          <input type="number" id="boss-answer-input" class="answer-input" placeholder="Ta réponse...">
+          <button id="btn-boss-validate" class="btn-primary">Valider</button>
+        </div>
+
+        <div id="boss-feedback-section" class="feedback-section" style="display:none">
+          <p id="boss-feedback-result" class="feedback-result"></p>
+          <p id="boss-feedback-explanation" class="feedback-explanation"></p>
+          <button id="btn-boss-next" class="btn-primary">Suivant</button>
+        </div>
       </div>
 
-      <div id="boss-answer-section" class="answer-section">
-        <input type="number" id="boss-answer-input" class="answer-input" placeholder="Ta réponse...">
-        <button id="btn-boss-validate" class="btn-primary">Valider</button>
+      <div class="player-hp-section">
+        <span class="player-hp-label">Toi</span>
+        <span id="player-hearts" class="player-hearts">❤️❤️❤️</span>
+        <div class="hp-bar hp-bar-player">
+          <div id="player-hp-fill" class="hp-fill hp-fill-player"></div>
+        </div>
+        <span id="player-hp-text" class="hp-text-player">3/3</span>
       </div>
+    </div>
 
-      <div id="boss-feedback-section" class="feedback-section" style="display:none">
-        <p id="boss-feedback-result" class="feedback-result"></p>
-        <p id="boss-feedback-explanation" class="feedback-explanation"></p>
-        <button id="btn-boss-next" class="btn-primary">Suivant</button>
-      </div>
+    <div id="boss-critical-flash" class="boss-critical-flash"></div>
+    <div id="boss-fatal-overlay" class="boss-fatal-overlay">
+      <span class="fatal-text">⚔️ COUP FATAL</span>
     </div>
   </div>
 

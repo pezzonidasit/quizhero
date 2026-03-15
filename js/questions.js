@@ -1641,12 +1641,12 @@ function generateQuestion(category, subLevel, lastCategory) {
 // ── Boss Fight Data ──────────────────────────────────────────────────
 
 const BOSS_POOL = [
-  { id: 'dragon',    name: 'Dragon des Fractions',     emoji: '🐉', category: 'fractions', stake: 50, hp: 5, lootType: 'theme',   lootId: 'boss_dragon',  lootName: 'Antre du Dragon' },
-  { id: 'golem',     name: 'Golem du Calcul',          emoji: '🤖', category: 'calcul',    stake: 40, hp: 4, lootType: 'title',   lootId: 'boss_golem',   lootName: 'Briseur de Golem' },
-  { id: 'sorcier',   name: 'Sorcier de Logique',       emoji: '🧙', category: 'logique',   stake: 60, hp: 5, lootType: 'sticker', lootId: 'boss_sorcier', lootName: 'Grimoire' },
-  { id: 'sphinx',    name: 'Sphinx de Géométrie',      emoji: '📐', category: 'geometrie', stake: 50, hp: 5, lootType: 'badge',   lootId: 'boss_sphinx',  lootName: 'Œil du Sphinx' },
-  { id: 'alchimiste',name: 'Alchimiste des Mesures',   emoji: '⚗️', category: 'mesures',   stake: 50, hp: 5, lootType: 'effect',  lootId: 'boss_alchimiste', lootName: 'Potions' },
-  { id: 'kraken',    name: 'Kraken des Problèmes',     emoji: '🌀', category: 'ouvert',    stake: 70, hp: 6, lootType: 'theme',   lootId: 'boss_kraken',  lootName: 'Abysses' },
+  { id: 'dragon',    name: 'Dragon des Fractions',     emoji: '🐉', category: 'fractions', stake: 50, hp: 5, color: '#3d1212', lootType: 'theme',   lootId: 'boss_dragon',  lootName: 'Antre du Dragon' },
+  { id: 'golem',     name: 'Golem du Calcul',          emoji: '🤖', category: 'calcul',    stake: 40, hp: 4, color: '#1a2a1a', lootType: 'title',   lootId: 'boss_golem',   lootName: 'Briseur de Golem' },
+  { id: 'sorcier',   name: 'Sorcier de Logique',       emoji: '🧙', category: 'logique',   stake: 60, hp: 5, color: '#1a1a3d', lootType: 'sticker', lootId: 'boss_sorcier', lootName: 'Grimoire' },
+  { id: 'sphinx',    name: 'Sphinx de Géométrie',      emoji: '📐', category: 'geometrie', stake: 50, hp: 5, color: '#2a2a1a', lootType: 'badge',   lootId: 'boss_sphinx',  lootName: 'Œil du Sphinx' },
+  { id: 'alchimiste',name: 'Alchimiste des Mesures',   emoji: '⚗️', category: 'mesures',   stake: 50, hp: 5, color: '#1a2a2a', lootType: 'effect',  lootId: 'boss_alchimiste', lootName: 'Potions' },
+  { id: 'kraken',    name: 'Kraken des Problèmes',     emoji: '🌀', category: 'ouvert',    stake: 70, hp: 6, color: '#0a1530', lootType: 'theme',   lootId: 'boss_kraken',  lootName: 'Abysses' },
 ];
 
 const BOSS_QUESTIONS = [
