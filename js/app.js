@@ -1117,9 +1117,20 @@ function renderShop() {
   document.getElementById('shop-coins').textContent = coins;
   const container = document.getElementById('shop-grid');
 
-  // === SECTION 1: Thèmes ===
+  // === SECTION 1: Thèmes (paid + boss themes if owned) ===
   const paidThemes = getThemeList().filter(t => t.price > 0);
+  const bossThemes = getThemeList().filter(t => t.price === -1 && ownedThemes.includes(t.id));
   let html = '<h3 class="shop-section-title">🎨 Thèmes</h3>';
+  if (bossThemes.length > 0) {
+    html += bossThemes.map(t => {
+      const isActive = t.id === activeTheme;
+      return `<div class="shop-item shop-theme owned ${isActive ? 'active-theme' : ''}" data-theme="${t.id}" style="border:1px solid var(--accent-yellow)">
+        <span class="shop-icon">${t.preview}</span>
+        <span class="shop-name">${t.name}</span>
+        <span class="shop-price">${isActive ? '✓ Actif' : '⚔️ Boss'}</span>
+      </div>`;
+    }).join('');
+  }
   html += paidThemes.map(t => {
     const isOwned = ownedThemes.includes(t.id);
     const isActive = t.id === activeTheme;
@@ -1182,14 +1193,14 @@ function renderShop() {
       const theme = THEMES[themeId];
       const c = ProfileManager.get('coins', 0);
       if (c >= theme.price) {
-        ProfileManager.set('coins', c - theme.price);
-        const o = ProfileManager.get('ownedThemes', []);
-        o.push(themeId);
-        ProfileManager.set('ownedThemes', o);
-        ProfileManager.set('activeTheme', themeId);
-        ProfileManager.updateMeta(ProfileManager.getActiveId(), { theme: themeId });
-        applyTheme(themeId);
-        renderShop();
+        if (confirm(`Acheter ${theme.name} ${theme.preview} pour ${theme.price} 🪙 ?`)) {
+          ProfileManager.set('coins', c - theme.price);
+          const o = ProfileManager.get('ownedThemes', []);
+          o.push(themeId);
+          ProfileManager.set('ownedThemes', o);
+          // Don't auto-activate — just buy
+          renderShop();
+        }
       }
     });
   });
