@@ -32,6 +32,8 @@ const ProfileManager = {
     this._setData(id, 'xpBoostActive', false);
     this._setData(id, 'freeHints', 0);
     this._setData(id, 'shields', 0);
+    this._setData(id, 'ownedStickers', []);
+    this._setData(id, 'boosts', {});
 
     return profile;
   },

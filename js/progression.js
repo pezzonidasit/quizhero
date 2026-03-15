@@ -144,7 +144,7 @@ function generateChestLoot(tier, ownedThemes) {
 
   if (tier === 'big') {
     // Coins
-    items.push({ id: 'coins', name: 'Pièces', type: 'coins', icon: '🪙', amount: rand(30, 60) });
+    items.push({ id: 'coins', name: 'Pièces', type: 'coins', icon: '🪙', rarity: 'common', amount: rand(30, 60) });
 
     // Build weighted pools for big chest (guaranteed rare+)
     const pools = [{ weight: 3, pool: LOOT_RARE }];
@@ -157,7 +157,7 @@ function generateChestLoot(tier, ownedThemes) {
     }
   } else {
     // Small chest
-    items.push({ id: 'coins', name: 'Pièces', type: 'coins', icon: '🪙', amount: rand(10, 25) });
+    items.push({ id: 'coins', name: 'Pièces', type: 'coins', icon: '🪙', rarity: 'common', amount: rand(10, 25) });
     items.push(pick(LOOT_COMMON));
   }
 

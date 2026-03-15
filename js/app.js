@@ -96,7 +96,7 @@ function saveGameState() {
     questionCount: state.questionCount,
     timerEnabled: state.timerEnabled,
     questions: state.questions,
-    currentIndex: state.currentIndex,
+    currentIndex: state.currentIndex + 1,
     score: state.score,
     streak: state.streak,
     bestStreakThisGame: state.bestStreakThisGame,
@@ -233,7 +233,7 @@ function selectProfile(id) {
     state.noHintCount = savedGame.noHintCount;
     state.gameStartTime = Date.now() - (savedGame.elapsedBeforeSave || 0);
     state.answered = false;
-    state.currentIndex++;
+    // Don't increment - saveGameState already saved the next index
     if (state.currentIndex >= state.questionCount) {
       showScreen('screen-home');
       clearGameState();
@@ -455,6 +455,7 @@ function showQuestion() {
   const catInfo = CATEGORIES[q.category];
   badge.textContent = catInfo ? catInfo.label : q.category;
   badge.setAttribute('data-cat', q.category);
+  document.getElementById('question-card').setAttribute('data-cat', q.category);
 
   document.getElementById('question-text').textContent = q.text;
   const unitEl = document.getElementById('question-unit');
@@ -875,13 +876,24 @@ function endGame() {
         const bonusCoins = Math.round(rewards.coins * mult);
         rewards.coins += bonusCoins;
         ProfileManager.set('coins', ProfileManager.get('coins', 0) + bonusCoins);
+      } else if (boost.effect === 'score') {
+        const bonusScore = Math.round(state.score * (mult === 2 ? 1 : mult === 0.5 ? 0.5 : 0.5));
+        // Score boost gives bonus XP equal to the extra score
+        rewards.xp += bonusScore;
+        rewards.coins += Math.round(bonusScore / 2);
+        ProfileManager.set('xp', ProfileManager.get('xp', 0) + bonusScore);
+        ProfileManager.set('coins', ProfileManager.get('coins', 0) + Math.round(bonusScore / 2));
       }
     }
 
     // Show boost result in rewards section
     const boostResultEl = document.getElementById('boost-result');
     if (boostResultEl) {
-      if (isPerfect && boost) {
+      if (boost && boost.effect === 'hints') {
+        boostResultEl.textContent = `${boost.icon} Pack Indices utilisé !`;
+        boostResultEl.style.display = '';
+        boostResultEl.style.color = 'var(--accent-green)';
+      } else if (isPerfect && boost) {
         boostResultEl.textContent = `${boost.icon} Boost ${boost.name} activé ! (×${1 + mult})`;
         boostResultEl.style.display = '';
         boostResultEl.style.color = 'var(--accent-green)';
@@ -1345,7 +1357,14 @@ function launchBigConfetti() {
   animateConfetti(particles);
 }
 
+let confettiAnimating = false;
+
 function animateConfetti(particles) {
+  if (confettiAnimating) {
+    // Skip new animation if one is already running
+    return;
+  }
+  confettiAnimating = true;
   function frame() {
     confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
 
@@ -1373,6 +1392,7 @@ function animateConfetti(particles) {
       requestAnimationFrame(frame);
     } else {
       confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confettiAnimating = false;
     }
   }
 
