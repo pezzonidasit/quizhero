@@ -296,6 +296,14 @@ function updateProfileHeader() {
   renderNextGoals();
   // Render boost selector
   renderBoostSelector();
+
+  // V4: Show admin button
+  const adminBtn = document.getElementById('btn-admin');
+  if (adminBtn) {
+    checkIsGlobalAdmin().then(isAdmin => {
+      adminBtn.style.display = isAdmin ? '' : 'none';
+    }).catch(() => {});
+  }
 }
 
 function renderBoostSelector() {
@@ -2305,6 +2313,15 @@ async function renderGroupDetail(code) {
       '<div class="gd-group-code">' + code + '</div>' +
       '<div class="gd-member-count">' + memberCount + ' membre' + (memberCount > 1 ? 's' : '') + '</div>';
 
+    // Generate QR code for joining
+    const joinUrl = 'https://pezzonidasit.github.io/mathquiz/?join=' + code;
+    const qr = qrcode(0, 'M');
+    qr.addData(joinUrl);
+    qr.make();
+    const qrSize = 4;
+    headerEl.innerHTML += '<div class="gd-qr">' + qr.createSvgTag(qrSize, 0) + '</div>' +
+      '<p class="gd-qr-hint">Scanne pour rejoindre</p>';
+
     // Group leaderboard
     const entries = await getGroupLeaderboard(code);
     const rankIcons = { bronze: '🥉', argent: '🥈', or: '🥇', diamant: '💎', maitre: '👑', legende: '⭐' };
@@ -2506,13 +2523,203 @@ function showCoinToast(amount) {
   setTimeout(() => toast.remove(), 4000);
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// V4 — AUTO-JOIN GROUP FROM URL
+// ══════════════════════════════════════════════════════════════════════
+
+const urlParams = new URLSearchParams(window.location.search);
+const joinCode = urlParams.get('join');
+if (joinCode) {
+  // Clean URL
+  window.history.replaceState({}, '', window.location.pathname);
+  // Wait for Firebase auth then join
+  setTimeout(async () => {
+    if (!firebaseUid) await firebaseSignIn();
+    if (firebaseUid) {
+      try {
+        const result = await joinGroup(joinCode);
+        alert('Groupe "' + result.name + '" rejoint ! 🎉');
+      } catch(e) {
+        alert('Impossible de rejoindre : ' + e.message);
+      }
+    }
+  }, 2000);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// V4 — ADMIN GLOBAL DASHBOARD
+// ══════════════════════════════════════════════════════════════════════
+
+let adminTab = 'players';
+
+document.getElementById('btn-admin').addEventListener('click', async () => {
+  const isAdmin = await checkIsGlobalAdmin();
+  if (isAdmin) {
+    showScreen('screen-admin');
+    renderAdminDashboard();
+  } else {
+    const pin = prompt('Code parent pour activer le mode admin :');
+    if (pin === PIN_CODE) {
+      await setGlobalAdmin();
+      document.getElementById('btn-admin').style.display = '';
+      showScreen('screen-admin');
+      renderAdminDashboard();
+    } else if (pin !== null) {
+      alert('Code incorrect');
+    }
+  }
+});
+
+document.getElementById('btn-admin-back').addEventListener('click', () => {
+  updateProfileHeader();
+  showScreen('screen-home');
+});
+
+document.getElementById('admin-tabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.lb-tab');
+  if (!tab) return;
+  adminTab = tab.dataset.tab;
+  document.querySelectorAll('#admin-tabs .lb-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  renderAdminDashboard();
+});
+
+async function renderAdminDashboard() {
+  const contentEl = document.getElementById('admin-content');
+  contentEl.innerHTML = '<p style="text-align:center;color:var(--text-secondary)">Chargement...</p>';
+
+  try {
+    if (adminTab === 'players') {
+      await renderAdminPlayers(contentEl);
+    } else if (adminTab === 'groups') {
+      await renderAdminGroups(contentEl);
+    } else if (adminTab === 'riddles') {
+      await renderAdminRiddles(contentEl);
+    }
+  } catch(e) {
+    contentEl.innerHTML = '<p style="color:var(--accent-red)">Erreur : ' + e.message + '</p>';
+  }
+}
+
+async function renderAdminPlayers(el) {
+  const players = await getAllPlayers();
+  const rankIcons = { bronze: '🥉', argent: '🥈', or: '🥇', diamant: '💎', maitre: '👑', legende: '⭐' };
+
+  if (players.length === 0) {
+    el.innerHTML = '<div class="lb-empty">Aucun joueur</div>';
+    return;
+  }
+
+  // Sort by XP descending
+  players.sort((a, b) => (b.xp || 0) - (a.xp || 0));
+
+  let html = '<p style="text-align:center;color:var(--text-secondary);font-size:0.85rem">' + players.length + ' joueur' + (players.length > 1 ? 's' : '') + '</p>';
+
+  players.forEach(p => {
+    const rankIcon = rankIcons[p.rank] || '🥉';
+    // Find player groups
+    const groupCodes = p.groups ? Object.keys(p.groups) : [];
+
+    html += '<div class="dash-member">';
+    html += '<div class="dash-member-name">' + rankIcon + ' ' + (p.name || 'Joueur') + ' <span style="font-size:0.7rem;color:var(--text-secondary)">' + (p.xp || 0) + ' XP — ' + (p.gamesPlayed || 0) + ' parties</span></div>';
+
+    // Groups badges
+    if (groupCodes.length > 0) {
+      html += '<div style="margin-bottom:0.5rem">';
+      groupCodes.forEach(c => {
+        html += '<span style="font-size:0.65rem;background:var(--bg-card-hover);padding:0.15rem 0.4rem;border-radius:6px;margin-right:0.3rem">' + c + '</span>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+async function renderAdminGroups(el) {
+  const groups = await getAllGroups();
+
+  if (groups.length === 0) {
+    el.innerHTML = '<div class="lb-empty">Aucun groupe</div>';
+    return;
+  }
+
+  let html = '<p style="text-align:center;color:var(--text-secondary);font-size:0.85rem">' + groups.length + ' groupe' + (groups.length > 1 ? 's' : '') + '</p>';
+
+  for (const g of groups) {
+    const memberCount = g.members ? Object.keys(g.members).length : 0;
+    const bannedCount = g.banned ? Object.keys(g.banned).length : 0;
+
+    html += '<div class="dash-member">';
+    html += '<div class="dash-member-name">👥 ' + (g.name || 'Sans nom') + '</div>';
+    html += '<div style="font-size:0.8rem;color:var(--text-secondary)">';
+    html += 'Code : <span style="font-family:monospace;color:var(--accent-yellow);letter-spacing:2px">' + g.code + '</span>';
+    html += ' — ' + memberCount + ' membre' + (memberCount > 1 ? 's' : '');
+    if (bannedCount > 0) html += ' — ' + bannedCount + ' banni' + (bannedCount > 1 ? 's' : '');
+    html += '</div>';
+
+    // List members
+    if (g.members) {
+      html += '<div style="margin-top:0.5rem;display:flex;flex-wrap:wrap;gap:0.3rem">';
+      for (const uid of Object.keys(g.members)) {
+        try {
+          const snap = await db.ref('players/' + uid + '/name').once('value');
+          const name = snap.val() || 'Joueur';
+          html += '<span style="font-size:0.7rem;background:var(--bg-card-hover);padding:0.2rem 0.5rem;border-radius:6px">' + name + '</span>';
+        } catch(e) {}
+      }
+      html += '</div>';
+    }
+
+    html += '</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+async function renderAdminRiddles(el) {
+  const riddles = await getAllRiddles();
+
+  if (riddles.length === 0) {
+    el.innerHTML = '<div class="lb-empty">Aucune énigme</div>';
+    return;
+  }
+
+  let html = '<p style="text-align:center;color:var(--text-secondary);font-size:0.85rem">' + riddles.length + ' énigme' + (riddles.length > 1 ? 's' : '') + '</p>';
+
+  riddles.forEach(r => {
+    const totalVotes = (r.upvotes || 0) + (r.downvotes || 0);
+    const approval = totalVotes > 0 ? Math.round(r.upvotes / totalVotes * 100) : 0;
+
+    html += '<div class="dash-member">';
+    html += '<div class="dash-member-name">📝 ' + (r.creatorName || 'Anonyme') + ' <span style="font-size:0.7rem;color:var(--text-secondary)">' + (r.category || '') + '</span></div>';
+    html += '<p style="font-size:0.85rem;margin:0.3rem 0">"' + (r.text || '').substring(0, 80) + (r.text && r.text.length > 80 ? '...' : '') + '"</p>';
+    html += '<div style="font-size:0.75rem;color:var(--text-secondary)">Réponse : ' + r.answer + ' | ' + (r.plays || 0) + ' plays | ' + approval + '% 👍</div>';
+    html += '<button class="btn-danger" style="font-size:0.7rem;padding:0.2rem 0.5rem;margin-top:0.3rem" onclick="adminDeleteRiddleAction(\'' + r.id + '\')">Supprimer</button>';
+    html += '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+async function adminDeleteRiddleAction(riddleId) {
+  if (!confirm('Supprimer cette énigme ?')) return;
+  try {
+    await adminDeleteAnyRiddle(riddleId);
+    renderAdminDashboard();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
 // Expose V4 functions for inline onclick handlers
 window.leaveGroupAction = leaveGroupAction;
 window.regenerateCodeAction = regenerateCodeAction;
 window.banMemberAction = banMemberAction;
 window.showDashboard = showDashboard;
+window.adminDeleteRiddleAction = adminDeleteRiddleAction;
 
 // Debug helper — accessible from browser console
-window._debug = { triggerBoss, state, showBossAppear, BOSS_POOL, renderLeaderboard, renderGroupsScreen, showCreateRiddleScreen };
+window._debug = { triggerBoss, state, showBossAppear, BOSS_POOL, renderLeaderboard, renderGroupsScreen, showCreateRiddleScreen, renderAdminDashboard };
 
 } // end initApp()

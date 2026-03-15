@@ -328,3 +328,64 @@ async function adminDeleteRiddle(riddleId, groupCode) {
   if (groupSnap.val() !== firebaseUid) throw new Error('Not admin');
   await db.ref('riddles/' + riddleId).remove();
 }
+
+// ── Admin Global ──
+
+/** Set current user as global admin */
+async function setGlobalAdmin() {
+  if (!firebaseUid) return;
+  await db.ref('players/' + firebaseUid + '/isAdmin').set(true);
+}
+
+/** Check if current user is global admin */
+async function checkIsGlobalAdmin() {
+  if (!firebaseUid) return false;
+  try {
+    const snap = await db.ref('players/' + firebaseUid + '/isAdmin').once('value');
+    return snap.val() === true;
+  } catch(e) { return false; }
+}
+
+/** Get ALL players (admin only) */
+async function getAllPlayers() {
+  const snap = await db.ref('players').once('value');
+  if (!snap.exists()) return [];
+  const players = [];
+  snap.forEach(child => {
+    players.push({ uid: child.key, ...child.val() });
+  });
+  return players;
+}
+
+/** Get ALL groups (admin only) */
+async function getAllGroups() {
+  const snap = await db.ref('groups').once('value');
+  if (!snap.exists()) return [];
+  const groups = [];
+  snap.forEach(child => {
+    groups.push({ code: child.key, ...child.val() });
+  });
+  return groups;
+}
+
+/** Get ALL riddles (admin only) */
+async function getAllRiddles() {
+  const snap = await db.ref('riddles').once('value');
+  if (!snap.exists()) return [];
+  const riddles = [];
+  snap.forEach(child => {
+    riddles.push({ id: child.key, ...child.val() });
+  });
+  return riddles;
+}
+
+/** Admin delete any riddle */
+async function adminDeleteAnyRiddle(riddleId) {
+  await db.ref('riddles/' + riddleId).remove();
+}
+
+/** Admin ban from any group */
+async function adminBanFromGroup(groupCode, targetUid) {
+  await db.ref('groups/' + groupCode + '/banned/' + targetUid).set(true);
+  await db.ref('groups/' + groupCode + '/members/' + targetUid).remove();
+}

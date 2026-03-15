@@ -72,6 +72,7 @@
         </div>
       </div>
       <div class="profile-actions">
+        <button id="btn-admin" class="btn-icon" title="Admin" style="display:none">👑</button>
         <button id="btn-leaderboard" class="btn-icon" title="Classement">🏆</button>
         <button id="btn-shop" class="btn-icon" title="Boutique">🛒</button>
         <div class="coins-display">🪙 <span id="home-coins">0</span></div>
@@ -392,8 +393,21 @@
     </div>
   </div>
 
+  <!-- ÉCRAN ADMIN GLOBAL -->
+  <div id="screen-admin" class="screen">
+    <button id="btn-admin-back" class="btn-back">← Retour</button>
+    <h2>👑 Dashboard Admin</h2>
+    <div id="admin-tabs" class="lb-tabs">
+      <button class="lb-tab active" data-tab="players">👤 Joueurs</button>
+      <button class="lb-tab" data-tab="groups">👥 Groupes</button>
+      <button class="lb-tab" data-tab="riddles">📝 Énigmes</button>
+    </div>
+    <div id="admin-content" class="dash-content"></div>
+  </div>
+
   <canvas id="confetti-canvas"></canvas>
 
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <!-- Firebase SDK (compat mode) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
