@@ -1117,6 +1117,8 @@ function renderShop() {
   document.getElementById('shop-coins').textContent = coins;
   const container = document.getElementById('shop-grid');
 
+  const sections_map = { debut: '⭐ Débuts', perf: '🏆 Performance', master: '🎓 Maîtrise', xp: '⚔️ XP', total: '✅ Réponses', explore: '🌍 Exploration' };
+
   // === SECTION 1: Thèmes (only unpurchased) ===
   const paidThemes = getThemeList().filter(t => t.price > 0);
   const unboughtThemes = paidThemes.filter(t => !ownedThemes.includes(t.id));
@@ -1174,9 +1176,52 @@ function renderShop() {
     });
   }
 
+  // === SECTION 4: Récompenses Vraie Vie (buyable if category done + not currently purchased) ===
+  const rlRewards = BADGE_DEFS.filter(b => b.reallife);
+  const availableRL = rlRewards.filter(b => {
+    const purchased = ProfileManager.get('purchased_' + b.id, false);
+    const used = ProfileManager.get('used_' + b.id, false);
+    // Available in shop if: not currently purchased (or already used = can rebuy)
+    return !purchased || used;
+  });
+  if (availableRL.length > 0) {
+    html += '<h3 class="shop-section-title">🎁 Récompenses Vraie Vie</h3>';
+    availableRL.forEach(b => {
+      const categoryDone = b.check();
+      const locked = !categoryDone;
+      const reqTitle = b.requires === 'ALL' ? 'TOUTES' : (sections_map[b.requires] || b.requires);
+      html += `<div class="shop-item shop-reward ${locked ? 'shop-locked' : ''}" data-reward="${b.id}" data-price="${b.price}">
+        <span class="shop-icon">${b.icon}</span>
+        <span class="shop-name">${b.name}</span>
+        <span class="shop-desc">${b.reward}</span>
+        <span class="shop-price">${locked ? '🔒 ' + reqTitle : '🪙 ' + b.price}</span>
+      </div>`;
+    });
+  }
+
   container.innerHTML = html;
 
   // === Event handlers ===
+  // Reward buy
+  container.querySelectorAll('.shop-reward:not(.shop-locked)').forEach(item => {
+    item.addEventListener('click', () => {
+      const rewardId = item.dataset.reward;
+      const price = parseInt(item.dataset.price);
+      const reward = rlRewards.find(b => b.id === rewardId);
+      const c = ProfileManager.get('coins', 0);
+      if (c >= price) {
+        if (confirm(`Acheter ${reward.name} ${reward.icon} pour ${price} 🪙 ?`)) {
+          ProfileManager.set('coins', c - price);
+          ProfileManager.set('purchased_' + rewardId, true);
+          ProfileManager.set('used_' + rewardId, false);
+          renderShop();
+        }
+      } else {
+        alert(`Pas assez de pièces ! (${c}/${price})`);
+      }
+    });
+  });
+
   // Theme buy (shop only shows unbought)
   container.querySelectorAll('.shop-theme').forEach(item => {
     item.addEventListener('click', () => {
@@ -1386,46 +1431,49 @@ function renderProfileDetail() {
       continue;
     }
 
+    // Reallife rewards: only show purchased-and-ready-to-use in profile
+    if (sec.key === 'reallife') {
+      const readyToUse = secBadges.filter(b => {
+        const purchased = ProfileManager.get('purchased_' + b.id, false);
+        const used = ProfileManager.get('used_' + b.id, false);
+        return purchased && !used;
+      });
+      if (readyToUse.length === 0) {
+        badgesHtml += `<h3>${sec.title}</h3><p style="color:var(--text-secondary);font-size:0.85rem;text-align:center">Achète des récompenses dans la boutique !</p>`;
+      } else {
+        badgesHtml += `<h3>${sec.title}</h3><div class="badges-grid">`;
+        readyToUse.forEach(b => {
+          badgesHtml += `<div class="badge-item badge-reallife" data-badge-id="${b.id}" data-rl-state="owned" style="cursor:pointer">
+            <span class="badge-icon">${b.icon}</span>
+            <span class="badge-name">${b.name}</span>
+            <span class="badge-reward">${b.reward}</span>
+            <span class="badge-hint" style="color:var(--accent-green)">Cliquer pour utiliser</span>
+          </div>`;
+        });
+        badgesHtml += '</div>';
+      }
+      continue;
+    }
+
     badgesHtml += `<h3>${sec.title}</h3><div class="badges-grid">`;
     secBadges.forEach(b => {
       const unlocked = badges.includes(b.id);
       const isRL = b.reallife;
-      const purchased = isRL && ProfileManager.get('purchased_' + b.id, false);
-      const usedUp = isRL && ProfileManager.get('used_' + b.id, false);
-      const categoryDone = isRL && b.check();
-      const rewardText = isRL ? `<span class="badge-reward">${b.reward}</span>` : '';
-      const usedLabel = usedUp ? '<span class="badge-used">Utilisé ✓</span>' : '';
-      let rlStatusLabel = '';
-      if (isRL) {
-        if (usedUp) {
-          rlStatusLabel = '';
-        } else if (purchased) {
-          rlStatusLabel = '<span class="badge-hint" style="color:var(--accent-green)">Cliquer pour utiliser</span>';
-        } else if (categoryDone) {
-          rlStatusLabel = `<span class="badge-hint" style="color:var(--accent-yellow)">🪙 ${b.price} pièces pour acheter</span>`;
-        } else {
-          rlStatusLabel = `<span class="badge-hint">Complète "${sections.find(s=>s.key===b.requires)?.title || b.requires}" + 🪙 ${b.price}</span>`;
-        }
-      }
-      const rlUnlockState = isRL ? (usedUp ? 'spent' : purchased ? 'owned' : categoryDone ? 'buyable' : 'locked') : '';
-      // Progress bar for locked badges
+      if (isRL) return; // skip — handled above
       let progressHtml = '';
-      if (!unlocked && b.progress && !isRL) {
+      if (!unlocked && b.progress) {
         const p = b.progress();
         if (p.cur > 0) {
           const pct = Math.round((p.cur / p.max) * 100);
           progressHtml = `<div class="badge-progress"><div class="badge-progress-bar" style="width:${pct}%"></div></div><span class="badge-progress-text">${p.cur}/${p.max}</span>`;
         }
       }
-      const hintHtml = !unlocked && b.hint && !isRL ? `<span class="badge-hint">${b.hint}</span>` : '';
-      const isLocked = isRL ? (rlUnlockState === 'locked') : !unlocked;
-      const badgeClasses = `badge-item ${isRL ? 'badge-reallife' : ''} ${usedUp ? 'badge-spent' : ''} ${isRL && rlUnlockState === 'buyable' ? 'badge-buyable' : ''}`;
-      const badgeStyle = isLocked ? 'opacity:0.4;filter:grayscale(0.8)' : (usedUp ? 'opacity:0.4' : '');
-      const dataAttr = isRL && !usedUp ? `data-badge-id="${b.id}" data-rl-state="${rlUnlockState}" data-price="${b.price || 0}"` : '';
-      badgesHtml += `<div class="${badgeClasses}" style="${badgeStyle}" ${dataAttr}>
+      const hintHtml = !unlocked && b.hint ? `<span class="badge-hint">${b.hint}</span>` : '';
+      const badgeStyle = !unlocked ? 'opacity:0.4;filter:grayscale(0.8)' : '';
+      badgesHtml += `<div class="badge-item" style="${badgeStyle}">
         <span class="badge-icon">${b.icon}</span>
         <span class="badge-name">${b.name}</span>
-        ${progressHtml}${hintHtml}${rewardText}${rlStatusLabel}${usedLabel}
+        ${progressHtml}${hintHtml}
       </div>`;
     });
     badgesHtml += '</div>';
@@ -1433,29 +1481,15 @@ function renderProfileDetail() {
 
   document.getElementById('profile-badges-list').innerHTML = badgesHtml;
 
-  // Click handler for real-life badges: buy or use
+  // Click handler for real-life rewards: use (profile only shows purchased ones)
   document.querySelectorAll('.badge-reallife[data-badge-id]').forEach(el => {
     el.addEventListener('click', () => {
       const bid = el.dataset.badgeId;
-      const rlState = el.dataset.rlState;
-      const price = parseInt(el.dataset.price || '0');
-      const coins = ProfileManager.get('coins', 0);
-
-      if (rlState === 'buyable') {
-        if (coins < price) {
-          alert(`Pas assez de pièces ! Tu as ${coins} 🪙, il en faut ${price}.`);
-          return;
-        }
-        if (confirm(`Acheter cette récompense pour ${price} 🪙 ?`)) {
-          ProfileManager.set('coins', coins - price);
-          ProfileManager.set('purchased_' + bid, true);
-          renderProfileDetail();
-        }
-      } else if (rlState === 'owned') {
-        if (confirm('Utiliser cette récompense ? Elle disparaîtra après utilisation.')) {
-          ProfileManager.set('used_' + bid, true);
-          renderProfileDetail();
-        }
+      if (confirm('Utiliser cette récompense ? Elle retournera dans la boutique.')) {
+        // Reset: available for purchase again
+        ProfileManager.set('purchased_' + bid, false);
+        ProfileManager.set('used_' + bid, false);
+        renderProfileDetail();
       }
     });
   });

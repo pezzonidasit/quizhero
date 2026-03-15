@@ -2329,6 +2329,19 @@ h2 {
   color: var(--text-secondary);
 }
 
+/* Shop — locked reward items */
+.shop-item.shop-locked {
+  opacity: 0.4;
+  filter: grayscale(0.5);
+  pointer-events: none;
+}
+
+.shop-item.shop-reward .shop-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
    PROFILE — THEME SELECTOR
    ══════════════════════════════════════════════════════════════════════ */
