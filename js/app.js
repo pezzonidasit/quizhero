@@ -1981,4 +1981,7 @@ function checkContractBadges(stats) {
   }
 }
 
+// Debug helper — accessible from browser console
+window._debug = { triggerBoss, state, showBossAppear, BOSS_POOL };
+
 } // end initApp()
