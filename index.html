@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mathématiques & Énigmes</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧮</text></svg>">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="description" content="Jeu de mathématiques et énigmes pour enfants">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- ÉCRAN SÉLECTION PROFIL -->
+  <div id="screen-profiles" class="screen active">
+    <h1>Mathématiques &amp; Énigmes</h1>
+    <p class="subtitle">Qui joue ?</p>
+    <div id="profiles-list" class="profiles-list"></div>
+    <button id="btn-new-profile" class="btn-primary">+ Nouveau joueur</button>
+  </div>
+
+  <!-- ÉCRAN CRÉATION PROFIL -->
+  <div id="screen-create-profile" class="screen">
+    <h2>Nouveau joueur</h2>
+    <div class="create-profile-card">
+      <div class="setting-group">
+        <label>Ton prénom</label>
+        <input type="text" id="profile-name-input" class="answer-input" placeholder="Entre ton prénom..." maxlength="20" style="width:100%">
+      </div>
+      <div class="setting-group">
+        <label>Choisis ton thème</label>
+        <div id="theme-picker" class="theme-picker"></div>
+      </div>
+    </div>
+    <div class="end-buttons">
+      <button id="btn-create-profile" class="btn-primary">C'est parti !</button>
+      <button id="btn-cancel-profile" class="btn-secondary">Retour</button>
+    </div>
+  </div>
+
+  <!-- ÉCRAN ACCUEIL -->
+  <div id="screen-home" class="screen">
+    <div id="profile-header" class="profile-header">
+      <div class="profile-info" id="btn-profile-detail">
+        <span id="profile-rank-icon" class="rank-icon">🥉</span>
+        <div class="profile-text">
+          <span id="profile-name-display" class="profile-name"></span>
+          <div class="xp-bar-container">
+            <div id="xp-bar" class="xp-bar"></div>
+            <span id="xp-text" class="xp-text"></span>
+          </div>
+        </div>
+      </div>
+      <div class="profile-actions">
+        <button id="btn-shop" class="btn-icon" title="Boutique">🛒</button>
+        <div class="coins-display">🪙 <span id="home-coins">0</span></div>
+      </div>
+    </div>
+    <h1>Mathématiques &amp; Énigmes</h1>
+
+    <div class="settings-card">
+      <div class="setting-group">
+        <label>Catégorie</label>
+        <div class="pill-group" data-setting="category">
+          <button class="pill active" data-value="all">Toutes</button>
+          <button class="pill" data-value="calcul">Calcul</button>
+          <button class="pill" data-value="logique">Logique</button>
+          <button class="pill" data-value="geometrie">Géométrie</button>
+          <button class="pill" data-value="fractions">Fractions</button>
+          <button class="pill" data-value="mesures">Mesures</button>
+          <button class="pill" data-value="ouvert">Problèmes ouverts</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label>Difficulté</label>
+        <div class="pill-group" data-setting="difficulty">
+          <button class="pill" data-value="easy">Facile</button>
+          <button class="pill active" data-value="medium">Moyen</button>
+          <button class="pill" data-value="hard">Difficile</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label>Questions</label>
+        <div class="pill-group" data-setting="count">
+          <button class="pill active" data-value="5">5</button>
+          <button class="pill" data-value="10">10</button>
+          <button class="pill" data-value="20">20</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label class="toggle-label">
+          <span>Chronomètre</span>
+          <input type="checkbox" id="timer-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <button id="btn-play" class="btn-primary">Jouer !</button>
+
+    <div id="records-display" class="records-section"></div>
+  </div>
+
+  <!-- ÉCRAN JEU -->
+  <div id="screen-game" class="screen">
+    <div class="game-header">
+      <div class="stat">
+        <span class="stat-label">Question</span>
+        <span id="question-counter" class="stat-value">1 / 5</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Score</span>
+        <span id="score-display" class="stat-value">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Série</span>
+        <span id="streak-display" class="stat-value">0 <span id="streak-flame"></span></span>
+      </div>
+      <div class="stat" id="timer-stat" style="display:none">
+        <span class="stat-label">Temps</span>
+        <span id="timer-display" class="stat-value">0:00</span>
+      </div>
+    </div>
+
+    <div id="question-card" class="question-card">
+      <span id="category-badge" class="category-badge">Calcul</span>
+      <p id="question-text" class="question-text"></p>
+      <p id="question-unit" class="question-unit"></p>
+
+      <button id="btn-hint" class="btn-hint">Afficher l'indice</button>
+      <p id="hint-text" class="hint-text"></p>
+
+      <div id="answer-section" class="answer-section">
+        <input type="number" id="answer-input" class="answer-input" placeholder="Ta réponse...">
+        <button id="btn-validate" class="btn-primary">Valider</button>
+      </div>
+
+      <div id="feedback-section" class="feedback-section" style="display:none">
+        <p id="feedback-result" class="feedback-result"></p>
+        <p id="feedback-explanation" class="feedback-explanation"></p>
+        <button id="btn-next" class="btn-primary">Suivant</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÉCRAN FIN -->
+  <div id="screen-end" class="screen">
+    <h2>Partie terminée !</h2>
+    <div id="final-score" class="final-score"></div>
+    <div id="new-record" class="new-record" style="display:none">🏆 Nouveau record !</div>
+    <div id="badges-unlocked" class="badges-unlocked"></div>
+    <div id="rewards-section" class="rewards-section">
+      <div class="reward-row"><span>XP gagnés</span><span id="xp-earned" class="reward-value">+0</span></div>
+      <div class="reward-row"><span>Pièces gagnées</span><span id="coins-earned" class="reward-value">+0</span></div>
+      <div id="rank-up-display" class="rank-up" style="display:none"><span id="rank-up-text"></span></div>
+      <div class="xp-bar-container" style="width:100%;height:12px">
+        <div id="xp-bar-end-fill" class="xp-bar"></div>
+        <span id="xp-bar-end-text" class="xp-text" style="top:-18px"></span>
+      </div>
+    </div>
+    <div class="end-buttons">
+      <button id="btn-replay" class="btn-primary">Rejouer</button>
+      <button id="btn-menu" class="btn-secondary">Menu</button>
+    </div>
+  </div>
+
+  <!-- ÉCRAN COFFRE -->
+  <div id="screen-chest" class="screen">
+    <h2>Coffre trouvé !</h2>
+    <div class="chest-container">
+      <div id="chest-box" class="chest-box">🎁</div>
+    </div>
+    <div id="chest-items" class="chest-items"></div>
+    <button id="btn-chest-close" class="btn-primary" style="display:none">Continuer</button>
+  </div>
+
+  <!-- ÉCRAN BOUTIQUE -->
+  <div id="screen-shop" class="screen">
+    <div class="shop-header">
+      <button id="btn-shop-back" class="btn-back">← Retour</button>
+      <h2>Boutique</h2>
+      <div class="coins-display">🪙 <span id="shop-coins">0</span></div>
+    </div>
+    <div id="shop-grid" class="shop-grid"></div>
+  </div>
+
+  <!-- ÉCRAN PROFIL DÉTAIL -->
+  <div id="screen-profile-detail" class="screen">
+    <button id="btn-profile-back" class="btn-back">← Retour</button>
+    <div id="profile-card" class="profile-detail-card"></div>
+    <div id="profile-badges-list" class="profile-badges-list"></div>
+    <button id="btn-delete-profile" class="btn-danger">Supprimer ce profil</button>
+  </div>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <script src="js/themes.js"></script>
+  <script src="js/profiles.js"></script>
+  <script src="js/questions.js"></script>
+  <script src="js/progression.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
+    }
+  </script>
+</body>
+</html>
