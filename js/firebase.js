@@ -68,10 +68,11 @@ async function pushPlayerStats(profile, stats) {
     // Also update weekly leaderboard
     await db.ref('leaderboard/weekly/' + firebaseUid).set({
       name: displayName,
-      xp: stats.weeklyXP || 0,
+      xp: stats.xp || 0,
       rank: stats.rank,
       bestStreak: stats.bestStreak || 0,
       bossesDefeated: stats.bossesDefeated || 0,
+      gamesPlayed: stats.gamesPlayed || 0,
     });
   } catch (e) {
     console.warn('pushPlayerStats failed:', e.message);
