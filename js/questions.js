@@ -1721,7 +1721,7 @@ const BOSS_QUESTIONS = [
     boss: 'sphinx',
     steps: [
       { text: "Un carré a un périmètre de 36 cm. Quel est son côté ?", answer: 9, unit: 'cm', hint: "Périmètre ÷ 4", explanation: "36 ÷ 4 = 9 cm" },
-      { text: "Quelle est l'aire de ce carré ?", answer: 81, unit: 'cm²', hint: "côté × côté", explanation: "9 × 9 = 81 cm²" },
+      { text: "Ce carré a un côté de 9 cm. Quelle est son aire ?", answer: 81, unit: 'cm²', hint: "côté × côté", explanation: "9 × 9 = 81 cm²" },
     ]
   },
   // Alchimiste des Mesures
