@@ -534,17 +534,125 @@ document.getElementById('btn-next').addEventListener('click', () => {
 });
 
 // ── Badges System ──────────────────────────────────────────────────
+// Helper for badge checks
+function totalCorrect() {
+  return Object.values(state.categoryStats).reduce((s, c) => s + (c.correct || 0), 0);
+}
+function profileXP() { return ProfileManager.get('xp', 0); }
+function profileGames() { return ProfileManager.get('gamesPlayed', 0); }
+
+function isCategoryComplete(catKey) {
+  // Check if all badges in a category (excluding reallife and hidden) are unlocked
+  const catBadges = BADGE_DEFS.filter(b => b.category === catKey && !b.reallife && !b.hidden);
+  return catBadges.length > 0 && catBadges.every(b => state.badges.includes(b.id));
+}
+
 const BADGE_DEFS = [
-  { id: 'first_game', name: 'Première partie', icon: '\u2B50', check: () => true },
-  { id: 'perfect', name: 'Sans faute', icon: '\uD83C\uDFC6', check: () => state.bestStreakThisGame >= state.questionCount },
-  { id: 'on_fire', name: 'En feu !', icon: '\uD83D\uDD25', check: () => state.bestStreakThisGame >= 10 },
-  { id: 'no_hints', name: 'Sans aide', icon: '\uD83E\uDDE0', check: () => state.noHintCount >= 5 },
-  { id: 'speedster', name: 'Rapide', icon: '\u26A1', check: () => state.timerEnabled && (Date.now() - state.gameStartTime) < 120000 },
-  { id: 'hard_mode', name: 'Mode difficile', icon: '\uD83D\uDCAA', check: () => state.difficulty === 'hard' },
-  { id: 'explorer', name: 'Explorateur', icon: '\uD83C\uDF0D', check: () => Object.keys(state.categoryStats).length >= 6 },
-  { id: 'master_calcul', name: 'Maître Calcul', icon: '\uD83E\uDDEE', check: () => (state.categoryStats.calcul?.correct || 0) >= 50 },
-  { id: 'master_logique', name: 'Maître Logique', icon: '\uD83E\uDE84', check: () => (state.categoryStats.logique?.correct || 0) >= 50 },
-  { id: 'master_geometrie', name: 'Maître Géométrie', icon: '\uD83D\uDCD0', check: () => (state.categoryStats.geometrie?.correct || 0) >= 50 },
+  // ── Débuts ──
+  { id: 'first_game', name: 'Première partie', icon: '⭐', category: 'debut', check: () => true },
+  { id: 'ten_games', name: '10 parties', icon: '🎯', category: 'debut', check: () => profileGames() >= 10 },
+  { id: 'fifty_games', name: '50 parties', icon: '🎪', category: 'debut', check: () => profileGames() >= 50 },
+  { id: 'hundred_games', name: '100 parties !', icon: '💯', category: 'debut', check: () => profileGames() >= 100 },
+
+  // ── Performance ──
+  { id: 'perfect', name: 'Sans faute', icon: '🏆', category: 'perf', check: () => state.bestStreakThisGame >= state.questionCount },
+  { id: 'perfect_20', name: 'Parfait x20', icon: '👑', category: 'perf', check: () => state.bestStreakThisGame >= 20 && state.questionCount === 20 },
+  { id: 'on_fire', name: 'En feu !', icon: '🔥', category: 'perf', check: () => state.bestStreakThisGame >= 10 },
+  { id: 'inferno', name: 'Inferno', icon: '🌋', category: 'perf', check: () => state.bestStreakThisGame >= 20 },
+  { id: 'no_hints', name: 'Sans aide', icon: '🧠', category: 'perf', check: () => state.noHintCount >= 5 },
+  { id: 'no_hints_10', name: 'Cerveau d\'acier', icon: '🦾', category: 'perf', check: () => state.noHintCount >= 10 },
+  { id: 'speedster', name: 'Rapide', icon: '⚡', category: 'perf', check: () => state.timerEnabled && (Date.now() - state.gameStartTime) < 120000 },
+  { id: 'flash', name: 'Flash', icon: '💨', category: 'perf', check: () => state.timerEnabled && (Date.now() - state.gameStartTime) < 60000 },
+  { id: 'hard_mode', name: 'Mode difficile', icon: '💪', category: 'perf', check: () => state.difficulty === 'hard' },
+  { id: 'hard_perfect', name: 'Difficile parfait', icon: '🏅', category: 'perf', check: () => state.difficulty === 'hard' && state.bestStreakThisGame >= state.questionCount },
+  { id: 'score_100', name: 'Score 100+', icon: '📈', category: 'perf', check: () => state.score >= 100 },
+  { id: 'score_200', name: 'Score 200+', icon: '📊', category: 'perf', check: () => state.score >= 200 },
+  { id: 'score_300', name: 'Score 300+', icon: '🚀', category: 'perf', check: () => state.score >= 300 },
+
+  // ── Exploration ──
+  { id: 'explorer', name: 'Explorateur', icon: '🌍', category: 'explore', check: () => Object.keys(state.categoryStats).length >= 6 },
+  { id: 'try_easy', name: 'Échauffement', icon: '😊', category: 'explore', check: () => state.difficulty === 'easy' },
+  { id: 'try_chrono', name: 'Contre la montre', icon: '⏱️', category: 'explore', check: () => state.timerEnabled },
+  { id: 'marathon', name: 'Marathon', icon: '🏃', category: 'explore', check: () => state.questionCount === 20 },
+
+  // ── Maîtrise par catégorie ──
+  { id: 'master_calcul', name: 'Maître Calcul', icon: '🧮', category: 'master', check: () => (state.categoryStats.calcul?.correct || 0) >= 50 },
+  { id: 'master_logique', name: 'Maître Logique', icon: '🧩', category: 'master', check: () => (state.categoryStats.logique?.correct || 0) >= 50 },
+  { id: 'master_geometrie', name: 'Maître Géométrie', icon: '📐', category: 'master', check: () => (state.categoryStats.geometrie?.correct || 0) >= 50 },
+  { id: 'master_fractions', name: 'Maître Fractions', icon: '🍕', category: 'master', check: () => (state.categoryStats.fractions?.correct || 0) >= 50 },
+  { id: 'master_mesures', name: 'Maître Mesures', icon: '📏', category: 'master', check: () => (state.categoryStats.mesures?.correct || 0) >= 50 },
+  { id: 'master_ouvert', name: 'Maître Ouvert', icon: '💡', category: 'master', check: () => (state.categoryStats.ouvert?.correct || 0) >= 50 },
+  { id: 'grand_master', name: 'Grand Maître', icon: '🎓', category: 'master', check: () => {
+    return ['calcul','logique','geometrie','fractions','mesures','ouvert'].every(c => (state.categoryStats[c]?.correct || 0) >= 50);
+  }},
+
+  // ── XP milestones ──
+  { id: 'xp_100', name: 'Centurion', icon: '🔰', category: 'xp', check: () => profileXP() >= 100 },
+  { id: 'xp_500', name: 'Vétéran', icon: '⚔️', category: 'xp', check: () => profileXP() >= 500 },
+  { id: 'xp_1000', name: 'Champion', icon: '🗡️', category: 'xp', check: () => profileXP() >= 1000 },
+  { id: 'xp_2500', name: 'Héros', icon: '🦸', category: 'xp', check: () => profileXP() >= 2500 },
+  { id: 'xp_5000', name: 'Légende', icon: '🐉', category: 'xp', check: () => profileXP() >= 5000 },
+  { id: 'xp_10000', name: 'Mythique', icon: '🌟', category: 'xp', check: () => profileXP() >= 10000 },
+
+  // ── Réponses totales ──
+  { id: 'correct_50', name: '50 bonnes réponses', icon: '✅', category: 'total', check: () => totalCorrect() >= 50 },
+  { id: 'correct_100', name: '100 bonnes réponses', icon: '💚', category: 'total', check: () => totalCorrect() >= 100 },
+  { id: 'correct_250', name: '250 bonnes réponses', icon: '💎', category: 'total', check: () => totalCorrect() >= 250 },
+  { id: 'correct_500', name: '500 bonnes réponses', icon: '🏰', category: 'total', check: () => totalCorrect() >= 500 },
+  { id: 'correct_1000', name: '1000 bonnes réponses', icon: '👸', category: 'total', check: () => totalCorrect() >= 1000 },
+
+  // ═══ BADGES CACHÉS (le kid les découvre par hasard) ═══
+  { id: 'night_owl', name: 'Hibou', icon: '🦉', category: 'hidden', hidden: true,
+    check: () => new Date().getHours() >= 21 || new Date().getHours() < 6 },
+  { id: 'early_bird', name: 'Lève-tôt', icon: '🐓', category: 'hidden', hidden: true,
+    check: () => { const h = new Date().getHours(); return h >= 6 && h < 8; }},
+  { id: 'weekend', name: 'Week-end warrior', icon: '🎉', category: 'hidden', hidden: true,
+    check: () => [0, 6].includes(new Date().getDay()) },
+  { id: 'answer_42', name: 'La réponse ultime', icon: '🌌', category: 'hidden', hidden: true,
+    check: () => state.score === 42 },
+  { id: 'lucky_7', name: 'Lucky Seven', icon: '🍀', category: 'hidden', hidden: true,
+    check: () => state.bestStreakThisGame === 7 },
+  { id: 'palindrome', name: 'Palindrome', icon: '🔄', category: 'hidden', hidden: true,
+    check: () => { const s = String(state.score); return s.length >= 2 && s === s.split('').reverse().join(''); }},
+  { id: 'speed_demon', name: 'Speed Demon', icon: '😈', category: 'hidden', hidden: true,
+    check: () => state.timerEnabled && (Date.now() - state.gameStartTime) < 30000 && state.questionCount >= 5 },
+  { id: 'triple_cat', name: 'Tricolore', icon: '🌈', category: 'hidden', hidden: true,
+    check: () => {
+      const cats = state.questions.map(q => q.category);
+      return new Set(cats).size >= 3;
+    }},
+
+  // ═══ BADGES VRAIE VIE ═══
+  // Débloqués uniquement quand une catégorie de badges est 100% complétée
+  // isCategoryComplete checks if all non-reallife, non-hidden badges in a category are unlocked
+  { id: 'rl_gaming', name: '🎮 30 min de jeux', icon: '🎮', category: 'reallife', reallife: true,
+    reward: '30 minutes de jeux vidéo',
+    requires: 'debut',
+    check: () => isCategoryComplete('debut') },
+  { id: 'rl_movie', name: '🎬 Choix du film', icon: '🎬', category: 'reallife', reallife: true,
+    reward: 'Choisir le film du soir',
+    requires: 'explore',
+    check: () => isCategoryComplete('explore') },
+  { id: 'rl_snack', name: '🛒 Petit plaisir', icon: '🛒', category: 'reallife', reallife: true,
+    reward: 'Choix d\'un snack au magasin',
+    requires: 'total',
+    check: () => isCategoryComplete('total') },
+  { id: 'rl_outing', name: '🎢 Sortie spéciale', icon: '🎢', category: 'reallife', reallife: true,
+    reward: 'Sortie au choix (parc, ciné, bowling...)',
+    requires: 'perf',
+    check: () => isCategoryComplete('perf') },
+  { id: 'rl_bedtime', name: '🌙 Coucher tard', icon: '🌙', category: 'reallife', reallife: true,
+    reward: '+30 min avant de dormir',
+    requires: 'xp',
+    check: () => isCategoryComplete('xp') },
+  { id: 'rl_gift', name: '🎁 Surprise', icon: '🎁', category: 'reallife', reallife: true,
+    reward: 'Cadeau surprise',
+    requires: 'master',
+    check: () => isCategoryComplete('master') },
+  { id: 'rl_legend', name: '⭐ Légende vivante', icon: '⭐', category: 'reallife', reallife: true,
+    reward: 'Gros privilège au choix',
+    requires: 'ALL',
+    check: () => ['debut','explore','total','perf','xp','master'].every(c => isCategoryComplete(c)) },
 ];
 
 function checkBadges() {
@@ -802,14 +910,68 @@ function renderProfileDetail() {
       <div class="stat-box"><span class="stat-value">${gamesPlayed}</span><span class="stat-label">Parties</span></div>
     </div>`;
 
-  const allBadges = [...BADGE_DEFS, {id:'collector',name:'Collectionneur',icon:'\uD83C\uDFC5'}, {id:'lucky',name:'Chanceux',icon:'\uD83C\uDF40'}];
-  document.getElementById('profile-badges-list').innerHTML = '<h3>Badges</h3><div class="badges-grid">' +
-    allBadges.map(b => {
+  const allBadges = [...BADGE_DEFS, {id:'collector',name:'Collectionneur',icon:'🏅',category:'hidden',hidden:true}, {id:'lucky',name:'Chanceux',icon:'🍀',category:'hidden',hidden:true}];
+
+  const sections = [
+    { key: 'reallife', title: '🎁 Récompenses Vraie Vie' },
+    { key: 'perf', title: '🏆 Performance' },
+    { key: 'master', title: '🎓 Maîtrise' },
+    { key: 'xp', title: '⚔️ Progression XP' },
+    { key: 'total', title: '✅ Réponses' },
+    { key: 'debut', title: '⭐ Débuts' },
+    { key: 'explore', title: '🌍 Exploration' },
+    { key: 'hidden', title: '🔮 Secrets' },
+  ];
+
+  let badgesHtml = '';
+  for (const sec of sections) {
+    const secBadges = allBadges.filter(b => b.category === sec.key);
+    if (secBadges.length === 0) continue;
+
+    // For hidden badges: only show unlocked ones + count of remaining mysteries
+    if (sec.key === 'hidden') {
+      const unlockedHidden = secBadges.filter(b => badges.includes(b.id));
+      const hiddenCount = secBadges.length - unlockedHidden.length;
+      badgesHtml += `<h3>${sec.title}</h3><div class="badges-grid">`;
+      unlockedHidden.forEach(b => {
+        badgesHtml += `<div class="badge-item badge-hidden"><span class="badge-icon">${b.icon}</span><span class="badge-name">${b.name}</span></div>`;
+      });
+      if (hiddenCount > 0) {
+        badgesHtml += `<div class="badge-item" style="opacity:0.3"><span class="badge-icon">❓</span><span class="badge-name">${hiddenCount} secrets à découvrir</span></div>`;
+      }
+      badgesHtml += '</div>';
+      continue;
+    }
+
+    badgesHtml += `<h3>${sec.title}</h3><div class="badges-grid">`;
+    secBadges.forEach(b => {
       const unlocked = badges.includes(b.id);
-      return `<div class="badge-item" style="${unlocked ? '' : 'opacity:0.3;filter:grayscale(1)'}">
-        <span class="badge-icon">${b.icon}</span><span class="badge-name">${unlocked ? b.name : '???'}</span>
+      const isRL = b.reallife;
+      const rewardText = isRL && unlocked ? `<span class="badge-reward">${b.reward}</span>` : '';
+      const usedUp = isRL && unlocked && (ProfileManager.get('used_' + b.id, false));
+      const usedLabel = usedUp ? '<span class="badge-used">Utilisé ✓</span>' : '';
+      const requiresLabel = isRL && !unlocked && b.requires ? `<span class="badge-reward">Complète "${sections.find(s=>s.key===b.requires)?.title || b.requires}"</span>` : '';
+      badgesHtml += `<div class="badge-item ${isRL ? 'badge-reallife' : ''} ${usedUp ? 'badge-spent' : ''}" style="${unlocked ? '' : 'opacity:0.3;filter:grayscale(1)'}" ${isRL && unlocked && !usedUp ? `data-badge-id="${b.id}"` : ''}>
+        <span class="badge-icon">${b.icon}</span>
+        <span class="badge-name">${unlocked ? b.name : '???'}</span>
+        ${rewardText}${requiresLabel}${usedLabel}
       </div>`;
-    }).join('') + '</div>';
+    });
+    badgesHtml += '</div>';
+  }
+
+  document.getElementById('profile-badges-list').innerHTML = badgesHtml;
+
+  // Click to "use" real-life badges
+  document.querySelectorAll('.badge-reallife[data-badge-id]').forEach(el => {
+    el.addEventListener('click', () => {
+      const bid = el.dataset.badgeId;
+      if (confirm('Utiliser cette récompense ? Elle disparaîtra après utilisation.')) {
+        ProfileManager.set('used_' + bid, true);
+        renderProfileDetail();
+      }
+    });
+  });
 }
 
 document.getElementById('btn-delete-profile').addEventListener('click', () => {
