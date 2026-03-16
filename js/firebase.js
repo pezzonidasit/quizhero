@@ -531,7 +531,14 @@ async function adminDeletePlayer(uid) {
     });
   }
 
-  await db.ref().update(updates);
+  // Execute updates per top-level path to avoid root-level permission issues
+  const byPath = {};
+  for (const [key, val] of Object.entries(updates)) {
+    const top = key.split('/')[0];
+    if (!byPath[top]) byPath[top] = {};
+    byPath[top][key.slice(top.length + 1)] = val;
+  }
+  await Promise.all(Object.entries(byPath).map(([top, sub]) => db.ref(top).update(sub)));
 }
 
 /** Admin: delete a group and remove it from all members */
@@ -550,7 +557,14 @@ async function adminDeleteGroup(code) {
   // Delete group itself
   updates['groups/' + code] = null;
 
-  await db.ref().update(updates);
+  // Execute updates per top-level path to avoid root-level permission issues
+  const byPath = {};
+  for (const [key, val] of Object.entries(updates)) {
+    const top = key.split('/')[0];
+    if (!byPath[top]) byPath[top] = {};
+    byPath[top][key.slice(top.length + 1)] = val;
+  }
+  await Promise.all(Object.entries(byPath).map(([top, sub]) => db.ref(top).update(sub)));
 }
 
 /** Admin: get all recovery codes with player names */
