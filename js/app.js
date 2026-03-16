@@ -1369,8 +1369,11 @@ function showChest(chest) {
   const box = document.getElementById('chest-box');
   const itemsContainer = document.getElementById('chest-items');
   const closeBtn = document.getElementById('btn-chest-close');
-  box.className = 'chest-box';
-  box.textContent = '\uD83C\uDF81';
+  const screenEl = document.getElementById('screen-chest');
+  const isBig = chest.tier === 'big';
+  box.className = 'chest-box' + (isBig ? ' chest-big' : '');
+  screenEl.classList.toggle('chest-screen-big', isBig);
+  box.textContent = isBig ? '👑' : '🎁';
   itemsContainer.innerHTML = '';
   closeBtn.style.display = 'none';
 
@@ -1379,7 +1382,7 @@ function showChest(chest) {
     setTimeout(() => {
       box.classList.remove('shaking');
       box.classList.add('opened');
-      box.textContent = '\uD83C\uDF89';
+      box.textContent = isBig ? '💎' : '🎉';
       loot.forEach((item, i) => {
         applyLootItem(item);
         setTimeout(() => {

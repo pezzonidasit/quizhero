@@ -1347,6 +1347,31 @@ h2 {
 .chest-box.shaking { animation: shake 0.5s ease infinite; }
 .chest-box.opened { animation: popIn 0.5s ease; font-size: 3rem; opacity: 0.5; }
 
+/* Big chest — golden glow */
+.chest-box.chest-big {
+  font-size: 6rem;
+  filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 60px rgba(255, 165, 0, 0.3));
+}
+.chest-box.chest-big:hover {
+  filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.8)) drop-shadow(0 0 80px rgba(255, 165, 0, 0.4));
+}
+.chest-box.chest-big.opened {
+  font-size: 4rem;
+}
+
+/* Big chest screen background */
+.chest-screen-big .chest-container {
+  min-height: 250px;
+}
+.chest-screen-big::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(255, 215, 0, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
 .chest-items {
   width: 100%;
   display: flex;
