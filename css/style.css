@@ -2829,6 +2829,23 @@ h2 {
   margin-top: 0.25rem;
 }
 
+.gd-join-link {
+  display: block;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--accent);
+  word-break: break-all;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: var(--bg-card);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.gd-join-link:active {
+  opacity: 0.6;
+}
+
 /* Admin button glow */
 #btn-admin {
   animation: adminGlow 2s ease-in-out infinite;
@@ -2928,6 +2945,8 @@ body.low-perf-mode::before {
 
 body.low-perf-mode .boss-pixel *,
 body.low-perf-mode .boss-svg-container *,
+body.low-perf-mode .boss-fight-emoji,
+body.low-perf-mode .btn-boss-fight,
 body.low-perf-mode #btn-admin,
 body.low-perf-mode .streak-flame,
 body.low-perf-mode .streak-fire,

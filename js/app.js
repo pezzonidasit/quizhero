@@ -1869,7 +1869,10 @@ function createParticle(x, y, vx, vy) {
   };
 }
 
+const _lowPerf = () => document.body.classList.contains('low-perf-mode');
+
 function launchMiniConfetti() {
+  if (_lowPerf()) return;
   const particles = [];
   const cx = confettiCanvas.width / 2;
   const cy = confettiCanvas.height / 2;
@@ -1882,8 +1885,9 @@ function launchMiniConfetti() {
 }
 
 function launchBigConfetti() {
+  const count = _lowPerf() ? 25 : 120;
   const particles = [];
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < count; i++) {
     const x = Math.random() * confettiCanvas.width;
     const y = -10 - Math.random() * 50;
     const vx = (Math.random() - 0.5) * 4;
@@ -2682,7 +2686,8 @@ async function renderGroupDetail(code) {
     qr.make();
     const qrSize = 4;
     headerEl.innerHTML += '<div class="gd-qr">' + qr.createSvgTag(qrSize, 0) + '</div>' +
-      '<p class="gd-qr-hint">Scanne pour rejoindre</p>';
+      '<p class="gd-qr-hint">Scanne pour rejoindre</p>' +
+      '<a href="' + joinUrl + '" class="gd-join-link" onclick="event.preventDefault();navigator.clipboard.writeText(\'' + joinUrl + '\').then(()=>{this.textContent=\'✅ Lien copié !\';setTimeout(()=>{this.textContent=\'' + joinUrl + '\'},2000)})">' + joinUrl + '</a>';
 
     // Group leaderboard
     const entries = await getGroupLeaderboard(code);
