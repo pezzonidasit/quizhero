@@ -144,6 +144,8 @@ async function joinGroup(code) {
 async function leaveGroup(code) {
   if (!firebaseUid) return;
   await db.ref('groups/' + code + '/members/' + firebaseUid).remove();
+  await db.ref('groups/' + code + '/parents/' + firebaseUid).remove();
+  await db.ref('groups/' + code + '/parentRequests/' + firebaseUid).remove();
   await db.ref('players/' + firebaseUid + '/groups/' + code).remove();
 }
 
@@ -189,6 +191,8 @@ async function getGroupDashboard(code) {
 async function banMember(groupCode, targetUid) {
   await db.ref('groups/' + groupCode + '/banned/' + targetUid).set(true);
   await db.ref('groups/' + groupCode + '/members/' + targetUid).remove();
+  await db.ref('groups/' + groupCode + '/parents/' + targetUid).remove();
+  await db.ref('groups/' + groupCode + '/parentRequests/' + targetUid).remove();
 }
 
 async function unbanMember(groupCode, targetUid) {
@@ -501,6 +505,8 @@ async function adminDeletePlayer(uid) {
   groups.forEach(code => {
     updates['groups/' + code + '/members/' + uid] = null;
     updates['groups/' + code + '/dashboard/' + uid] = null;
+    updates['groups/' + code + '/parents/' + uid] = null;
+    updates['groups/' + code + '/parentRequests/' + uid] = null;
   });
 
   // Delete player data
@@ -594,7 +600,7 @@ async function removeParentRole(groupCode, uid) {
 
 /** Check if current user is parent in a group */
 function isParentInGroup(group) {
-  return group.parents && group.parents[firebaseUid];
+  return !!(group.parents && group.parents[firebaseUid]);
 }
 
 // ── Group Rewards ──

@@ -1,5 +1,12 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
+// ── HTML Sanitization ────────────────────────────────────────────
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 // ── PIN Gate ──────────────────────────────────────────────────────
 const PIN_CODE = '2609';
 
@@ -2493,11 +2500,27 @@ async function renderGroupDetail(code) {
         requestKeys.forEach(uid => {
           const req = requests[uid];
           actHtml += '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem">' +
-            '<span>' + (req.name || 'Joueur') + '</span>' +
+            '<span>' + escapeHtml(req.name || 'Joueur') + '</span>' +
             '<button class="btn-primary" style="font-size:0.7rem;padding:0.2rem 0.5rem" onclick="acceptParentAction(\'' + code + '\',\'' + uid + '\')">✅ Accepter</button>' +
             '<button class="btn-danger" style="font-size:0.7rem;padding:0.2rem 0.5rem" onclick="rejectParentAction(\'' + code + '\',\'' + uid + '\')">❌ Refuser</button>' +
             '</div>';
         });
+        actHtml += '</div>';
+      }
+
+      // Show current parents list (admin can remove)
+      const parentUids = Object.keys(group.parents || {}).filter(uid => uid !== group.createdBy);
+      if (parentUids.length > 0) {
+        actHtml += '<div style="margin-top:0.75rem;padding:0.75rem;background:rgba(255,255,255,0.03);border:1px solid var(--bg-card-hover);border-radius:8px">';
+        actHtml += '<p style="font-weight:600;margin-bottom:0.5rem;font-size:0.85rem">👪 Parents actuels :</p>';
+        for (const uid of parentUids) {
+          const member = group.membersList.find(m => m.uid === uid);
+          const name = member ? member.name : 'Joueur';
+          actHtml += '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem">' +
+            '<span style="font-size:0.85rem">' + escapeHtml(name) + '</span>' +
+            '<button class="btn-danger" style="font-size:0.65rem;padding:0.15rem 0.4rem" onclick="removeParentAction(\'' + code + '\',\'' + uid + '\')">Retirer</button>' +
+            '</div>';
+        }
         actHtml += '</div>';
       }
     }
@@ -2946,6 +2969,8 @@ window.adminDeletePlayerAction = adminDeletePlayerAction;
 
 async function toggleParentCapable(uid, value) {
   try {
+    const isAdmin = await checkIsGlobalAdmin();
+    if (!isAdmin) { alert('Accès refusé'); return; }
     await db.ref('players/' + uid + '/parentCapable').set(value);
     showToast(value ? 'Marqué comme parent' : 'Rôle parent retiré');
     renderAdminDashboard();
@@ -3037,6 +3062,16 @@ async function rejectParentAction(code, uid) {
   } catch(e) { alert('Erreur : ' + e.message); }
 }
 window.rejectParentAction = rejectParentAction;
+
+async function removeParentAction(code, uid) {
+  if (!confirm('Retirer le rôle parent de ce joueur ?')) return;
+  try {
+    await removeParentRole(code, uid);
+    showToast('Rôle parent retiré');
+    renderGroupDetail(code);
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+window.removeParentAction = removeParentAction;
 
 // ── Duel Event Handlers ──
 
