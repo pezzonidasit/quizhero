@@ -1,5 +1,7 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
+const APP_VERSION = '5.0';
+
 // ── HTML Sanitization ────────────────────────────────────────────
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -897,7 +899,7 @@ function validateAnswer() {
     launchMiniConfetti();
   } else {
     const correctAnswer = q.textAnswer !== undefined ? q.textAnswer : q.answer;
-    feedbackResult.textContent = 'Pas encore ! La réponse était ' + correctAnswer;
+    feedbackResult.textContent = 'Tu as répondu ' + userAnswer + ' — la bonne réponse était ' + correctAnswer;
     feedbackResult.className = 'feedback-result incorrect';
     if (state.streakLostMessage) {
       feedbackResult.textContent += ' · ' + state.streakLostMessage;
@@ -2224,7 +2226,7 @@ function handleBossAnswer(timedOut) {
     const correctAnswer = q.textAnswer !== undefined ? q.textAnswer : q.answer;
     feedbackResult.textContent = timedOut
       ? 'Temps écoulé ! La réponse était ' + correctAnswer
-      : 'Pas encore ! La réponse était ' + correctAnswer;
+      : 'Tu as répondu ' + userAnswer + ' — la bonne réponse était ' + correctAnswer;
     feedbackResult.className = 'feedback-result incorrect';
   }
   feedbackExplanation.textContent = q.explanation || '';
@@ -3374,5 +3376,96 @@ document.getElementById('btn-session-stop').addEventListener('click', () => {
   document.getElementById('session-limit-overlay').style.display = 'none';
   showScreen('screen-home');
 });
+
+// ── V5: Feedback & Bug Report ───────────────────────────────────────
+(function initFeedback() {
+  let feedbackType = 'bug';
+  const fab = document.getElementById('btn-feedback');
+  const overlay = document.getElementById('feedback-overlay');
+  if (!fab || !overlay) return;
+
+  fab.addEventListener('click', () => {
+    overlay.style.display = 'flex';
+    document.getElementById('feedback-text').value = '';
+    document.getElementById('feedback-status').textContent = '';
+    document.getElementById('feedback-include-screenshot').checked = feedbackType === 'bug';
+    document.getElementById('feedback-screenshot-section').style.display = feedbackType === 'bug' ? '' : 'none';
+  });
+
+  // Type toggle
+  overlay.querySelectorAll('.feedback-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      overlay.querySelectorAll('.feedback-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      feedbackType = btn.dataset.type;
+      document.getElementById('feedback-screenshot-section').style.display = feedbackType === 'bug' ? '' : 'none';
+    });
+  });
+
+  document.getElementById('btn-feedback-cancel').addEventListener('click', () => {
+    overlay.style.display = 'none';
+  });
+
+  document.getElementById('btn-feedback-send').addEventListener('click', async () => {
+    const text = document.getElementById('feedback-text').value.trim();
+    if (!text) {
+      document.getElementById('feedback-status').textContent = 'Écris quelque chose !';
+      return;
+    }
+
+    const statusEl = document.getElementById('feedback-status');
+    statusEl.textContent = 'Envoi en cours...';
+    document.getElementById('btn-feedback-send').disabled = true;
+
+    try {
+      const data = {
+        type: feedbackType,
+        text: text,
+        uid: firebaseUid || 'anonymous',
+        profileName: ProfileManager.getActive()?.name || 'unknown',
+        appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
+        screen: document.querySelector('.screen.active')?.id || 'unknown',
+        userAgent: navigator.userAgent.substring(0, 200),
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+      };
+
+      // Screenshot capture (for bugs)
+      if (feedbackType === 'bug' && document.getElementById('feedback-include-screenshot').checked) {
+        try {
+          // Hide overlay temporarily for clean screenshot
+          overlay.style.display = 'none';
+          await new Promise(r => setTimeout(r, 100));
+
+          const canvas = await html2canvas(document.body, {
+            scale: 0.5,
+            logging: false,
+            useCORS: true,
+            width: window.innerWidth,
+            height: window.innerHeight,
+          });
+          data.screenshot = canvas.toDataURL('image/jpeg', 0.5);
+          overlay.style.display = 'flex';
+        } catch (e) {
+          // html2canvas not available — use simple DOM snapshot instead
+          overlay.style.display = 'flex';
+          data.screenshot = null;
+          data.screenHTML = document.querySelector('.screen.active')?.innerHTML?.substring(0, 2000) || '';
+        }
+      }
+
+      await db.ref('feedback').push(data);
+      statusEl.textContent = 'Merci ! Ton message a été envoyé 🎉';
+      statusEl.style.color = 'var(--accent-green)';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        document.getElementById('btn-feedback-send').disabled = false;
+      }, 1500);
+    } catch (e) {
+      statusEl.textContent = 'Erreur — réessaie plus tard.';
+      statusEl.style.color = 'var(--error)';
+      document.getElementById('btn-feedback-send').disabled = false;
+    }
+  });
+})();
 
 } // end initApp()

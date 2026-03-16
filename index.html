@@ -568,9 +568,35 @@
     </div>
   </div>
 
+  <!-- V5: Feedback button -->
+  <button id="btn-feedback" class="feedback-fab" title="Signaler un bug ou une idée">💬</button>
+
+  <div id="feedback-overlay" class="overlay" style="display:none;">
+    <div class="overlay-content feedback-popup">
+      <h2>💬 Ton avis compte !</h2>
+      <div class="feedback-type-selector">
+        <button class="feedback-type-btn active" data-type="bug">🐛 Bug</button>
+        <button class="feedback-type-btn" data-type="suggestion">💡 Idée</button>
+      </div>
+      <textarea id="feedback-text" class="feedback-textarea" placeholder="Décris le problème ou ton idée..." rows="4" maxlength="500"></textarea>
+      <div id="feedback-screenshot-section">
+        <label class="feedback-screenshot-label">
+          <input type="checkbox" id="feedback-include-screenshot" checked>
+          📸 Inclure une capture d'écran
+        </label>
+      </div>
+      <div class="feedback-actions">
+        <button id="btn-feedback-cancel" class="btn btn-secondary">Annuler</button>
+        <button id="btn-feedback-send" class="btn btn-primary">Envoyer</button>
+      </div>
+      <div id="feedback-status" class="feedback-status"></div>
+    </div>
+  </div>
+
   <canvas id="confetti-canvas"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
   <!-- Firebase SDK (compat mode) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
