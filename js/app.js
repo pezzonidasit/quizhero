@@ -287,6 +287,13 @@ document.getElementById('btn-create-profile').addEventListener('click', () => {
   const profile = ProfileManager.create(name, selectedTheme);
   selectProfile(profile.id);
 
+  // V4: Sign in to Firebase on first profile creation
+  if (!firebaseUid) {
+    firebaseSignIn().then(() => {
+      MQSync._pushAll().catch(() => {});
+    }).catch(() => {});
+  }
+
   // V4: Generate and save recovery code
   if (typeof generateRecoveryCode === 'function') {
     const code = generateRecoveryCode(name);

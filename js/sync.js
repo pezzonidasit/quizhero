@@ -100,7 +100,12 @@ const MQSync = {
 
   /** Called on app launch. Sign in + sync pending + refresh cache. */
   async syncOnLaunch() {
-    await firebaseSignIn();
+    // Only sign in to Firebase if a profile exists — avoid creating
+    // phantom entries in /players for visitors who never create a profile
+    const hasProfile = ProfileManager.getAll().length > 0;
+    if (hasProfile) {
+      await firebaseSignIn();
+    }
 
     // Force-update: check version in Firebase, purge cache if newer
     try {
