@@ -61,6 +61,7 @@ async function pushPlayerStats(profile, stats) {
     bestStreak: stats.bestStreak || 0,
     bossesDefeated: stats.bossesDefeated || 0,
     gamesPlayed: stats.gamesPlayed || 0,
+    activeTitle: stats.activeTitle || null,
     updatedAt: firebase.database.ServerValue.TIMESTAMP,
   };
   try {
@@ -73,6 +74,7 @@ async function pushPlayerStats(profile, stats) {
       bestStreak: stats.bestStreak || 0,
       bossesDefeated: stats.bossesDefeated || 0,
       gamesPlayed: stats.gamesPlayed || 0,
+      activeTitle: stats.activeTitle || null,
     });
   } catch (e) {
     console.warn('pushPlayerStats failed:', e.message);
@@ -410,7 +412,7 @@ async function backupProfile(profileId) {
   const pm = ProfileManager;
   const fields = ['xp', 'coins', 'gamesPlayed', 'goodGamesStreak', 'records', 'badges',
     'catStats', 'ownedThemes', 'activeTheme', 'ownedStickers', 'boosts', 'chestsOpened',
-    'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames', 'recoveryCode'];
+    'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames', 'recoveryCode', 'bossTitles', 'activeTitle'];
 
   const data = {};
   fields.forEach(f => {
@@ -476,7 +478,7 @@ async function restoreFromCode(code) {
   // Restore all fields
   const fields = ['xp', 'coins', 'gamesPlayed', 'goodGamesStreak', 'records', 'badges',
     'catStats', 'ownedThemes', 'activeTheme', 'ownedStickers', 'boosts', 'chestsOpened',
-    'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames'];
+    'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames', 'bossTitles', 'activeTitle'];
 
   fields.forEach(f => {
     if (data[f] !== null && data[f] !== undefined) {
@@ -665,7 +667,7 @@ async function restoreProfile() {
     // Restore all fields
     const fields = ['xp', 'coins', 'gamesPlayed', 'goodGamesStreak', 'records', 'badges',
       'catStats', 'ownedThemes', 'activeTheme', 'ownedStickers', 'boosts', 'chestsOpened',
-      'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames'];
+      'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames', 'bossTitles', 'activeTitle'];
 
     fields.forEach(f => {
       if (data[f] !== null && data[f] !== undefined) {

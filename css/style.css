@@ -650,8 +650,8 @@ h2 {
 }
 
 .feedback-result.incorrect {
-  color: var(--error);
-  text-shadow: 0 0 12px rgba(255, 107, 107, 0.4);
+  color: var(--accent-orange, #ffa726);
+  text-shadow: 0 0 12px rgba(255, 167, 38, 0.3);
 }
 
 .feedback-explanation {
@@ -2941,3 +2941,116 @@ body.low-perf-mode .chest-open-overlay .chest-item {
   animation: none !important;
   opacity: 1 !important;
 }
+
+.almost-there {
+  text-align: center;
+  color: var(--accent-orange, #ffa726);
+  font-weight: 600;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  animation: pulseOpacity 1.5s ease-in-out infinite;
+}
+@keyframes pulseOpacity {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* V5: Boss Titles */
+.title-section { margin: 1rem 0; width: 100%; }
+.title-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.title-chip {
+  padding: 0.4rem 0.8rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.title-chip.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg-dark);
+}
+.player-title {
+  font-size: 0.75rem;
+  color: var(--accent-orange, #ffa726);
+  font-style: italic;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   V5 — DAILY LOGIN REWARD
+   ══════════════════════════════════════════════════════════════════════ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.overlay-content {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  max-width: 90%;
+  width: 360px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: popIn 0.4s ease;
+}
+
+.session-limit-popup { text-align: center; padding: 2rem; }
+.session-limit-popup p { color: var(--text-secondary); margin: 1rem 0; line-height: 1.5; }
+.session-limit-buttons { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; }
+.session-limit-buttons .btn-secondary { opacity: 0.7; }
+
+.login-reward-popup { text-align: center; padding: 2rem; }
+.login-streak-dots { display: flex; justify-content: center; gap: 0.5rem; margin: 1rem 0; }
+.login-dot {
+  width: 2.5rem; height: 2.5rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 600;
+  border: 2px solid var(--border); background: var(--bg-card); color: var(--text-secondary);
+}
+.login-dot.claimed { background: var(--accent-green); border-color: var(--accent-green); color: white; }
+.login-dot.today { border-color: var(--accent); background: var(--accent); color: var(--bg-dark); animation: pulse 1.5s infinite; }
+.login-dot.future { opacity: 0.4; }
+.login-reward-amount { font-size: 1.8rem; font-weight: 700; margin: 1rem 0; color: var(--accent); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   V5 — WEEKLY CEREMONY
+   ══════════════════════════════════════════════════════════════════════ */
+.weekly-ceremony { text-align: center; padding: 2rem; }
+.weekly-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.weekly-stat { background: var(--bg-card); border-radius: 1rem; padding: 1rem; border: 1px solid var(--border); }
+.weekly-stat-value { display: block; font-size: 2rem; font-weight: 700; color: var(--accent); }
+.weekly-stat-label { font-size: 0.85rem; color: var(--text-secondary); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   V5 — REGULARITY STREAK
+   ══════════════════════════════════════════════════════════════════════ */
+.regularity-streak {
+  margin: 0.75rem 0; padding: 0.75rem;
+  background: var(--bg-card); border-radius: 1rem; border: 1px solid var(--border);
+}
+.regularity-header { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-secondary); }
+.regularity-dots { display: flex; justify-content: space-between; gap: 0.25rem; }
+.reg-dot {
+  flex: 1; text-align: center; padding: 0.4rem 0;
+  border-radius: 0.5rem; border: 2px solid var(--border); background: var(--bg-dark);
+}
+.reg-dot.played { background: var(--accent-green); border-color: var(--accent-green); }
+.reg-dot.today { border-color: var(--accent); border-style: dashed; }
+.reg-dot.missed { opacity: 0.4; }
+.reg-dot.future { opacity: 0.3; }
+.reg-label { font-size: 0.65rem; font-weight: 600; color: var(--text-primary); }
+.reg-dot.played .reg-label { color: white; }
+.regularity-msg { text-align: center; font-size: 0.8rem; margin-top: 0.5rem; color: var(--accent-green); font-weight: 600; }

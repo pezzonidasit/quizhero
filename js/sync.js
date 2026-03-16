@@ -24,9 +24,22 @@ const MQSync = {
     const weekStart = this.getWeekStart();
     const lastWeek = ProfileManager.get('weekStart', 0);
     if (lastWeek < weekStart) {
+      // V5: Save last week's stats for ceremony
+      const lastWeeklyXP = ProfileManager.get('weeklyXP', 0);
+      const lastWeeklyGames = ProfileManager.get('weeklyGames', 0);
+      if (lastWeeklyXP > 0 || lastWeeklyGames > 0) {
+        ProfileManager.set('lastWeekStats', {
+          xp: lastWeeklyXP,
+          games: lastWeeklyGames,
+          weekOf: lastWeek,
+        });
+        ProfileManager.set('showWeeklyCeremony', true);
+      }
       ProfileManager.set('weekStart', weekStart);
       ProfileManager.set('weeklyXP', 0);
       ProfileManager.set('weeklyGames', 0);
+      ProfileManager.set('weeklyTimeSpent', 0);
+      ProfileManager.set('daysPlayedThisWeek', []);
     }
   },
 
@@ -64,6 +77,7 @@ const MQSync = {
       bestStreak: ProfileManager.get('records', {}).global?.streak || 0,
       bossesDefeated: (ProfileManager.get('defeatedBosses', []) || []).length,
       gamesPlayed: ProfileManager.get('gamesPlayed', 0),
+      activeTitle: ProfileManager.get('activeTitle', null),
     });
 
     // Push to group dashboards

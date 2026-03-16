@@ -91,6 +91,26 @@ function checkChestMilestones(gamesPlayed, xp, chestsOpened) {
   return unclaimed;
 }
 
+/** V5: Check if daily chest cap is reached (max 3/day) */
+function canOpenChestToday() {
+  const today = new Date().toISOString().slice(0, 10);
+  const daily = ProfileManager.get('dailyChestCount', { date: '', count: 0 });
+  if (daily.date !== today) return true;
+  return daily.count < 3;
+}
+
+/** V5: Increment daily chest counter */
+function recordChestOpened() {
+  const today = new Date().toISOString().slice(0, 10);
+  const daily = ProfileManager.get('dailyChestCount', { date: '', count: 0 });
+  if (daily.date !== today) {
+    ProfileManager.set('dailyChestCount', { date: today, count: 1 });
+  } else {
+    daily.count++;
+    ProfileManager.set('dailyChestCount', daily);
+  }
+}
+
 // ─── Loot Tables ────────────────────────────────────────────────────
 
 const LOOT_COMMON = [
@@ -251,6 +271,10 @@ function applyBossLoot(boss) {
 
   return item;
 }
+
+const TITLE_NAMES = {
+  boss_golem: 'Briseur de Golem',
+};
 
 function calculateBossReward(boss, playerHP, maxPlayerHP) {
   const baseReward = boss.stake * 3;

@@ -30,6 +30,9 @@ function initApp() {
   });
 })();
 
+// ── Session start time (V5: session limit nudge) ─────────────────
+const sessionStartTime = Date.now();
+
 // ── State ──────────────────────────────────────────────────────────
 const state = {
   category: 'all',
@@ -354,7 +357,83 @@ function selectProfile(id) {
   } else {
     showScreen('screen-home');
     renderBossWaitingIcon();
+    MQSync.checkWeeklyReset();
+    renderRegularityStreak();
+    checkLoginReward();
   }
+}
+
+// ── V5: Weekly Ceremony ──────────────────────────────────────────
+function checkWeeklyCeremony() {
+  if (!ProfileManager.get('showWeeklyCeremony', false)) return;
+  const stats = ProfileManager.get('lastWeekStats', null);
+  if (!stats) { ProfileManager.set('showWeeklyCeremony', false); return; }
+
+  const grid = document.getElementById('weekly-ceremony-stats');
+  grid.innerHTML =
+    '<div class="weekly-stat"><span class="weekly-stat-value">' + stats.xp + '</span><span class="weekly-stat-label">XP gagnés</span></div>' +
+    '<div class="weekly-stat"><span class="weekly-stat-value">' + stats.games + '</span><span class="weekly-stat-label">Parties jouées</span></div>';
+
+  document.getElementById('weekly-ceremony-overlay').style.display = 'flex';
+  if (typeof launchBigConfetti === 'function') launchBigConfetti();
+
+  document.getElementById('btn-close-ceremony').onclick = () => {
+    ProfileManager.set('showWeeklyCeremony', false);
+    document.getElementById('weekly-ceremony-overlay').style.display = 'none';
+  };
+}
+
+// ── V5: Daily Login Reward ──────────────────────────────────────────
+const LOGIN_REWARDS = [15, 20, 25, 30, 35, 40, 0]; // Day 7 = chest
+
+function checkLoginReward() {
+  const today = new Date().toISOString().slice(0, 10);
+  const lastLogin = ProfileManager.get('lastLoginDate', '');
+  if (lastLogin === today) { checkWeeklyCeremony(); return; }
+
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  let loginStreak = ProfileManager.get('loginStreak', 0);
+  if (lastLogin === yesterday) {
+    loginStreak = Math.min(loginStreak + 1, 6);
+  } else if (lastLogin !== today) {
+    loginStreak = 0;
+  }
+
+  const dayReward = LOGIN_REWARDS[loginStreak];
+  const isChestDay = loginStreak === 6;
+
+  const dotsEl = document.getElementById('login-reward-streak');
+  let dotsHtml = '';
+  for (let i = 0; i < 7; i++) {
+    const cls = i < loginStreak ? 'claimed' : i === loginStreak ? 'today' : 'future';
+    const label = i === 6 ? '🎁' : 'J' + (i + 1);
+    dotsHtml += '<div class="login-dot ' + cls + '">' + label + '</div>';
+  }
+  dotsEl.innerHTML = dotsHtml;
+
+  const amountEl = document.getElementById('login-reward-amount');
+  if (isChestDay) {
+    amountEl.innerHTML = '🎁 Coffre bonus !';
+  } else {
+    amountEl.innerHTML = '+' + dayReward + ' 🪙';
+  }
+
+  document.getElementById('login-reward-overlay').style.display = 'flex';
+
+  document.getElementById('btn-claim-login').onclick = () => {
+    if (isChestDay) {
+      const loot = generateChestLoot('small', ProfileManager.get('ownedThemes', []));
+      loot.forEach(item => applyLootItem(item));
+      recordChestOpened();
+    } else {
+      ProfileManager.set('coins', ProfileManager.get('coins', 0) + dayReward);
+    }
+    ProfileManager.set('lastLoginDate', today);
+    ProfileManager.set('loginStreak', loginStreak);
+    document.getElementById('login-reward-overlay').style.display = 'none';
+    updateProfileHeader();
+    checkWeeklyCeremony();
+  };
 }
 
 // ── Update Profile Header ─────────────────────────────────────────
@@ -502,6 +581,47 @@ function renderNextGoals() {
     `).join('');
 }
 
+// ── V5: Regularity Streak ──────────────────────────────────────────
+function renderRegularityStreak() {
+  const container = document.getElementById('regularity-streak');
+  if (!container) return;
+  if (!ProfileManager.getActiveId()) { container.innerHTML = ''; return; }
+
+  const daysPlayed = ProfileManager.get('daysPlayedThisWeek', []);
+  const dayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const now = new Date();
+  const currentDay = now.getDay();
+
+  const weekStart = new Date(now);
+  const diff = currentDay === 0 ? -6 : 1 - currentDay;
+  weekStart.setDate(now.getDate() + diff);
+  weekStart.setHours(0, 0, 0, 0);
+
+  let html = '<div class="regularity-header">📅 Cette semaine</div><div class="regularity-dots">';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const played = daysPlayed.includes(dateStr);
+    const isToday = dateStr === now.toISOString().slice(0, 10);
+    const isFuture = d > now && !isToday;
+    let cls = 'reg-dot';
+    if (played) cls += ' played';
+    else if (isToday) cls += ' today';
+    else if (isFuture) cls += ' future';
+    else cls += ' missed';
+    html += '<div class="' + cls + '"><span class="reg-label">' + dayLabels[i] + '</span></div>';
+  }
+  html += '</div>';
+  const count = daysPlayed.length;
+  if (count >= 5) {
+    html += '<div class="regularity-msg">🔥 Super régulier cette semaine !</div>';
+  } else if (count >= 3) {
+    html += '<div class="regularity-msg">👍 Bon rythme, continue !</div>';
+  }
+  container.innerHTML = html;
+}
+
 // ── Records Display ────────────────────────────────────────────────
 function renderRecords() {
   const container = document.getElementById('records-display');
@@ -535,6 +655,7 @@ function startGame() {
   state.consecutiveWrong = 0;
   state.badgesUnlocked = [];
   state.noHintCount = 0;
+  state.streakLostMessage = null;
   state.gameStartTime = Date.now();
 
   // Consume active boost from inventory
@@ -728,6 +849,9 @@ function validateAnswer() {
       state.consecutiveCorrect = 0;
     }
   } else {
+    if (state.streak >= 3) {
+      state.streakLostMessage = 'Belle série de ' + state.streak + ' ! On recommence';
+    }
     state.streak = 0;
     state.consecutiveWrong++;
     state.consecutiveCorrect = 0;
@@ -773,11 +897,12 @@ function validateAnswer() {
     launchMiniConfetti();
   } else {
     const correctAnswer = q.textAnswer !== undefined ? q.textAnswer : q.answer;
-    feedbackResult.textContent = 'Incorrect — la réponse était ' + correctAnswer;
+    feedbackResult.textContent = 'Pas encore ! La réponse était ' + correctAnswer;
     feedbackResult.className = 'feedback-result incorrect';
-    const card = document.getElementById('question-card');
-    card.classList.add('shake');
-    setTimeout(() => card.classList.remove('shake'), 500);
+    if (state.streakLostMessage) {
+      feedbackResult.textContent += ' · ' + state.streakLostMessage;
+      state.streakLostMessage = null;
+    }
   }
 
   feedbackExplanation.textContent = q.explanation;
@@ -963,6 +1088,18 @@ const BADGE_DEFS = [
   { id: 'contract_all_bronze', name: 'Tout Bronze', icon: '🥉', category: 'contrat', hidden: true,
     check: () => (ProfileManager.get('contractsCompleted', {}).bronze || 0) >= 20 },
 
+  // ═══ REGULARITY BADGES ═══
+  { id: 'regular_5', name: 'Régulier', icon: '📅', category: 'xp',
+    description: '5 jours joués en une semaine',
+    check: () => (ProfileManager.get('daysPlayedThisWeek', []).length >= 5),
+    progress: () => ({ cur: ProfileManager.get('daysPlayedThisWeek', []).length, max: 5 }),
+  },
+  { id: 'regular_7', name: 'Marathonien', icon: '🏃', category: 'xp',
+    description: '7 jours joués en une semaine',
+    check: () => (ProfileManager.get('daysPlayedThisWeek', []).length >= 7),
+    progress: () => ({ cur: ProfileManager.get('daysPlayedThisWeek', []).length, max: 7 }),
+  },
+
 ];
 
 function checkBadges() {
@@ -997,6 +1134,14 @@ function endGame() {
       state.records[key].streak = bestStreak;
     }
   });
+
+  // V5: Track regularity streak (days played this week)
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const daysPlayed = ProfileManager.get('daysPlayedThisWeek', []);
+  if (!daysPlayed.includes(todayStr)) {
+    daysPlayed.push(todayStr);
+    ProfileManager.set('daysPlayedThisWeek', daysPlayed);
+  }
 
   checkBadges();
   saveProfileData();
@@ -1104,9 +1249,19 @@ function endGame() {
   }
   ProfileManager.set('goodGamesStreak', goodStreak);
 
-  // Check chests
+  // Check chests (V5: max 3/day)
   const chestsOpened = ProfileManager.get('chestsOpened', []);
-  state.pendingChests = checkChestMilestones(gamesPlayed, finalXP, chestsOpened);
+  const allPending = checkChestMilestones(gamesPlayed, finalXP, chestsOpened);
+  state.pendingChests = canOpenChestToday() ? allPending : [];
+
+  // V5: Show hint when chests are pending but capped
+  if (!canOpenChestToday() && allPending.length > 0) {
+    const almostEl = document.getElementById('almost-there');
+    if (almostEl) {
+      almostEl.textContent = '🎁 Coffres en attente ! Reviens demain pour les ouvrir.';
+      almostEl.style.display = '';
+    }
+  }
 
   // Check rank up
   const oldRank = getRank(oldXP);
@@ -1126,6 +1281,28 @@ function endGame() {
   const progress = getRankProgress(finalXP);
   document.getElementById('xp-bar-end-fill').style.width = (progress.progress * 100) + '%';
   document.getElementById('xp-bar-end-text').textContent = progress.next ? progress.xpInLevel + '/' + progress.xpNeeded + ' XP' : 'MAX';
+
+  // V5: "Tu étais si près !" — show distance to next goal
+  const almostEl = document.getElementById('almost-there');
+  const almostHints = [];
+  const nextGameChest = GAME_MILESTONES.find(m => m > gamesPlayed);
+  if (nextGameChest && nextGameChest - gamesPlayed <= 3) {
+    almostHints.push('Plus que ' + (nextGameChest - gamesPlayed) + ' partie' + (nextGameChest - gamesPlayed > 1 ? 's' : '') + ' pour un coffre !');
+  }
+  const nextXPChest = XP_MILESTONES.find(m => m > finalXP);
+  if (nextXPChest && nextXPChest - finalXP <= 100) {
+    almostHints.push('Plus que ' + (nextXPChest - finalXP) + ' XP pour un coffre !');
+  }
+  const nextRankInfo = getNextRank(finalXP);
+  if (nextRankInfo && nextRankInfo.xp - finalXP <= 150) {
+    almostHints.push('Plus que ' + (nextRankInfo.xp - finalXP) + ' XP pour ' + nextRankInfo.icon + ' ' + nextRankInfo.name + ' !');
+  }
+  if (almostHints.length > 0) {
+    almostEl.textContent = almostHints[0];
+    almostEl.style.display = '';
+  } else {
+    almostEl.style.display = 'none';
+  }
 
   // V3: Evaluate contract
   if (state.activeContract && state.contractGameResult) {
@@ -1165,7 +1342,20 @@ function endGame() {
   // V4: Sync to Firebase
   const gameElapsed = Math.round((Date.now() - state.gameStartTime) / 1000);
   ProfileManager.set('weeklyTimeSpent', (ProfileManager.get('weeklyTimeSpent', 0)) + gameElapsed);
+
   MQSync.syncAfterGame(rewards.xp).catch(() => {});
+
+  // V5: Session limit check (30 min gentle nudge)
+  const sessionMinutes = (Date.now() - sessionStartTime) / 60000;
+  const alreadyNudged = sessionStorage.getItem('mq_session_nudged');
+  if (sessionMinutes >= 30 && !alreadyNudged) {
+    sessionStorage.setItem('mq_session_nudged', 'true');
+    setTimeout(() => {
+      document.getElementById('session-limit-overlay').style.display = 'flex';
+    }, 1500);
+  }
+
+  renderRegularityStreak();
 
   showScreen('screen-end');
 
@@ -1415,6 +1605,7 @@ function showChest(chest) {
       const co = ProfileManager.get('chestsOpened', []);
       co.push(chest.id);
       ProfileManager.set('chestsOpened', co);
+      recordChestOpened();
     }, 800);
   };
 }
@@ -1482,6 +1673,20 @@ async function renderProfileDetail() {
   themeHtml += '</div>';
   document.getElementById('profile-card').innerHTML += themeHtml;
 
+  // V5: Title selector
+  const ownedTitles = ProfileManager.get('bossTitles', []) || [];
+  if (ownedTitles.length > 0) {
+    const activeTitle = ProfileManager.get('activeTitle', null);
+    let titleHtml = '<div class="title-section"><h3>🏆 Titres</h3><div class="title-chips">';
+    titleHtml += '<button class="title-chip ' + (!activeTitle ? 'active' : '') + '" data-title="">Aucun</button>';
+    ownedTitles.forEach(t => {
+      const name = TITLE_NAMES[t] || t;
+      titleHtml += '<button class="title-chip ' + (activeTitle === t ? 'active' : '') + '" data-title="' + t + '">' + name + '</button>';
+    });
+    titleHtml += '</div></div>';
+    document.getElementById('profile-card').innerHTML += titleHtml;
+  }
+
   // V4: Groups + Riddle creation buttons
   document.getElementById('profile-card').innerHTML += `
     <div style="display:flex;gap:0.5rem;margin-top:1rem;width:100%">
@@ -1503,6 +1708,15 @@ async function renderProfileDetail() {
       ProfileManager.set('activeTheme', themeId);
       ProfileManager.updateMeta(ProfileManager.getActiveId(), { theme: themeId });
       applyTheme(themeId);
+      renderProfileDetail();
+    });
+  });
+
+  // V5: Title chip click handlers
+  document.querySelectorAll('.title-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const titleId = chip.dataset.title;
+      ProfileManager.set('activeTitle', titleId || null);
       renderProfileDetail();
     });
   });
@@ -2010,7 +2224,7 @@ function handleBossAnswer(timedOut) {
     const correctAnswer = q.textAnswer !== undefined ? q.textAnswer : q.answer;
     feedbackResult.textContent = timedOut
       ? 'Temps écoulé ! La réponse était ' + correctAnswer
-      : 'Incorrect — la réponse était ' + correctAnswer;
+      : 'Pas encore ! La réponse était ' + correctAnswer;
     feedbackResult.className = 'feedback-result incorrect';
   }
   feedbackExplanation.textContent = q.explanation || '';
@@ -2328,10 +2542,19 @@ async function renderLeaderboard() {
     const isChampion = i === 0;
     const rankNum = i + 1;
     const rankDisplay = rankNum <= 3 ? ['👑', '🥈', '🥉'][i] : rankNum;
+    // V5: Show active title
+    let titleDisplay = '';
+    if (isMe) {
+      const myTitle = ProfileManager.get('activeTitle', null);
+      if (myTitle && TITLE_NAMES[myTitle]) titleDisplay = '<div class="player-title">' + TITLE_NAMES[myTitle] + '</div>';
+    } else if (e.activeTitle && TITLE_NAMES[e.activeTitle]) {
+      titleDisplay = '<div class="player-title">' + TITLE_NAMES[e.activeTitle] + '</div>';
+    }
     return '<div class="lb-entry ' + (isMe ? 'me' : '') + ' ' + (isChampion ? 'champion' : '') + '">' +
       '<span class="lb-rank">' + rankDisplay + '</span>' +
       '<span class="lb-rank-icon">' + (rankIcons[e.rank] || '🥉') + '</span>' +
       '<div class="lb-info"><div class="lb-name">' + (e.name || 'Joueur') + '</div>' +
+      titleDisplay +
       '<div class="lb-stats">Streak: ' + (e.bestStreak || 0) + ' | Boss: ' + (e.bossesDefeated || 0) + '</div></div>' +
       '<span class="lb-xp">' + (e.xp || 0) + ' XP</span>' +
       '</div>';
@@ -3141,6 +3364,15 @@ document.querySelectorAll('#screen-duel-create .pill-group, #screen-duel-join .p
     group.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
     pill.classList.add('active');
   });
+});
+
+// V5: Session limit buttons
+document.getElementById('btn-session-continue').addEventListener('click', () => {
+  document.getElementById('session-limit-overlay').style.display = 'none';
+});
+document.getElementById('btn-session-stop').addEventListener('click', () => {
+  document.getElementById('session-limit-overlay').style.display = 'none';
+  showScreen('screen-home');
 });
 
 } // end initApp()

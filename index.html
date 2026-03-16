@@ -81,6 +81,8 @@
     </div>
     <h1>QuizHero</h1>
 
+    <div id="regularity-streak" class="regularity-streak"></div>
+
     <div class="settings-card">
       <div class="setting-group">
         <label>Catégorie</label>
@@ -188,6 +190,7 @@
         <div id="xp-bar-end-fill" class="xp-bar"></div>
         <span id="xp-bar-end-text" class="xp-text" style="top:-18px"></span>
       </div>
+      <div id="almost-there" class="almost-there" style="display:none;"></div>
     </div>
     <div class="end-buttons">
       <button id="btn-replay" class="btn-primary">Rejouer</button>
@@ -532,6 +535,36 @@
     <div class="end-buttons" style="margin-top:2rem">
       <button id="btn-duel-rematch" class="btn-primary">🔄 Revanche</button>
       <button id="btn-duel-home" class="btn-secondary">Retour</button>
+    </div>
+  </div>
+
+  <!-- OVERLAY: LOGIN REWARD -->
+  <div id="login-reward-overlay" class="overlay" style="display:none;">
+    <div class="overlay-content login-reward-popup">
+      <h2>🎁 Bonus du jour !</h2>
+      <div id="login-reward-streak" class="login-streak-dots"></div>
+      <div id="login-reward-amount" class="login-reward-amount"></div>
+      <button id="btn-claim-login" class="btn btn-primary">Récupérer</button>
+    </div>
+  </div>
+
+  <!-- OVERLAY: WEEKLY CEREMONY -->
+  <div id="weekly-ceremony-overlay" class="overlay" style="display:none;">
+    <div class="overlay-content weekly-ceremony">
+      <h2>📊 Résultats de la semaine</h2>
+      <div id="weekly-ceremony-stats" class="weekly-stats-grid"></div>
+      <button id="btn-close-ceremony" class="btn btn-primary">C'est parti pour une nouvelle semaine !</button>
+    </div>
+  </div>
+
+  <div id="session-limit-overlay" class="overlay" style="display:none;">
+    <div class="overlay-content session-limit-popup">
+      <h2>⭐ Bravo champion !</h2>
+      <p>Tu as bien joué aujourd'hui (30 min+). Fais une pause et reviens demain pour ton bonus du jour !</p>
+      <div class="session-limit-buttons">
+        <button id="btn-session-continue" class="btn btn-secondary">Encore un peu</button>
+        <button id="btn-session-stop" class="btn btn-primary">OK, à demain !</button>
+      </div>
     </div>
   </div>
 
