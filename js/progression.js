@@ -77,14 +77,14 @@ function checkChestMilestones(gamesPlayed, xp, chestsOpened) {
   for (const m of GAME_MILESTONES) {
     const id = `games_${m}`;
     if (gamesPlayed >= m && !chestsOpened.includes(id)) {
-      unclaimed.push({ id, type: 'games', tier: m >= 100 ? 'big' : 'small' });
+      unclaimed.push({ id, type: 'games', tier: m >= 200 ? 'big' : 'small' });
     }
   }
 
   for (const m of XP_MILESTONES) {
     const id = `xp_${m}`;
     if (xp >= m && !chestsOpened.includes(id)) {
-      unclaimed.push({ id, type: 'xp', tier: m >= 5000 ? 'big' : 'small' });
+      unclaimed.push({ id, type: 'xp', tier: m >= 10000 ? 'big' : 'small' });
     }
   }
 
@@ -135,7 +135,7 @@ function pickWeighted(pools) {
 
 /**
  * Generate chest loot.
- * Big chest: coins(30-60) + 1-2 items (guaranteed rare+).
+ * Big chest: coins(50-100) + 3-4 items (guaranteed rare+).
  * Small chest: coins(10-25) + 1 common item.
  */
 function generateChestLoot(tier, ownedThemes) {
@@ -144,14 +144,14 @@ function generateChestLoot(tier, ownedThemes) {
 
   if (tier === 'big') {
     // Coins
-    items.push({ id: 'coins', name: 'Pièces', type: 'coins', icon: '🪙', rarity: 'common', amount: rand(30, 60) });
+    items.push({ id: 'coins', name: 'Pièces', type: 'coins', icon: '🪙', rarity: 'common', amount: rand(50, 100) });
 
     // Build weighted pools for big chest (guaranteed rare+)
     const pools = [{ weight: 3, pool: LOOT_RARE }];
     if (epicPool.length > 0) pools.push({ weight: 1, pool: epicPool });
 
-    // 1-2 items
-    const count = rand(1, 2);
+    // 3-4 items
+    const count = rand(3, 4);
     for (let i = 0; i < count; i++) {
       items.push(pickWeighted(pools));
     }
