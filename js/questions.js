@@ -112,58 +112,106 @@ function generateLogique(subLevel) {
     };
   }
 
-  if (subLevel === 1) {
-    // Arithmetic sequence
-    const start = rand(2, 10);
-    const step = rand(3, 7);
-    const seq = [];
-    for (let i = 0; i < 5; i++) seq.push(start + step * i);
-    const answer = start + step * 5;
-    return {
-      category: 'logique',
-      text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`,
-      unit: '',
-      answer,
-      hint: `Regarde la différence entre chaque nombre.`,
-      explanation: `On ajoute ${step} à chaque fois. ${seq[4]} + ${step} = ${answer}.`
-    };
+  // Pick a random sequence type to avoid repetition
+  const seqTypes = subLevel === 1 ? [0, 1, 2] : subLevel === 2 ? [3, 4, 5] : [6, 7, 8];
+  const type = seqTypes[Math.floor(Math.random() * seqTypes.length)];
 
-  } else if (subLevel === 2) {
-    // Geometric sequence
-    const start = rand(2, 4);
-    const factor = rand(2, 3);
-    const seq = [];
-    let val = start;
-    for (let i = 0; i < 4; i++) { seq.push(val); val *= factor; }
-    const answer = val;
-    return {
-      category: 'logique',
-      text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`,
-      unit: '',
-      answer,
-      hint: `Chaque nombre est multiplié par le même facteur.`,
-      explanation: `On multiplie par ${factor} à chaque fois. ${seq[3]} × ${factor} = ${answer}.`
-    };
-
-  } else {
-    // Alternating pattern: +a, ×b
-    const a = rand(2, 5);
-    const b = 2;
-    let val = rand(3, 6);
-    const seq = [val];
-    for (let i = 0; i < 4; i++) {
-      val = (i % 2 === 0) ? val + a : val * b;
-      seq.push(val);
+  switch (type) {
+    case 0: { // Arithmetic +
+      const start = rand(1, 20);
+      const step = rand(2, 12);
+      const seq = [];
+      for (let i = 0; i < 5; i++) seq.push(start + step * i);
+      const answer = start + step * 5;
+      return { category: 'logique', text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`, unit: '', answer,
+        hint: `Regarde la différence entre chaque nombre.`,
+        explanation: `On ajoute ${step} à chaque fois. ${seq[4]} + ${step} = ${answer}.` };
     }
-    const answer = (4 % 2 === 0) ? val + a : val * b;
-    return {
-      category: 'logique',
-      text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`,
-      unit: '',
-      answer,
-      hint: `Regarde : une fois on ajoute, une fois on multiplie…`,
-      explanation: `Le motif alterne : +${a}, ×${b}. Le suivant est ${answer}.`
-    };
+    case 1: { // Arithmetic −
+      const start = rand(60, 100);
+      const step = rand(3, 11);
+      const seq = [];
+      for (let i = 0; i < 5; i++) seq.push(start - step * i);
+      const answer = start - step * 5;
+      return { category: 'logique', text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`, unit: '', answer,
+        hint: `La suite descend. De combien à chaque fois ?`,
+        explanation: `On enlève ${step} à chaque fois. ${seq[4]} − ${step} = ${answer}.` };
+    }
+    case 2: { // Squares 1, 4, 9, 16...
+      const offset = rand(0, 3);
+      const seq = [];
+      for (let i = 1; i <= 5; i++) seq.push((i + offset) * (i + offset));
+      const answer = (6 + offset) * (6 + offset);
+      return { category: 'logique', text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`, unit: '', answer,
+        hint: `Ce sont des carrés parfaits !`,
+        explanation: `${seq[0]}=${1+offset}², ${seq[1]}=${2+offset}², ... Le suivant est ${6+offset}² = ${answer}.` };
+    }
+    case 3: { // Geometric ×
+      const start = rand(2, 5);
+      const factor = rand(2, 4);
+      const seq = [];
+      let val = start;
+      for (let i = 0; i < 4; i++) { seq.push(val); val *= factor; }
+      const answer = val;
+      return { category: 'logique', text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`, unit: '', answer,
+        hint: `Chaque nombre est multiplié par le même facteur.`,
+        explanation: `On multiplie par ${factor} à chaque fois. ${seq[3]} × ${factor} = ${answer}.` };
+    }
+    case 4: { // Fibonacci-style: each = sum of 2 previous
+      const a = rand(1, 5), b = rand(1, 5);
+      const seq = [a, b];
+      for (let i = 2; i < 6; i++) seq.push(seq[i-1] + seq[i-2]);
+      const answer = seq[5] + seq[4];
+      seq.push(answer);
+      const shown = seq.slice(0, 6);
+      return { category: 'logique', text: `Trouve le nombre suivant : ${shown.join(', ')}, ?`, unit: '', answer,
+        hint: `Chaque nombre est la somme des deux précédents.`,
+        explanation: `${seq[4]} + ${seq[5]} = ${answer}. Chaque terme = somme des 2 précédents.` };
+    }
+    case 5: { // Double then add: ×2, +k
+      const k = rand(1, 4);
+      let val = rand(1, 4);
+      const seq = [val];
+      for (let i = 0; i < 4; i++) { val = val * 2 + k; seq.push(val); }
+      const answer = val * 2 + k;
+      return { category: 'logique', text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`, unit: '', answer,
+        hint: `Essaie : doubler puis ajouter un petit nombre.`,
+        explanation: `Chaque terme = précédent × 2 + ${k}. ${seq[4]} × 2 + ${k} = ${answer}.` };
+    }
+    case 6: { // Alternating +a, ×b
+      const a = rand(2, 6);
+      const b = rand(2, 3);
+      let val = rand(2, 6);
+      const seq = [val];
+      for (let i = 0; i < 4; i++) {
+        val = (i % 2 === 0) ? val + a : val * b;
+        seq.push(val);
+      }
+      const answer = (4 % 2 === 0) ? val + a : val * b;
+      return { category: 'logique', text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`, unit: '', answer,
+        hint: `Regarde : une fois on ajoute, une fois on multiplie…`,
+        explanation: `Le motif alterne : +${a}, ×${b}. Le suivant est ${answer}.` };
+    }
+    case 7: { // Two interleaved sequences: a, b, a+step, b+step, ...
+      const a = rand(1, 10), b = rand(20, 40);
+      const stepA = rand(2, 5), stepB = rand(3, 7);
+      const seq = [];
+      for (let i = 0; i < 3; i++) { seq.push(a + stepA * i); seq.push(b + stepB * i); }
+      const answer = a + stepA * 3;
+      return { category: 'logique', text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`, unit: '', answer,
+        hint: `Et si c'étaient deux suites entrelacées ? Regarde un nombre sur deux.`,
+        explanation: `Deux suites : ${a}, ${a+stepA}, ${a+stepA*2} (+${stepA}) et ${b}, ${b+stepB}, ${b+stepB*2} (+${stepB}). Le suivant est ${answer}.` };
+    }
+    case 8: { // Triangular numbers or step-increasing: +1, +2, +3, +4...
+      const start = rand(1, 8);
+      const seq = [start];
+      let val = start;
+      for (let i = 1; i <= 5; i++) { val += i; seq.push(val); }
+      const answer = val + 6;
+      return { category: 'logique', text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`, unit: '', answer,
+        hint: `La différence entre chaque nombre augmente de 1 à chaque fois.`,
+        explanation: `On ajoute +1, +2, +3, +4, +5, +6. ${seq[5]} + 6 = ${answer}.` };
+    }
   }
 }
 
