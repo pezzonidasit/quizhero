@@ -149,6 +149,7 @@ body::before {
   background: linear-gradient(135deg, #0f0e1a 0%, #1a1040 25%, #0d1a30 50%, #1a0e2a 75%, #0f0e1a 100%);
   background-size: 400% 400%;
   animation: gradientShift 20s ease infinite;
+  will-change: background-position;
   z-index: -2;
 }
 
@@ -2828,4 +2829,35 @@ h2 {
   margin-bottom: 0.75rem;
   font-weight: 600;
   color: var(--accent-orange);
+}
+
+/* ===== Performance: reduce animations on weak devices ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Low-perf mode toggled by JS on slow devices */
+body.low-perf-mode::before {
+  animation: none !important;
+  background-size: 100% 100% !important;
+}
+
+body.low-perf-mode .boss-pixel *,
+body.low-perf-mode .boss-svg-container *,
+body.low-perf-mode #btn-admin,
+body.low-perf-mode .streak-flame,
+body.low-perf-mode .streak-fire,
+body.low-perf-mode .streak-inferno,
+body.low-perf-mode .chest-box.shaking,
+body.low-perf-mode .boss-fight-header {
+  animation: none !important;
+}
+
+body.low-perf-mode .chest-open-overlay .chest-item {
+  animation: none !important;
+  opacity: 1 !important;
 }

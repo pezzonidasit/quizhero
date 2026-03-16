@@ -8,6 +8,21 @@ initApp();
 
 function initApp() {
 
+// ── Performance: detect slow devices ────────────────────────────
+(function detectSlowDevice() {
+  // Quick GPU benchmark: measure a rAF round-trip
+  const start = performance.now();
+  requestAnimationFrame(() => {
+    const elapsed = performance.now() - start;
+    // If a single frame takes > 50ms or device has ≤ 4 logical cores, enable low-perf mode
+    const slowCPU = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4;
+    if (elapsed > 50 || slowCPU) {
+      document.body.classList.add('low-perf-mode');
+      console.log('[QuizHero] Low-perf mode enabled (frame: ' + Math.round(elapsed) + 'ms, cores: ' + (navigator.hardwareConcurrency || '?') + ')');
+    }
+  });
+})();
+
 // ── State ──────────────────────────────────────────────────────────
 const state = {
   category: 'all',

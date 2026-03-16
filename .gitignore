@@ -1,0 +1,8 @@
+node_modules/
+test-results/
+tests/
+package*.json
+playwright.config.js
+boss-*.html
+CLAUDE.md
+docs/
