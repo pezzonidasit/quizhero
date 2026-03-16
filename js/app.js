@@ -375,8 +375,8 @@ function updateProfileHeader() {
     noGroupBanner = document.createElement('div');
     noGroupBanner.id = 'no-group-banner';
     noGroupBanner.className = 'no-group-banner';
-    const playBtn = document.getElementById('btn-play');
-    playBtn.parentNode.insertBefore(noGroupBanner, playBtn);
+    const playBtnWrapper = document.getElementById('btn-play').parentNode;
+    playBtnWrapper.parentNode.insertBefore(noGroupBanner, playBtnWrapper);
   }
 
   getMyGroups().then(groups => {
@@ -394,15 +394,15 @@ function updateProfileHeader() {
           '<button class="btn-primary" onclick="renderGroupsScreen(&quot;screen-home&quot;)" style="font-size:0.85rem">Rejoindre un groupe</button>';
       });
       noGroupBanner.style.display = '';
-      document.getElementById('btn-play').style.display = 'none';
+      document.getElementById('btn-play').parentNode.style.display = 'none';
     } else {
       noGroupBanner.style.display = 'none';
-      document.getElementById('btn-play').style.display = '';
+      document.getElementById('btn-play').parentNode.style.display = '';
     }
   }).catch(() => {
     // Offline — allow play
     noGroupBanner.style.display = 'none';
-    document.getElementById('btn-play').style.display = '';
+    document.getElementById('btn-play').parentNode.style.display = '';
   });
 }
 
