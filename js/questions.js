@@ -1792,11 +1792,11 @@ const RIDDLE_BANK = [
   },
   {
     category: 'calcul',
-    text: 'Un astronaute pèse 75 kg sur Terre. Sur la Lune, il ne pèse qu\'un sixième de son poids terrestre. Quel est son poids sur la Lune ?',
+    text: 'Un astronaute pèse 72 kg sur Terre. Sur la Lune, il ne pèse qu\'un sixième de son poids terrestre. Quel est son poids sur la Lune ?',
     unit: 'kg',
-    answer: 12.5,
+    answer: 12,
     hint: 'Divise le poids terrestre par 6.',
-    explanation: '75 ÷ 6 = 12,5 kg sur la Lune.'
+    explanation: '72 ÷ 6 = 12 kg sur la Lune.'
   },
   {
     category: 'logique',
@@ -1816,11 +1816,11 @@ const RIDDLE_BANK = [
   },
   {
     category: 'geometrie',
-    text: 'Un cratère lunaire est parfaitement circulaire avec un diamètre de 10 km. Quelle est sa circonférence ? (π ≈ 3,14)',
+    text: 'Un cratère lunaire est parfaitement circulaire avec un diamètre de 10 km. Quelle est sa circonférence ? (π ≈ 3)',
     unit: 'km',
-    answer: 31.4,
+    answer: 30,
     hint: 'Circonférence = π × diamètre.',
-    explanation: 'Circonférence = 3,14 × 10 = 31,4 km.'
+    explanation: 'Circonférence ≈ 3 × 10 = 30 km.'
   },
   {
     category: 'geometrie',
@@ -1864,11 +1864,11 @@ const RIDDLE_BANK = [
   },
   {
     category: 'mesures',
-    text: 'Un scaphandre pèse 12 kg sur Terre. Sur Mars, les objets pèsent environ 4/10 de leur poids terrestre. Quel est le poids du scaphandre sur Mars ?',
+    text: 'Un scaphandre pèse 20 kg sur Terre. Sur Mars, les objets pèsent environ 4/10 de leur poids terrestre. Quel est le poids du scaphandre sur Mars ?',
     unit: 'kg',
-    answer: 4.8,
+    answer: 8,
     hint: 'Multiplie le poids terrestre par 4/10.',
-    explanation: '12 × 4/10 = 12 × 0,4 = 4,8 kg.'
+    explanation: '20 × 4/10 = 20 × 0,4 = 8 kg.'
   },
   {
     category: 'mesures',
