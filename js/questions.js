@@ -379,11 +379,11 @@ function generateOuvert(subLevel) {
     }
     return {
       category: 'ouvert',
-      text: `Combien de façons peux-tu faire ${target} CHF avec des pièces de 5 CHF et de 2 CHF ?`,
+      text: `Combien de façons peux-tu faire ${target} € avec des pièces de 5 € et de 2 € ?`,
       unit: '',
       answer: count,
       hint: `Essaie avec 0 pièces de 5, puis 1 pièce de 5, etc.`,
-      explanation: `Il y a ${count} façon(s) de combiner des pièces de 5 CHF et 2 CHF pour faire ${target} CHF.`
+      explanation: `Il y a ${count} façon(s) de combiner des pièces de 5 € et 2 € pour faire ${target} €.`
     };
 
   } else if (subLevel === 2) {
@@ -419,7 +419,7 @@ function generateOuvert(subLevel) {
 const RIDDLE_BANK = [
 
   // ═══════════════════════════════════════════════════════════════════
-  // CALCUL (18 riddles: 8 original + 10 new)
+  // CALCUL (~8 riddles)
   // ═══════════════════════════════════════════════════════════════════
   {
     category: 'calcul',
@@ -431,19 +431,19 @@ const RIDDLE_BANK = [
   },
   {
     category: 'calcul',
-    text: 'Tu as un billet de 20 CHF. Tu achètes un cahier à 5 CHF et 2 stylos à 3 CHF chacun. Combien te reste-t-il ?',
-    unit: 'CHF',
+    text: 'Tu as un billet de 20 €. Tu achètes un cahier à 5 € et 2 stylos à 3 € chacun. Combien te reste-t-il ?',
+    unit: '€',
     answer: 9,
     hint: 'Calcule d\'abord le total dépensé.',
-    explanation: 'Cahier : 5 CHF. Stylos : 2 × 3 = 6 CHF. Total : 11 CHF. Rendu : 20 − 11 = 9 CHF.'
+    explanation: 'Cahier : 5 €. Stylos : 2 × 3 = 6 €. Total : 11 €. Rendu : 20 − 11 = 9 €.'
   },
   {
     category: 'calcul',
-    text: 'Au supermarché, Maman achète 3 paquets de biscuits à 4 CHF et 2 bouteilles de jus à 3 CHF. Papa lui donne un bon de réduction de 5 CHF. Combien paie-t-elle ?',
-    unit: 'CHF',
+    text: 'Au supermarché, Maman achète 3 paquets de biscuits à 4 € et 2 bouteilles de jus à 3 €. Papa lui donne un bon de réduction de 5 €. Combien paie-t-elle ?',
+    unit: '€',
     answer: 13,
     hint: 'Additionne tout, puis retire la réduction.',
-    explanation: 'Biscuits : 3 × 4 = 12 CHF. Jus : 2 × 3 = 6 CHF. Total : 18 CHF. Avec réduction : 18 − 5 = 13 CHF.'
+    explanation: 'Biscuits : 3 × 4 = 12 €. Jus : 2 × 3 = 6 €. Total : 18 €. Avec réduction : 18 − 5 = 13 €.'
   },
   {
     category: 'calcul',
@@ -455,11 +455,11 @@ const RIDDLE_BANK = [
   },
   {
     category: 'calcul',
-    text: 'Pour son anniversaire, Léa reçoit 25 CHF de ses parents, 15 CHF de sa mamie et 10 CHF de son oncle. Elle achète un livre à 18 CHF et un bracelet à 12 CHF. Combien lui reste-t-il ?',
-    unit: 'CHF',
+    text: 'Pour son anniversaire, Léa reçoit 25 € de ses parents, 15 € de sa mamie et 10 € de son oncle. Elle achète un livre à 18 € et un bracelet à 12 €. Combien lui reste-t-il ?',
+    unit: '€',
     answer: 20,
     hint: 'Additionne les cadeaux, puis soustrais les achats.',
-    explanation: 'Reçu : 25 + 15 + 10 = 50 CHF. Dépensé : 18 + 12 = 30 CHF. Reste : 50 − 30 = 20 CHF.'
+    explanation: 'Reçu : 25 + 15 + 10 = 50 €. Dépensé : 18 + 12 = 30 €. Reste : 50 − 30 = 20 €.'
   },
   {
     category: 'calcul',
@@ -487,11 +487,11 @@ const RIDDLE_BANK = [
   },
   {
     category: 'calcul',
-    text: 'Au marché, tu achètes 4 pommes à 0,50 CHF, 3 bananes à 0,30 CHF et 1 pastèque à 3 CHF. Tu paies avec un billet de 10 CHF. Combien te rend-on ?',
-    unit: 'CHF',
+    text: 'Au marché, tu achètes 4 pommes à 0,50 €, 3 bananes à 0,30 € et 1 pastèque à 3 €. Tu paies avec un billet de 10 €. Combien te rend-on ?',
+    unit: '€',
     answer: 4.1,
-    hint: 'Calcule le prix total de chaque fruit, puis soustrais de 10 CHF.',
-    explanation: 'Pommes : 4 × 0,50 = 2 CHF. Bananes : 3 × 0,30 = 0,90 CHF. Pastèque : 3 CHF. Total : 5,90 CHF. Rendu : 10 − 5,90 = 4,10 CHF.'
+    hint: 'Calcule le prix total de chaque fruit, puis soustrais de 10 €.',
+    explanation: 'Pommes : 4 × 0,50 = 2 €. Bananes : 3 × 0,30 = 0,90 €. Pastèque : 3 €. Total : 5,90 €. Rendu : 10 − 5,90 = 4,10 €.'
   },
   {
     category: 'calcul',
@@ -519,11 +519,11 @@ const RIDDLE_BANK = [
   },
   {
     category: 'calcul',
-    text: 'Un magasin fait une réduction de 10 CHF sur un article à 65 CHF. Tu achètes 2 de ces articles en promotion. Combien paies-tu ?',
-    unit: 'CHF',
+    text: 'Un magasin fait une réduction de 10 € sur un article à 65 €. Tu achètes 2 de ces articles en promotion. Combien paies-tu ?',
+    unit: '€',
     answer: 110,
     hint: 'Calcule d\'abord le prix réduit d\'un article.',
-    explanation: 'Prix réduit : 65 − 10 = 55 CHF. Pour 2 articles : 55 × 2 = 110 CHF.'
+    explanation: 'Prix réduit : 65 − 10 = 55 €. Pour 2 articles : 55 × 2 = 110 €.'
   },
   {
     category: 'calcul',
@@ -559,11 +559,11 @@ const RIDDLE_BANK = [
   },
   {
     category: 'calcul',
-    text: 'Tu fais les courses avec 50 CHF. Tu achètes : 2 pizzas à 8 CHF chacune, 1 salade à 3 CHF, 4 yaourts à 1,50 CHF chacun et 1 jus à 2 CHF. Combien te reste-t-il ?',
-    unit: 'CHF',
+    text: 'Tu fais les courses avec 50 €. Tu achètes : 2 pizzas à 8 € chacune, 1 salade à 3 €, 4 yaourts à 1,50 € chacun et 1 jus à 2 €. Combien te reste-t-il ?',
+    unit: '€',
     answer: 23,
     hint: 'Calcule le prix de chaque article puis le total.',
-    explanation: 'Pizzas : 2 × 8 = 16 CHF. Salade : 3 CHF. Yaourts : 4 × 1,50 = 6 CHF. Jus : 2 CHF. Total : 27 CHF. Reste : 50 − 27 = 23 CHF.'
+    explanation: 'Pizzas : 2 × 8 = 16 €. Salade : 3 €. Yaourts : 4 × 1,50 = 6 €. Jus : 2 €. Total : 27 €. Reste : 50 − 27 = 23 €.'
   },
   {
     category: 'calcul',
@@ -931,11 +931,11 @@ const RIDDLE_BANK = [
   },
   {
     category: 'geometrie',
-    text: 'Une chambre rectangulaire mesure 5 m de long et 4 m de large. On veut la couvrir de moquette à 12 CHF le m². Combien coûte la moquette ?',
-    unit: 'CHF',
+    text: 'Une chambre rectangulaire mesure 5 m de long et 4 m de large. On veut la couvrir de moquette à 12 € le m². Combien coûte la moquette ?',
+    unit: '€',
     answer: 240,
     hint: 'Calcule l\'aire de la chambre, puis multiplie par le prix au m².',
-    explanation: 'Aire = 5 × 4 = 20 m². Coût : 20 × 12 = 240 CHF.'
+    explanation: 'Aire = 5 × 4 = 20 m². Coût : 20 × 12 = 240 €.'
   },
   {
     category: 'geometrie',
@@ -955,11 +955,11 @@ const RIDDLE_BANK = [
   },
   {
     category: 'geometrie',
-    text: 'Un jardin carré a un côté de 8 m. On veut l\'entourer d\'une clôture qui coûte 15 CHF par mètre. Quel est le coût total ?',
-    unit: 'CHF',
+    text: 'Un jardin carré a un côté de 8 m. On veut l\'entourer d\'une clôture qui coûte 15 € par mètre. Quel est le coût total ?',
+    unit: '€',
     answer: 480,
     hint: 'Calcule d\'abord le périmètre du carré.',
-    explanation: 'Périmètre = 4 × 8 = 32 m. Coût : 32 × 15 = 480 CHF.'
+    explanation: 'Périmètre = 4 × 8 = 32 m. Coût : 32 × 15 = 480 €.'
   },
   {
     category: 'geometrie',
@@ -1119,11 +1119,11 @@ const RIDDLE_BANK = [
   },
   {
     category: 'fractions',
-    text: 'Un héritage de 12 000 CHF est partagé entre 3 frères. L\'aîné reçoit 1/2, le cadet 1/3 et le benjamin le reste. Combien reçoit le benjamin ?',
-    unit: 'CHF',
+    text: 'Un héritage de 12 000 € est partagé entre 3 frères. L\'aîné reçoit 1/2, le cadet 1/3 et le benjamin le reste. Combien reçoit le benjamin ?',
+    unit: '€',
     answer: 2000,
     hint: 'Calcule la part de l\'aîné et du cadet, puis déduis le reste.',
-    explanation: 'Aîné : 1/2 de 12 000 = 6 000 CHF. Cadet : 1/3 de 12 000 = 4 000 CHF. Benjamin : 12 000 − 6 000 − 4 000 = 2 000 CHF.'
+    explanation: 'Aîné : 1/2 de 12 000 = 6 000 €. Cadet : 1/3 de 12 000 = 4 000 €. Benjamin : 12 000 − 6 000 − 4 000 = 2 000 €.'
   },
   {
     category: 'fractions',
@@ -1283,11 +1283,11 @@ const RIDDLE_BANK = [
   },
   {
     category: 'mesures',
-    text: 'Tu achètes 3 baguettes à 1,20 CHF chacune et un croissant à 1,50 CHF. Tu paies avec un billet de 10 CHF. Combien te rend-on ?',
-    unit: 'CHF',
+    text: 'Tu achètes 3 baguettes à 1,20 € chacune et un croissant à 1,50 €. Tu paies avec un billet de 10 €. Combien te rend-on ?',
+    unit: '€',
     answer: 4.9,
-    hint: 'Calcule le total dépensé, puis soustrais de 10 CHF.',
-    explanation: '3 × 1,20 = 3,60 CHF. Total : 3,60 + 1,50 = 5,10 CHF. Rendu : 10 − 5,10 = 4,90 CHF.'
+    hint: 'Calcule le total dépensé, puis soustrais de 10 €.',
+    explanation: '3 × 1,20 = 3,60 €. Total : 3,60 + 1,50 = 5,10 €. Rendu : 10 − 5,10 = 4,90 €.'
   },
   {
     category: 'mesures',
@@ -1535,10 +1535,10 @@ const RIDDLE_BANK = [
   },
   {
     category: 'ouvert',
-    text: 'Tu as des pièces de 1 CHF, 2 CHF et 5 CHF. De combien de façons peux-tu faire exactement 10 CHF ?',
+    text: 'Tu as des pièces de 1 €, 2 € et 5 €. De combien de façons peux-tu faire exactement 10 € ?',
     unit: '',
     answer: 10,
-    hint: 'Commence par le nombre de pièces de 5 CHF (0, 1 ou 2), puis essaie les combinaisons.',
+    hint: 'Commence par le nombre de pièces de 5 € (0, 1 ou 2), puis essaie les combinaisons.',
     explanation: 'Avec 2×5 : 1 façon. Avec 1×5 : 5 restants → (0×2,5×1), (1×2,3×1), (2×2,1×1) = 3 façons. Avec 0×5 : 10 restants → (0×2,10×1), (1×2,8×1), (2×2,6×1), (3×2,4×1), (4×2,2×1), (5×2,0×1) = 6 façons. Total : 1+3+6 = 10.'
   },
   {
@@ -1647,80 +1647,1076 @@ const RIDDLE_BANK = [
   },
 
   // ═══════════════════════════════════════════════════════════════════
-  // NEW 60 RIDDLES (10 per category)
+  // HEROIC FANTASY
   // ═══════════════════════════════════════════════════════════════════
+  {
+    category: 'calcul',
+    text: 'Le dragon Ignar possède 7 grottes secrètes. Dans chaque grotte, il cache 144 pièces d\'or. Combien de pièces d\'or possède-t-il en tout ?',
+    unit: 'pièces',
+    answer: 1008,
+    hint: 'Multiplie le nombre de grottes par le nombre de pièces dans chaque grotte.',
+    explanation: '7 grottes × 144 pièces = 1 008 pièces d\'or au total.'
+  },
+  {
+    category: 'calcul',
+    text: 'La sorcière Mélusine prépare une potion magique. Elle a besoin de 3 ingrédients rares. Le premier coûte 48 pièces, le deuxième coûte le double du premier, et le troisième coûte 35 pièces. Combien dépense-t-elle en tout ?',
+    unit: 'pièces',
+    answer: 179,
+    hint: 'Commence par calculer le prix du deuxième ingrédient, puis additionne les trois.',
+    explanation: 'Le deuxième ingrédient coûte 48 × 2 = 96 pièces. Total : 48 + 96 + 35 = 179 pièces.'
+  },
+  {
+    category: 'calcul',
+    text: 'Le chevalier Aldric tue 9 monstres par jour pendant 8 jours. Son écuyer en tue 3 fois moins au total. Combien de monstres ont-ils tués ensemble ?',
+    unit: 'monstres',
+    answer: 96,
+    hint: 'Calcule d\'abord le total du chevalier, puis celui de l\'écuyer, puis additionne.',
+    explanation: 'Aldric : 9 × 8 = 72 monstres. L\'écuyer : 72 ÷ 3 = 24 monstres. Ensemble : 72 + 24 = 96 monstres.'
+  },
+  {
+    category: 'logique',
+    text: 'Trois elfes — Aël, Brin et Célindë — portent chacun une gemme différente : un rubis, une émeraude et un saphir. Aël ne porte pas le rubis ni l\'émeraude. Brin ne porte pas l\'émeraude. Qui porte le rubis ?',
+    unit: '',
+    answer: null,
+    textAnswer: 'brin',
+    hint: 'Commence par Aël : s\'il ne porte ni le rubis ni l\'émeraude, que lui reste-t-il ?',
+    explanation: 'Aël ne porte ni rubis ni émeraude → Aël porte le saphir. Brin ne porte pas l\'émeraude → Brin porte le rubis. Célindë porte l\'émeraude.'
+  },
+  {
+    category: 'logique',
+    text: 'Un magicien pense à un nombre entre 1 et 20. Il donne trois indices : le nombre est pair, il est plus grand que 12, et il n\'est pas divisible par 4. Quels sont les deux nombres possibles ? Donne le plus petit.',
+    unit: '',
+    answer: 14,
+    hint: 'Liste les nombres pairs entre 13 et 20, puis élimine ceux divisibles par 4.',
+    explanation: 'Nombres pairs > 12 et ≤ 20 : 14, 16, 18, 20. Divisibles par 4 : 16 et 20. Restent 14 et 18. Le plus petit est 14.'
+  },
+  {
+    category: 'geometrie',
+    text: 'Le château du roi Arthus est entouré d\'un fossé rectangulaire de 120 m de long et 80 m de large. Quelle est la longueur totale du fossé ?',
+    unit: 'm',
+    answer: 400,
+    hint: 'Le périmètre d\'un rectangle = 2 × (longueur + largeur).',
+    explanation: 'Périmètre = 2 × (120 + 80) = 2 × 200 = 400 m.'
+  },
+  {
+    category: 'geometrie',
+    text: 'La salle du trône est un triangle dont les côtés mesurent 15 m, 20 m et 25 m. Le roi veut tapisser les murs d\'une bordure dorée. Quelle longueur de bordure faut-il ?',
+    unit: 'm',
+    answer: 60,
+    hint: 'Le périmètre d\'un triangle = somme de ses trois côtés.',
+    explanation: 'Périmètre = 15 + 20 + 25 = 60 m de bordure.'
+  },
+  {
+    category: 'geometrie',
+    text: 'L\'arène des chevaliers est un carré de 35 m de côté. Un écuyer doit courir 3 fois le tour de l\'arène pour s\'entraîner. Quelle distance parcourt-il ?',
+    unit: 'm',
+    answer: 420,
+    hint: 'Calcule d\'abord le périmètre du carré, puis multiplie par 3.',
+    explanation: 'Périmètre = 4 × 35 = 140 m. Distance totale = 140 × 3 = 420 m.'
+  },
+  {
+    category: 'fractions',
+    text: 'Le magicien Oryn possède un grimoire de 120 sorts. Il a déjà appris 3/4 des sorts. Combien de sorts connaît-il ?',
+    unit: 'sorts',
+    answer: 90,
+    hint: 'Divise 120 par 4 pour trouver 1/4, puis multiplie par 3.',
+    explanation: '1/4 de 120 = 30 sorts. Donc 3/4 = 30 × 3 = 90 sorts.'
+  },
+  {
+    category: 'fractions',
+    text: 'Une fée a cueilli 48 fleurs magiques. Elle en offre 1/6 à la reine des elfes et 1/4 à son ami le lutin. Combien de fleurs lui reste-t-il ?',
+    unit: 'fleurs',
+    answer: 28,
+    hint: 'Calcule 1/6 et 1/4 de 48 séparément, puis soustrais les deux du total.',
+    explanation: '1/6 de 48 = 8 fleurs. 1/4 de 48 = 12 fleurs. Reste : 48 − 8 − 12 = 28 fleurs.'
+  },
+  {
+    category: 'fractions',
+    text: 'Un dragon a rempli 2/3 d\'un coffre avec des rubis et 1/6 avec des émeraudes. Quelle fraction du coffre est encore vide ? Donne le dénominateur.',
+    unit: '',
+    answer: 6,
+    hint: 'Convertis les fractions avec le même dénominateur, additionne-les, puis soustrais de 1.',
+    explanation: '2/3 = 4/6. Total rempli : 4/6 + 1/6 = 5/6. Vide : 6/6 − 5/6 = 1/6. Le dénominateur est 6.'
+  },
+  {
+    category: 'mesures',
+    text: 'Le jeune apprenti sorcier doit marcher jusqu\'à la tour enchantée, distante de 3 km et 400 m. Il a déjà parcouru 1 750 m. Combien de mètres lui reste-t-il ?',
+    unit: 'm',
+    answer: 1650,
+    hint: 'Convertis 3 km 400 m en mètres, puis soustrais.',
+    explanation: '3 km 400 m = 3 400 m. Distance restante : 3 400 − 1 750 = 1 650 m.'
+  },
+  {
+    category: 'mesures',
+    text: 'La potion de guérison nécessite 2 kg et 300 g de racines de mandragore. L\'herboriste a déjà préparé 850 g. Combien de grammes manque-t-il ?',
+    unit: 'g',
+    answer: 1450,
+    hint: 'Convertis la quantité totale en grammes, puis soustrais.',
+    explanation: '2 kg 300 g = 2 300 g. Quantité manquante : 2 300 − 850 = 1 450 g.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Le roi dispose de 3 bannières (rouge, bleue, dorée) et de 2 emblèmes (aigle, dragon). Combien d\'étendards différents peut-il créer en combinant une bannière et un emblème ?',
+    unit: '',
+    answer: 6,
+    hint: 'Chaque bannière peut être associée à chaque emblème.',
+    explanation: '3 bannières × 2 emblèmes = 6 étendards différents.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Quatre aventuriers — un guerrier, un mage, un archer et un voleur — doivent traverser un pont en équipe de 2. Combien de duos différents peuvent-ils former ?',
+    unit: '',
+    answer: 6,
+    hint: 'Liste tous les duos possibles sans compter deux fois la même paire.',
+    explanation: 'Guerrier+Mage, Guerrier+Archer, Guerrier+Voleur, Mage+Archer, Mage+Voleur, Archer+Voleur = 6 duos.'
+  },
 
-  // NEW CALCUL (10 riddles)
-  { category: 'calcul', text: '53 billes doivent être réparties équitablement entre 6 joueurs. Combien chaque joueur reçoit-il de billes entières ?', unit: '', answer: 8, hint: 'Combien de fois 6 rentre-t-il dans 53 ?', explanation: '53 ÷ 6 = 8 et il reste 5. Chaque joueur reçoit 8 billes.' },
-  { category: 'calcul', text: 'La maîtresse veut distribuer 47 feutres en lots de 5. Combien de lots complets peut-elle faire ?', unit: '', answer: 9, hint: 'Divise 47 par 5.', explanation: '47 ÷ 5 = 9 lots complets (et 2 feutres restants).' },
-  { category: 'calcul', text: '4 cahiers coûtent 12 CHF. Combien coûtent 7 cahiers au même prix ?', unit: 'CHF', answer: 21, hint: 'Calcule d\'abord le prix d\'un seul cahier.', explanation: 'Un cahier = 12 ÷ 4 = 3 CHF. Donc 7 cahiers = 7 × 3 = 21 CHF.' },
-  { category: 'calcul', text: 'Un cycliste parcourt 60 km en 3 heures. Combien de kilomètres parcourt-il en 5 heures au même rythme ?', unit: 'km', answer: 100, hint: 'Calcule la distance parcourue en 1 heure.', explanation: 'En 1 heure : 60 ÷ 3 = 20 km. En 5 heures : 20 × 5 = 100 km.' },
-  { category: 'calcul', text: 'Tu achètes un sandwich à 3,50 CHF et un jus à 1,25 CHF. Tu paies avec un billet de 10 CHF. Combien te rend-on ?', unit: 'CHF', answer: 5.25, hint: 'Additionne les deux prix, puis soustrais de 10.', explanation: '3,50 + 1,25 = 4,75 CHF. 10 − 4,75 = 5,25 CHF.' },
-  { category: 'calcul', text: 'Des petits pains coûtent 0,75 CHF pièce. Tu en achètes 8. Quel est le prix total ?', unit: 'CHF', answer: 6, hint: 'Multiplie 0,75 par 8.', explanation: '0,75 × 8 = 6 CHF.' },
-  { category: 'calcul', text: 'Un sac coûte 40 CHF. La boutique offre une réduction de 25 %. Quel est le prix après réduction ?', unit: 'CHF', answer: 30, hint: '25 % de 40, c\'est le quart de 40.', explanation: '25 % de 40 = 40 ÷ 4 = 10 CHF. Prix réduit = 40 − 10 = 30 CHF.' },
-  { category: 'calcul', text: 'Léa a marqué 80 % des paniers lors d\'un entraînement de basket. Elle a tiré 20 fois. Combien de paniers a-t-elle réussis ?', unit: '', answer: 16, hint: '80 % de 20, c\'est 80 ÷ 100 × 20.', explanation: '80 ÷ 100 × 20 = 16 paniers réussis.' },
-  { category: 'calcul', text: 'Théo a 45 CHF. Il gagne 12 CHF en rendant service à son voisin. Il achète un livre à 8 CHF et offre 5 CHF à sa sœur. Combien lui reste-t-il ?', unit: 'CHF', answer: 44, hint: 'Fais les opérations dans l\'ordre : + 12, − 8, − 5.', explanation: '45 + 12 = 57. 57 − 8 = 49. 49 − 5 = 44 CHF.' },
-  { category: 'calcul', text: 'Une boulangerie cuit 3 fournées de 24 pains le matin. Elle en vend 58 dans la journée et reçoit une livraison de 15 pains en fin d\'après-midi. Combien de pains reste-t-il le soir ?', unit: '', answer: 29, hint: 'Étape 1 : total produit (3 × 24). Étape 2 : soustraire les ventes. Étape 3 : ajouter la livraison.', explanation: '3 × 24 = 72 pains. 72 − 58 = 14. 14 + 15 = 29 pains.' },
+  // ═══════════════════════════════════════════════════════════════════
+  // ESPACE
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    category: 'calcul',
+    text: 'Une fusée met 8 minutes pour atteindre l\'orbite. Elle effectue 6 tours de la Terre (92 minutes chacun), puis revient en 8 minutes. Combien de minutes dure le voyage ?',
+    unit: 'minutes',
+    answer: 568,
+    hint: 'Calcule la durée des 6 tours, puis ajoute montée et descente.',
+    explanation: '6 × 92 = 552 minutes. Montée + descente : 8 + 8 = 16 min. Total : 552 + 16 = 568 minutes.'
+  },
+  {
+    category: 'calcul',
+    text: 'La Station Spatiale tourne autour de la Terre 16 fois par jour. En 3 jours, combien de tours aura-t-elle effectués ?',
+    unit: 'tours',
+    answer: 48,
+    hint: 'Multiplie le nombre de tours par jour par le nombre de jours.',
+    explanation: '16 × 3 = 48 tours.'
+  },
+  {
+    category: 'calcul',
+    text: 'Un astronaute pèse 75 kg sur Terre. Sur la Lune, il ne pèse qu\'un sixième de son poids terrestre. Quel est son poids sur la Lune ?',
+    unit: 'kg',
+    answer: 12.5,
+    hint: 'Divise le poids terrestre par 6.',
+    explanation: '75 ÷ 6 = 12,5 kg sur la Lune.'
+  },
+  {
+    category: 'logique',
+    text: 'Un alien a 3 têtes et chaque tête a 4 yeux. Un autre alien a 2 têtes et chaque tête a 7 yeux. Lequel a le plus d\'yeux, et de combien ?',
+    unit: '',
+    answer: 2,
+    hint: 'Calcule le total d\'yeux de chaque créature, puis fais la différence.',
+    explanation: 'Alien 1 : 3 × 4 = 12 yeux. Alien 2 : 2 × 7 = 14 yeux. La différence : 14 − 12 = 2 yeux de plus.'
+  },
+  {
+    category: 'logique',
+    text: 'Une sonde spatiale envoie un signal toutes les 9 secondes, une autre toutes les 12 secondes. Elles envoient un signal en même temps à t=0. Après combien de secondes enverront-elles à nouveau un signal simultanément ?',
+    unit: 'secondes',
+    answer: 36,
+    hint: 'Cherche le plus petit multiple commun de 9 et de 12.',
+    explanation: 'Multiples de 9 : 9, 18, 27, 36… Multiples de 12 : 12, 24, 36… Le PPCM est 36 secondes.'
+  },
+  {
+    category: 'geometrie',
+    text: 'Un cratère lunaire est parfaitement circulaire avec un diamètre de 10 km. Quelle est sa circonférence ? (π ≈ 3,14)',
+    unit: 'km',
+    answer: 31.4,
+    hint: 'Circonférence = π × diamètre.',
+    explanation: 'Circonférence = 3,14 × 10 = 31,4 km.'
+  },
+  {
+    category: 'geometrie',
+    text: 'Une fenêtre carrée d\'une capsule spatiale mesure 40 cm de côté. Quelle est son aire ?',
+    unit: 'cm²',
+    answer: 1600,
+    hint: 'Aire d\'un carré = côté × côté.',
+    explanation: '40 × 40 = 1 600 cm².'
+  },
+  {
+    category: 'geometrie',
+    text: 'Une antenne de vaisseau spatial a la forme d\'un triangle rectangle. Ses deux côtés autour de l\'angle droit mesurent 6 m et 8 m. Quelle est son aire ?',
+    unit: 'm²',
+    answer: 24,
+    hint: 'Aire d\'un triangle = (base × hauteur) ÷ 2.',
+    explanation: '(6 × 8) ÷ 2 = 48 ÷ 2 = 24 m².'
+  },
+  {
+    category: 'fractions',
+    text: 'Un vaisseau transporte 120 kg de nourriture. Les astronautes mangent 1/4 le premier mois et 1/3 le deuxième. Combien de kg reste-t-il ?',
+    unit: 'kg',
+    answer: 50,
+    hint: 'Calcule ce qui est mangé chaque mois, puis soustrais du total.',
+    explanation: '1/4 de 120 = 30 kg. 1/3 de 120 = 40 kg. Consommé : 70 kg. Reste : 120 − 70 = 50 kg.'
+  },
+  {
+    category: 'fractions',
+    text: 'Sur 48 étoiles observées au télescope, 3/8 sont des géantes rouges. Combien d\'étoiles sont des géantes rouges ?',
+    unit: '',
+    answer: 18,
+    hint: 'Divise 48 par 8, puis multiplie par 3.',
+    explanation: '48 ÷ 8 = 6. 6 × 3 = 18 géantes rouges.'
+  },
+  {
+    category: 'fractions',
+    text: 'Une mission spatiale dure 180 jours. L\'équipage a déjà effectué 5/12 de la mission. Combien de jours reste-t-il ?',
+    unit: 'jours',
+    answer: 105,
+    hint: 'Calcule les jours effectués, puis soustrais du total.',
+    explanation: '5/12 de 180 = 15 × 5 = 75 jours effectués. Reste : 180 − 75 = 105 jours.'
+  },
+  {
+    category: 'mesures',
+    text: 'Un scaphandre pèse 12 kg sur Terre. Sur Mars, les objets pèsent environ 4/10 de leur poids terrestre. Quel est le poids du scaphandre sur Mars ?',
+    unit: 'kg',
+    answer: 4.8,
+    hint: 'Multiplie le poids terrestre par 4/10.',
+    explanation: '12 × 4/10 = 12 × 0,4 = 4,8 kg.'
+  },
+  {
+    category: 'mesures',
+    text: 'Une navette spatiale consomme 500 litres de carburant par minute au décollage. Le réservoir contient 6 000 litres. Combien de minutes de décollage sont possibles ?',
+    unit: 'minutes',
+    answer: 12,
+    hint: 'Divise la quantité de carburant par la consommation par minute.',
+    explanation: '6 000 ÷ 500 = 12 minutes.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Un commandant veut former une équipe de 2 astronautes parmi 4 candidats : Ada, Bruno, Cara et Diego. Combien d\'équipes différentes peut-il former ?',
+    unit: '',
+    answer: 6,
+    hint: 'Liste toutes les paires possibles sans doublon.',
+    explanation: 'Ada-Bruno, Ada-Cara, Ada-Diego, Bruno-Cara, Bruno-Diego, Cara-Diego = 6 équipes.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Un vaisseau doit ravitailler 3 stations : Alpha, Bêta et Gamma, dans n\'importe quel ordre. Combien d\'itinéraires différents peut-il choisir ?',
+    unit: '',
+    answer: 6,
+    hint: 'Combien de choix pour la 1ère station ? Pour la 2e ? La 3e ?',
+    explanation: '3 × 2 × 1 = 6 itinéraires différents.'
+  },
 
-  // NEW LOGIQUE (10 riddles)
-  { category: 'logique', text: 'Qui suis-je ?\n• Je suis un nombre à 2 chiffres.\n• La somme de mes chiffres est 9.\n• Mon double vaut 54.', unit: '', answer: 27, hint: 'Cherche un nombre à 2 chiffres dont les chiffres font 9. Puis vérifie le double.', explanation: '2 + 7 = 9 et 27 × 2 = 54. Je suis 27.' },
-  { category: 'logique', text: 'Qui suis-je ?\n• Je suis un nombre pair à 2 chiffres.\n• Mon chiffre des dizaines est 3.\n• La somme de mes chiffres est 7.', unit: '', answer: 34, hint: 'Le chiffre des dizaines est 3. Si la somme est 7, quel est le chiffre des unités ?', explanation: '3 + ? = 7 → unités = 4. Et 34 est bien pair. Je suis 34.' },
-  { category: 'logique', text: 'Trois amis ont chacun un animal : un chat, un chien ou un poisson.\nAna n\'a pas de poisson. Ben a un chat.\nQui a le poisson ? (1=Ana, 2=Ben, 3=Clara)', unit: '', answer: 3, hint: 'Ben a le chat. Ana n\'a pas le poisson. Il reste qui ?', explanation: 'Ben → chat. Ana → pas de poisson, donc Ana → chien. Clara → poisson. Réponse : 3.' },
-  { category: 'logique', text: 'Léo, Mia et Noa jouent à trois sports : foot, natation, tennis.\nMia ne joue pas au foot. Noa joue au tennis.\nQuel sport fait Léo ? (1=foot, 2=natation, 3=tennis)', unit: '', answer: 1, hint: 'Noa prend le tennis. Mia n\'a pas le foot. Que reste-t-il pour Léo ?', explanation: 'Noa → tennis. Mia → pas foot → natation. Léo → foot. Réponse : 1.' },
-  { category: 'logique', text: 'Alice, Ben, Carla et Dim font la queue.\n• Alice est 1ère.\n• Dim est 3ème.\nQuelle est la position de Ben si Carla est la dernière ?', unit: '', answer: 2, hint: 'Alice=1, Dim=3, Carla=4. Il ne reste qu\'une place pour Ben.', explanation: 'Alice=1ère, Dim=3ème, Carla=4ème. La seule place restante est la 2ème. Ben est 2ème.' },
-  { category: 'logique', text: 'Trouve le nombre mystère :\n• Je suis entre 1 et 50.\n• Je suis impair.\n• Mon chiffre des dizaines est le double de mon chiffre des unités.\n• Je suis inférieur à 50.', unit: '', answer: 21, hint: 'Dizaines = 2 × unités. Essaie unité=1 → dizaine=2 → 21.', explanation: 'Unité=1 → dizaine=2 → 21 (impair ✓, <50 ✓). Unité=2 → 42 (pair ✗). Réponse : 21.' },
-  { category: 'logique', text: 'Sur une balance, 3 billes bleues et 1 bille rouge sont en équilibre avec 1 bille dorée.\nUne bille dorée pèse 120 g. Une bille rouge pèse 30 g.\nCombien pèse une bille bleue ?', unit: 'g', answer: 30, hint: '3 bleues + 1 rouge = 120 g. Retire le poids de la rouge.', explanation: '3 bleues + 30 = 120. 3 bleues = 90. 1 bleue = 90 ÷ 3 = 30 g.' },
-  { category: 'logique', text: 'Un chat pèse 3 fois plus qu\'un lapin. Le lapin pèse 1 200 g. Combien pèse le chat ?', unit: 'g', answer: 3600, hint: 'Multiplie le poids du lapin par 3.', explanation: '3 × 1 200 = 3 600 g.' },
-  { category: 'logique', text: 'Éva, Félix, Gaël et Hana arrivent dans l\'ordre à un jeu.\n• Gaël est 2ème.\n• Hana est 4ème.\n• Éva arrive avant Félix.\nQuelle est la position d\'Éva ?', unit: '', answer: 1, hint: 'Gaël=2, Hana=4. Il reste 1 et 3 pour Éva et Félix.', explanation: 'Gaël=2ème, Hana=4ème. Places libres : 1 et 3. Éva avant Félix → Éva=1ère, Félix=3ème.' },
-  { category: 'logique', text: 'Trois sachets A, B et C. A pèse 30 g de plus que B. B pèse 20 g de plus que C. C pèse 50 g. Combien pèse A ?', unit: 'g', answer: 100, hint: 'Calcule B = C + 20, puis A = B + 30.', explanation: 'C = 50 g. B = 50 + 20 = 70 g. A = 70 + 30 = 100 g.' },
+  // ═══════════════════════════════════════════════════════════════════
+  // SPORT
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    category: 'calcul',
+    text: 'Un basketteur marque 8 paniers à 2 points et 5 paniers à 3 points. Combien de points a-t-il marqué en tout ?',
+    unit: '',
+    answer: 31,
+    hint: 'Calcule séparément les points à 2 et à 3, puis additionne.',
+    explanation: '8 × 2 = 16 points. 5 × 3 = 15 points. Total : 16 + 15 = 31 points.'
+  },
+  {
+    category: 'calcul',
+    text: 'Un stade a 4 tribunes. Deux ont 3 200 places chacune et les deux autres 1 850 places chacune. Combien de spectateurs le stade peut-il accueillir ?',
+    unit: '',
+    answer: 10100,
+    hint: 'Calcule le total de chaque paire, puis additionne.',
+    explanation: '2 × 3 200 = 6 400. 2 × 1 850 = 3 700. Total : 6 400 + 3 700 = 10 100 places.'
+  },
+  {
+    category: 'calcul',
+    text: 'Lors d\'un tournoi de tennis, chaque joueur affronte tous les autres une seule fois. Il y a 6 joueurs. Combien de matchs seront joués ?',
+    unit: '',
+    answer: 15,
+    hint: 'Le premier joue 5 matchs, le deuxième 4 nouveaux matchs, et ainsi de suite.',
+    explanation: '5 + 4 + 3 + 2 + 1 = 15 matchs au total.'
+  },
+  {
+    category: 'logique',
+    text: 'Cinq coureurs franchissent la ligne d\'arrivée. Lucas arrive avant Emma mais après Théo. Sofia arrive juste après Emma. Hugo arrive en dernier. Qui arrive en 3e position ?',
+    unit: '',
+    answer: null,
+    textAnswer: 'emma',
+    hint: 'Place Théo et Lucas d\'abord, puis Emma, puis les autres.',
+    explanation: 'Théo 1er, Lucas 2e (après Théo, avant Emma), Emma 3e, Sofia 4e (juste après Emma), Hugo 5e.'
+  },
+  {
+    category: 'logique',
+    text: 'Dans une compétition de natation, les Requins ont 12 points de plus que les Dauphins. Les Dauphins ont le double des Orques. Les Orques ont 9 points. Combien de points ont les Requins ?',
+    unit: '',
+    answer: 30,
+    hint: 'Commence par les Orques, puis calcule les Dauphins, puis les Requins.',
+    explanation: 'Orques : 9. Dauphins : 9 × 2 = 18. Requins : 18 + 12 = 30 points.'
+  },
+  {
+    category: 'geometrie',
+    text: 'Un terrain de basketball mesure 28 m de long et 15 m de large. Quelle est son aire ?',
+    unit: 'm²',
+    answer: 420,
+    hint: 'Aire d\'un rectangle = longueur × largeur.',
+    explanation: '28 × 15 = 420 m².'
+  },
+  {
+    category: 'geometrie',
+    text: 'Le sol d\'un vestiaire carré mesure 6 m de côté. On le carrele avec des dalles de 30 cm de côté. Combien de dalles faut-il ?',
+    unit: '',
+    answer: 400,
+    hint: 'Convertis 6 m en cm, puis calcule combien de dalles par rangée.',
+    explanation: '6 m = 600 cm. Par rangée : 600 ÷ 30 = 20 dalles. Total : 20 × 20 = 400 dalles.'
+  },
+  {
+    category: 'fractions',
+    text: 'Lors d\'un match de handball, la France marque 24 buts. 3/8 sont marqués en 1re mi-temps. Combien de buts en 1re mi-temps ?',
+    unit: '',
+    answer: 9,
+    hint: 'Calcule 3/8 de 24.',
+    explanation: '24 ÷ 8 = 3. 3 × 3 = 9 buts en première mi-temps.'
+  },
+  {
+    category: 'fractions',
+    text: 'Un cycliste parcourt 120 km en une journée. Il a déjà fait 2/5 du trajet. Combien de km lui reste-t-il ?',
+    unit: 'km',
+    answer: 72,
+    hint: 'Calcule la distance parcourue, puis la distance restante.',
+    explanation: '2/5 de 120 = 48 km parcourus. Reste : 120 − 48 = 72 km.'
+  },
+  {
+    category: 'fractions',
+    text: 'Dans une équipe de 30 gymnastes, 1/3 sont des garçons. Parmi les filles, 1/4 ont remporté une médaille. Combien de filles sont médaillées ?',
+    unit: '',
+    answer: 5,
+    hint: 'Trouve d\'abord le nombre de filles, puis calcule 1/4.',
+    explanation: '1/3 de 30 = 10 garçons. Filles : 30 − 10 = 20. 1/4 de 20 = 5 filles médaillées.'
+  },
+  {
+    category: 'mesures',
+    text: 'Un match de rugby dure 2 × 40 minutes avec 15 minutes de pause. S\'il commence à 14h30, à quelle heure se termine-t-il ? Donne les minutes.',
+    unit: '',
+    answer: 5,
+    hint: 'Calcule la durée totale, puis ajoute à 14h30.',
+    explanation: '40 + 15 + 40 = 95 minutes. 14h30 + 1h35 = 16h05. Les minutes sont 05.'
+  },
+  {
+    category: 'mesures',
+    text: 'Un athlète s\'entraîne 45 min/jour du lundi au vendredi et 1h30 le samedi. Combien de minutes s\'entraîne-t-il par semaine ?',
+    unit: 'minutes',
+    answer: 315,
+    hint: 'Calcule les minutes en semaine, puis ajoute le samedi.',
+    explanation: '5 × 45 = 225 min. Samedi : 1h30 = 90 min. Total : 225 + 90 = 315 minutes.'
+  },
+  {
+    category: 'mesures',
+    text: 'Un saut en longueur mesure 7 m 45 cm. Le record précédent était de 7 m 12 cm. De combien de cm le nouveau record dépasse-t-il l\'ancien ?',
+    unit: 'cm',
+    answer: 33,
+    hint: 'Convertis les deux distances en centimètres.',
+    explanation: '745 cm − 712 cm = 33 cm.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Un entraîneur doit former une équipe de 5 joueurs parmi 7 candidats, dont le capitaine obligatoire. De combien de façons peut-il choisir les 4 autres parmi les 6 restants ?',
+    unit: '',
+    answer: 15,
+    hint: 'Il faut choisir 4 parmi 6 : (6×5×4×3) ÷ (4×3×2×1).',
+    explanation: '(6×5×4×3) ÷ (4×3×2×1) = 360 ÷ 24 = 15 façons.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Aux JO, un pays remporte 3 médailles d\'or (5 pts), 4 d\'argent (3 pts) et 6 de bronze (1 pt). Quel est son score total ?',
+    unit: '',
+    answer: 33,
+    hint: 'Calcule les points de chaque type de médaille, puis additionne.',
+    explanation: '3 × 5 = 15. 4 × 3 = 12. 6 × 1 = 6. Total : 15 + 12 + 6 = 33 points.'
+  },
 
-  // NEW GÉOMÉTRIE (10 riddles)
-  { category: 'geometrie', text: 'Un triangle isocèle a deux côtés égaux de 9 cm et un troisième côté de 6 cm. Quel est son périmètre ?', unit: 'cm', answer: 24, hint: 'Additionne les trois côtés : 9 + 9 + 6.', explanation: '9 + 9 + 6 = 24 cm.' },
-  { category: 'geometrie', text: 'Un triangle a une base de 8 cm et une hauteur de 5 cm. Quelle est son aire ?', unit: 'cm²', answer: 20, hint: 'Aire du triangle = base × hauteur ÷ 2.', explanation: '8 × 5 = 40, puis 40 ÷ 2 = 20 cm².' },
-  { category: 'geometrie', text: 'Une piscine ronde a un diamètre de 6 m. Quel est son périmètre ? (Utilise π ≈ 3)', unit: 'm', answer: 18, hint: 'Circonférence ≈ diamètre × 3.', explanation: '6 × 3 = 18 m.' },
-  { category: 'geometrie', text: 'Un cercle a un rayon de 5 cm. Quelle est son aire approchée ? (Utilise π ≈ 3)', unit: 'cm²', answer: 75, hint: 'Aire ≈ rayon × rayon × 3.', explanation: '5 × 5 = 25, puis 25 × 3 = 75 cm².' },
-  { category: 'geometrie', text: 'Dans un angle droit (90°), un des deux angles complémentaires mesure 35°. Combien mesure l\'autre ?', unit: '°', answer: 55, hint: 'Les deux angles doivent faire 90° ensemble.', explanation: '90° − 35° = 55°.' },
-  { category: 'geometrie', text: 'Deux angles supplémentaires sont côte à côte sur une droite. L\'un mesure 110°. Combien mesure l\'autre ?', unit: '°', answer: 70, hint: 'Deux angles supplémentaires font 180° en tout.', explanation: '180° − 110° = 70°.' },
-  { category: 'geometrie', text: 'Une brique rectangulaire mesure 20 cm de long, 10 cm de large et 6 cm de haut. Quel est son volume ?', unit: 'cm³', answer: 1200, hint: 'Volume = longueur × largeur × hauteur.', explanation: '20 × 10 × 6 = 1 200 cm³.' },
-  { category: 'geometrie', text: 'Une boîte de jeu a une longueur de 5 cm, une largeur de 4 cm et une hauteur de 3 cm. Quel est son volume ?', unit: 'cm³', answer: 60, hint: 'Multiplie les trois dimensions.', explanation: '5 × 4 × 3 = 60 cm³.' },
-  { category: 'geometrie', text: 'Sur un quadrillage, le point M est en (2 ; 3). On trace l\'axe de symétrie vertical x = 5. Quelle est l\'abscisse du symétrique de M ?', unit: '', answer: 8, hint: 'M est à 3 cases de l\'axe (5 − 2 = 3). Reporte 3 cases de l\'autre côté.', explanation: 'Distance à l\'axe : 5 − 2 = 3. Symétrique : 5 + 3 = 8.' },
-  { category: 'geometrie', text: 'Sur un quadrillage, le point P est en (4 ; 1). On trace l\'axe horizontal y = 4. Quelle est l\'ordonnée du symétrique de P ?', unit: '', answer: 7, hint: 'P est à 3 cases de l\'axe (4 − 1 = 3). Reporte 3 cases de l\'autre côté.', explanation: 'Distance à l\'axe : 4 − 1 = 3. Symétrique : 4 + 3 = 7.' },
+  // ═══════════════════════════════════════════════════════════════════
+  // GAMER
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    category: 'calcul',
+    text: 'Dans un RPG, ton héros gagne 125 XP par monstre vaincu. Il en bat 8 pour passer au niveau suivant. Combien d\'XP gagne-t-il ?',
+    unit: 'XP',
+    answer: 1000,
+    hint: 'Multiplie le gain par combat par le nombre de combats.',
+    explanation: '125 × 8 = 1 000 XP.'
+  },
+  {
+    category: 'calcul',
+    text: 'Dans Minecraft, tu as 432 blocs de pierre. Tu construis un mur de 16 blocs par rangée. Combien de rangées complètes peux-tu faire ?',
+    unit: '',
+    answer: 27,
+    hint: 'Divise le total de blocs par le nombre de blocs par rangée.',
+    explanation: '432 ÷ 16 = 27 rangées complètes.'
+  },
+  {
+    category: 'calcul',
+    text: 'Un chasseur de trésors collecte 47 pièces dans la 1re salle, 83 dans la 2e et 69 dans la 3e. Le boss final lui en vole 35. Combien lui en reste-t-il ?',
+    unit: 'pièces',
+    answer: 164,
+    hint: 'Additionne tout, puis retire les pièces volées.',
+    explanation: '47 + 83 + 69 = 199. 199 − 35 = 164 pièces.'
+  },
+  {
+    category: 'logique',
+    text: 'Un coffre magique s\'ouvre avec un code à 3 chiffres. La somme des 3 chiffres est 12, le 1er chiffre est le double du 3e, et le 2e chiffre est 3. Quel est le code ?',
+    unit: '',
+    answer: 633,
+    hint: 'Le 2e chiffre est 3. Pose une équation pour les deux autres.',
+    explanation: '2e = 3. Reste 12 − 3 = 9. Le 1er = 2 × le 3e, donc 2x + x = 9, x = 3. Code : 633.'
+  },
+  {
+    category: 'logique',
+    text: 'Dans un jeu de plateforme, tu avances de 1, 2 ou 3 cases par saut. Combien de chemins différents pour atteindre la case 4 depuis la case 0 ?',
+    unit: '',
+    answer: 7,
+    hint: 'Liste toutes les combinaisons de sauts qui totalisent 4.',
+    explanation: '1+1+1+1, 1+1+2, 1+2+1, 2+1+1, 2+2, 1+3, 3+1 = 7 chemins.'
+  },
+  {
+    category: 'geometrie',
+    text: 'La carte d\'un jeu vidéo est un rectangle de 12 cm sur 7 cm. Quelle est son aire ?',
+    unit: 'cm²',
+    answer: 84,
+    hint: 'Aire d\'un rectangle = longueur × largeur.',
+    explanation: '12 × 7 = 84 cm².'
+  },
+  {
+    category: 'geometrie',
+    text: 'Dans un jeu de construction, tu entoures ta base carrée de 9 m de côté avec une clôture. Quelle longueur de clôture te faut-il ?',
+    unit: 'm',
+    answer: 36,
+    hint: 'Périmètre d\'un carré = 4 × côté.',
+    explanation: '4 × 9 = 36 m de clôture.'
+  },
+  {
+    category: 'fractions',
+    text: 'Tu as 24 potions magiques. Tu en utilises 1/4 contre un ogre, puis 1/3 de ce qui reste contre le boss. Combien de potions te reste-t-il ?',
+    unit: '',
+    answer: 12,
+    hint: 'Calcule après l\'ogre, puis enlève 1/3 de ce qui reste.',
+    explanation: '24 × 1/4 = 6 contre l\'ogre. Reste 18. 18 × 1/3 = 6 contre le boss. Reste : 12 potions.'
+  },
+  {
+    category: 'fractions',
+    text: 'Dans un jeu de stratégie, 3/5 de ton armée sont des archers. Si tu as 40 soldats, combien d\'archers as-tu ?',
+    unit: '',
+    answer: 24,
+    hint: 'Multiplie le total par 3/5.',
+    explanation: '40 × 3/5 = 120 ÷ 5 = 24 archers.'
+  },
+  {
+    category: 'mesures',
+    text: 'Une partie de jeu commence à 14h35 et se termine à 17h10. Combien de minutes a-t-elle duré ?',
+    unit: 'min',
+    answer: 155,
+    hint: 'Calcule la durée en heures et minutes, puis convertis en minutes.',
+    explanation: 'De 14h35 à 17h10 = 2h35 = 2 × 60 + 35 = 155 minutes.'
+  },
+  {
+    category: 'mesures',
+    text: 'Un personnage de jeu court à 8 m/s. En combien de secondes parcourt-il 120 m pour atteindre le portail ?',
+    unit: 's',
+    answer: 15,
+    hint: 'Divise la distance par la vitesse.',
+    explanation: '120 ÷ 8 = 15 secondes.'
+  },
+  {
+    category: 'mesures',
+    text: 'Dans un jeu de survie, ton personnage mange 250 g de nourriture par heure. Il part avec 2 kg. Combien d\'heures peut-il explorer ?',
+    unit: 'heures',
+    answer: 8,
+    hint: 'Convertis en grammes, puis divise.',
+    explanation: '2 kg = 2 000 g. 2 000 ÷ 250 = 8 heures.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Dans une boutique de jeu, une potion coûte 8 pièces et une flèche 3 pièces. Tu veux acheter exactement 10 objets pour 50 pièces. Combien de potions achètes-tu ?',
+    unit: '',
+    answer: 4,
+    hint: 'Si tu achètes p potions, tu achètes (10 − p) flèches. Pose l\'équation.',
+    explanation: '8p + 3(10−p) = 50 → 8p + 30 − 3p = 50 → 5p = 20 → p = 4 potions (et 6 flèches).'
+  },
+  {
+    category: 'ouvert',
+    text: 'Un plateau de jeu carré de 5×5 cases est colorié en échiquier (cases alternées). Si le coin haut-gauche est rouge, combien de cases rouges y a-t-il ?',
+    unit: '',
+    answer: 13,
+    hint: 'Dessine le quadrillage et compte. Les rangées impaires et paires n\'ont pas le même nombre de cases rouges.',
+    explanation: 'Rangées 1, 3, 5 : 3 cases rouges chacune. Rangées 2, 4 : 2 chacune. Total : 3+2+3+2+3 = 13.'
+  },
 
-  // NEW FRACTIONS (10 riddles)
-  { category: 'fractions', text: 'Complète : 3/4 = ?/12. Quel est le numérateur manquant ?', unit: '', answer: 9, hint: '4 a été multiplié par 3 pour faire 12. Fais pareil avec 3.', explanation: '4 × 3 = 12, donc 3 × 3 = 9. La fraction équivalente est 9/12.' },
-  { category: 'fractions', text: 'Deux élèves ont mangé la même quantité de tarte. Lola a mangé 2/3 et Marc a mangé ?/6. Quel est le numérateur de la part de Marc ?', unit: '', answer: 4, hint: 'Si 2/3 = ?/6, le dénominateur a été multiplié par 2.', explanation: '3 × 2 = 6, donc 2 × 2 = 4. Marc a mangé 4/6.' },
-  { category: 'fractions', text: 'Paul court 5/8 de km, Sophie court 3/8 de km. Qui court le plus loin ? Donne le numérateur de la plus grande distance.', unit: '', answer: 5, hint: 'Les dénominateurs sont identiques, compare les numérateurs.', explanation: 'Même dénominateur (8), donc 5/8 > 3/8. Numérateur = 5.' },
-  { category: 'fractions', text: 'Une bouteille A est remplie aux 2/5 et une bouteille B aux 4/5. Quelle est la plus pleine ? Donne son numérateur.', unit: '', answer: 4, hint: 'Les bouteilles ont le même dénominateur. Compare 2 et 4.', explanation: '4/5 > 2/5. La bouteille B est la plus pleine, numérateur = 4.' },
-  { category: 'fractions', text: 'Une ferme a 48 animaux. Les 3/4 sont des vaches. Combien de vaches y a-t-il ?', unit: '', answer: 36, hint: 'Calcule d\'abord 1/4 de 48, puis multiplie par 3.', explanation: '1/4 de 48 = 12. Donc 3/4 = 3 × 12 = 36 vaches.' },
-  { category: 'fractions', text: 'Dans une boîte de 60 crayons, 2/5 sont rouges. Combien de crayons rouges y a-t-il ?', unit: '', answer: 24, hint: 'Calcule 1/5 de 60, puis multiplie par 2.', explanation: '1/5 de 60 = 12. Donc 2/5 = 2 × 12 = 24 crayons rouges.' },
-  { category: 'fractions', text: 'Une corde mesure 7/8 de mètre. On en coupe 3/8. Quel numérateur décrit la longueur restante (dénominateur = 8) ?', unit: '', answer: 4, hint: 'Même dénominateur : soustrais les numérateurs.', explanation: '7/8 − 3/8 = 4/8. Le numérateur est 4.' },
-  { category: 'fractions', text: 'Un biberon contient 9/10 de litre. Bébé boit 4/10 de litre. Quel numérateur décrit ce qui reste (dénominateur = 10) ?', unit: '', answer: 5, hint: 'Soustrais les numérateurs : 9 − 4.', explanation: '9/10 − 4/10 = 5/10. Le numérateur est 5.' },
-  { category: 'fractions', text: 'Un vendeur dit qu\'une réduction de 1/4 est la même chose que 0,25. Combien vaut 3/4 en décimal ?', unit: '', answer: 0.75, hint: '1/4 = 0,25. Donc 3/4 = 3 × 0,25.', explanation: '3/4 = 3 × 0,25 = 0,75.' },
-  { category: 'fractions', text: 'Une planche de 1 mètre est coupée en 5 morceaux égaux. Chaque morceau mesure combien en décimal ?', unit: '', answer: 0.2, hint: '1 divisé par 5 = ?', explanation: '1 ÷ 5 = 0,2. Chaque morceau vaut 0,2 mètre.' },
+  // ═══════════════════════════════════════════════════════════════════
+  // CUISINE
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    category: 'calcul',
+    text: 'Une pâtissière fait 4 fournées de 18 éclairs au chocolat par jour. Elle en mange 3 avec son apprenti. Combien lui en reste-t-il à vendre ?',
+    unit: '',
+    answer: 69,
+    hint: 'Calcule le total, puis retire les 3 mangés.',
+    explanation: '4 × 18 = 72 éclairs. 72 − 3 = 69 à vendre.'
+  },
+  {
+    category: 'calcul',
+    text: 'Au marché, un boucher vend des côtelettes à 8 € et des saucisses à 3 € le paquet. Maman achète 5 côtelettes et 4 paquets de saucisses. Combien dépense-t-elle ?',
+    unit: '€',
+    answer: 52,
+    hint: 'Calcule chaque produit séparément, puis additionne.',
+    explanation: '5 × 8 = 40 €. 4 × 3 = 12 €. Total : 40 + 12 = 52 €.'
+  },
+  {
+    category: 'calcul',
+    text: 'Un chef prépare 9 tartes aux pommes avec 7 pommes chacune. Il avait 80 pommes. Combien lui en reste-t-il ?',
+    unit: '',
+    answer: 17,
+    hint: 'Calcule le total utilisé, puis soustrais.',
+    explanation: '9 × 7 = 63 pommes. 80 − 63 = 17 pommes restantes.'
+  },
+  {
+    category: 'logique',
+    text: 'Léa prépare des crêpes. Chaque face met 2 minutes à cuire. Sa poêle peut cuire 2 crêpes à la fois. Combien de minutes minimum pour cuire 3 crêpes ?',
+    unit: 'minutes',
+    answer: 6,
+    hint: 'Pense à retourner les crêpes astucieusement pour ne pas perdre de temps.',
+    explanation: 'Min 1-2 : face 1 de A et B. Min 3-4 : face 2 de A + face 1 de C. Min 5-6 : face 2 de B et C. Total : 6 min.'
+  },
+  {
+    category: 'logique',
+    text: 'Dans une boulangerie, il y a des baguettes (1 €) et des pains au chocolat (3 €). En tout : 20 articles et 46 € en caisse. Combien de pains au chocolat ?',
+    unit: '',
+    answer: 13,
+    hint: 'Si P = pains au chocolat, les baguettes = 20 − P.',
+    explanation: '3P + (20 − P) = 46 → 2P + 20 = 46 → 2P = 26 → P = 13 pains au chocolat.'
+  },
+  {
+    category: 'geometrie',
+    text: 'Un moule à cake rectangulaire mesure 25 cm de long et 10 cm de large. Quelle est l\'aire du fond ?',
+    unit: 'cm²',
+    answer: 250,
+    hint: 'Aire d\'un rectangle = longueur × largeur.',
+    explanation: '25 × 10 = 250 cm².'
+  },
+  {
+    category: 'geometrie',
+    text: 'Une pizza ronde a un diamètre de 30 cm. Quelle est la longueur de sa croûte tout autour ? (π ≈ 3)',
+    unit: 'cm',
+    answer: 90,
+    hint: 'Périmètre d\'un cercle = π × diamètre.',
+    explanation: '3 × 30 = 90 cm de croûte.'
+  },
+  {
+    category: 'fractions',
+    text: 'Un chef a préparé 24 macarons. Il en offre 1/3 à ses apprentis et en mange 1/8 lui-même. Combien en reste-t-il ?',
+    unit: '',
+    answer: 13,
+    hint: 'Calcule 1/3 de 24 et 1/8 de 24, puis soustrais les deux du total.',
+    explanation: '1/3 de 24 = 8. 1/8 de 24 = 3. Reste : 24 − 8 − 3 = 13 macarons.'
+  },
+  {
+    category: 'fractions',
+    text: 'Une recette demande 3/4 de tasse de sucre. Tom veut faire la moitié de la recette. Quelle fraction de tasse lui faut-il ? Donne le dénominateur.',
+    unit: '',
+    answer: 8,
+    hint: 'La moitié de 3/4 = 3/4 × 1/2.',
+    explanation: '3/4 × 1/2 = 3/8. Le dénominateur est 8.'
+  },
+  {
+    category: 'mesures',
+    text: 'Pour une soupe, Mamie utilise 1,5 L de bouillon, 300 mL de lait de coco et 200 mL de crème. Quel est le total en millilitres ?',
+    unit: 'mL',
+    answer: 2000,
+    hint: 'Convertis 1,5 L en mL (1 L = 1 000 mL), puis additionne.',
+    explanation: '1,5 L = 1 500 mL. Total : 1 500 + 300 + 200 = 2 000 mL.'
+  },
+  {
+    category: 'mesures',
+    text: 'Un pain au levain lève pendant 1h45, puis cuit 35 minutes. Si on le met à lever à 7h00, à quelle heure est-il cuit ? Donne les minutes.',
+    unit: '',
+    answer: 20,
+    hint: 'Additionne le temps de levée et de cuisson, puis ajoute à 7h00.',
+    explanation: '1h45 + 35 min = 2h20. 7h00 + 2h20 = 9h20. Les minutes sont 20.'
+  },
+  {
+    category: 'mesures',
+    text: 'Une recette de confiserie demande de chauffer le caramel à 160 °C, puis de le laisser refroidir à 40 °C. De combien de degrés la température doit-elle baisser ?',
+    unit: '°C',
+    answer: 120,
+    hint: 'Calcule la différence entre les deux températures.',
+    explanation: '160 − 40 = 120 °C.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Un chef dispose de 3 fromages (brie, comté, roquefort) et veut mettre exactement 2 fromages par plateau. Combien de plateaux différents peut-il composer ?',
+    unit: '',
+    answer: 3,
+    hint: 'Liste toutes les paires possibles.',
+    explanation: 'Brie+comté, brie+roquefort, comté+roquefort = 3 plateaux.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Zoé décore un gâteau en choisissant 1 couleur de glaçage parmi 4 et 1 décoration parmi 3. Combien de combinaisons différentes peut-elle créer ?',
+    unit: '',
+    answer: 12,
+    hint: 'Multiplie le nombre de couleurs par le nombre de décorations.',
+    explanation: '4 × 3 = 12 combinaisons.'
+  },
 
-  // NEW MESURES (10 riddles)
-  { category: 'mesures', text: 'Le film commence à 14h20 et se termine à 16h05. Combien de minutes a-t-il duré ?', unit: 'min', answer: 105, hint: 'De 14h20 à 15h20 = 60 min. De 15h20 à 16h05 = 45 min.', explanation: '60 + 45 = 105 min.' },
-  { category: 'mesures', text: 'L\'école commence à 8h30 et finit à 11h45. Combien de minutes dure la matinée ?', unit: 'min', answer: 195, hint: 'De 8h30 à 11h30 = 3h = 180 min. + 15 min.', explanation: '180 + 15 = 195 min.' },
-  { category: 'mesures', text: 'Pour faire un gâteau, tu mélanges 25 cL de lait et 75 cL de crème. Combien de mL au total ? (1 cL = 10 mL)', unit: 'mL', answer: 1000, hint: 'Convertis chaque quantité en mL.', explanation: '250 + 750 = 1000 mL.' },
-  { category: 'mesures', text: 'Une bouteille de sirop contient 75 cL. Tu en verses 4 verres de 150 mL. Combien de mL reste-t-il ? (1 cL = 10 mL)', unit: 'mL', answer: 150, hint: '75 cL = 750 mL. Soustrait 4 × 150.', explanation: '750 − 600 = 150 mL.' },
-  { category: 'mesures', text: 'Le bus part à 13h45 et le trajet dure 55 minutes. Donne les minutes de l\'heure d\'arrivée.', unit: '', answer: 40, hint: '13h45 + 55 min : attention, 45 + 55 dépasse 60 !', explanation: '13h45 + 15 min = 14h00 + 40 min = 14h40. Minutes = 40.' },
-  { category: 'mesures', text: 'Tu pars à vélo à 8h50. Le trajet dure 25 minutes. Donne les minutes de l\'heure d\'arrivée.', unit: '', answer: 15, hint: '8h50 + 25 min : passe par 9h00.', explanation: '8h50 + 10 = 9h00 + 15 = 9h15. Minutes = 15.' },
-  { category: 'mesures', text: 'Un jardin rectangulaire mesure 15 m de long et 8 m de large. Quelle longueur de grillage faut-il pour l\'entourer ?', unit: 'm', answer: 46, hint: 'Périmètre = 2 × (longueur + largeur).', explanation: '2 × (15 + 8) = 46 m.' },
-  { category: 'mesures', text: 'Un coureur fait 6 tours d\'une piste de 250 m. Quelle distance en km ?', unit: 'km', answer: 1.5, hint: 'Distance en mètres, puis convertis.', explanation: '6 × 250 = 1500 m = 1,5 km.' },
-  { category: 'mesures', text: 'Un bébé pèse 3 kg 850 g. Il prend 200 g par semaine pendant 4 semaines. Quel est son poids en grammes ?', unit: 'g', answer: 4650, hint: 'Poids initial en grammes + prise de poids.', explanation: '3850 + 800 = 4650 g.' },
-  { category: 'mesures', text: 'Camille porte un sac de 4 kg 500 g. Théo porte un sac de 3 kg 800 g. Combien de grammes de plus Camille porte-t-elle ?', unit: 'g', answer: 700, hint: 'Convertis en grammes, puis soustrait.', explanation: '4500 − 3800 = 700 g.' },
+  // ═══════════════════════════════════════════════════════════════════
+  // FAMILLE
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    category: 'calcul',
+    text: 'Jules gagne 8 € par semaine en rangeant sa chambre. Après 6 semaines, il dépense 17 € pour un jeu. Combien lui reste-t-il ?',
+    unit: '€',
+    answer: 31,
+    hint: 'Calcule d\'abord ce qu\'il a gagné en 6 semaines.',
+    explanation: '6 × 8 = 48 €. 48 − 17 = 31 €.'
+  },
+  {
+    category: 'calcul',
+    text: 'Pour l\'anniversaire de Maman, Papa prépare 5 tables de 6 couverts. 4 invités ne peuvent pas venir. Combien de personnes seront à table ?',
+    unit: '',
+    answer: 26,
+    hint: 'Calcule le nombre total de couverts, puis retire les absents.',
+    explanation: '5 × 6 = 30. 30 − 4 = 26 personnes.'
+  },
+  {
+    category: 'calcul',
+    text: 'Maman donne 3 € par corvée. Lola fait 4 corvées et Tom en fait 6. Combien reçoivent-ils ensemble ?',
+    unit: '€',
+    answer: 30,
+    hint: 'Compte le total de corvées, puis multiplie par 3.',
+    explanation: '4 + 6 = 10 corvées. 10 × 3 = 30 €.'
+  },
+  {
+    category: 'logique',
+    text: 'Le papa d\'Emma a 36 ans. Emma est 3 fois plus jeune que lui. Dans 8 ans, quel âge aura Emma ?',
+    unit: 'ans',
+    answer: 20,
+    hint: 'Trouve d\'abord l\'âge actuel d\'Emma.',
+    explanation: 'Emma : 36 ÷ 3 = 12 ans. Dans 8 ans : 12 + 8 = 20 ans.'
+  },
+  {
+    category: 'logique',
+    text: 'Grand-Mère distribue des bonbons à 4 enfants : chacun reçoit 9 et il en reste 5. Combien en avait-elle ?',
+    unit: '',
+    answer: 41,
+    hint: 'Calcule le total distribué, puis ajoute le reste.',
+    explanation: '4 × 9 = 36 distribués. 36 + 5 = 41 bonbons au départ.'
+  },
+  {
+    category: 'logique',
+    text: 'Papa plante 8 plants de tomates en ligne droite, espacés de 30 cm. Quelle est la longueur de la rangée ?',
+    unit: 'cm',
+    answer: 210,
+    hint: 'Entre 8 plants, il y a 7 espaces.',
+    explanation: '7 espaces × 30 cm = 210 cm.'
+  },
+  {
+    category: 'geometrie',
+    text: 'Le salon est un rectangle de 6 m sur 4 m. Quel est son périmètre ?',
+    unit: 'm',
+    answer: 20,
+    hint: 'Périmètre d\'un rectangle = 2 × (longueur + largeur).',
+    explanation: '2 × (6 + 4) = 20 m.'
+  },
+  {
+    category: 'geometrie',
+    text: 'Papa couvre l\'allée du jardin de gravillons. L\'allée mesure 12 m sur 3 m. Quelle est son aire ?',
+    unit: 'm²',
+    answer: 36,
+    hint: 'Aire d\'un rectangle = longueur × largeur.',
+    explanation: '12 × 3 = 36 m².'
+  },
+  {
+    category: 'geometrie',
+    text: 'Maman pose des carreaux carrés de 20 cm de côté. Quelle est l\'aire d\'un seul carreau ?',
+    unit: 'cm²',
+    answer: 400,
+    hint: 'Aire d\'un carré = côté × côté.',
+    explanation: '20 × 20 = 400 cm².'
+  },
+  {
+    category: 'fractions',
+    text: 'Théo reçoit 24 € d\'argent de poche. Il dépense 1/4 en bonbons et 1/3 en autocollants. Combien a-t-il dépensé en tout ?',
+    unit: '€',
+    answer: 14,
+    hint: 'Calcule 1/4 de 24 et 1/3 de 24 séparément.',
+    explanation: '1/4 de 24 = 6 €. 1/3 de 24 = 8 €. Total : 6 + 8 = 14 €.'
+  },
+  {
+    category: 'fractions',
+    text: 'La recette de Mamie pour 6 personnes demande 200 g de farine. Ce dimanche, 9 personnes sont invitées. Quelle quantité de farine faut-il ?',
+    unit: 'g',
+    answer: 300,
+    hint: 'Trouve la quantité pour 1 personne, puis multiplie par 9.',
+    explanation: '200 × 9 ÷ 6 = 1 800 ÷ 6 = 300 g.'
+  },
+  {
+    category: 'mesures',
+    text: 'La famille part en vacances à 80 km/h et doit parcourir 240 km. Combien d\'heures dure le trajet ?',
+    unit: 'h',
+    answer: 3,
+    hint: 'Temps = distance ÷ vitesse.',
+    explanation: '240 ÷ 80 = 3 heures.'
+  },
+  {
+    category: 'mesures',
+    text: 'Papa a un tuyau de 15 m. Il coupe 3 morceaux de 4 m chacun. Combien de mètres reste-t-il ?',
+    unit: 'm',
+    answer: 3,
+    hint: 'Calcule la longueur totale coupée, puis soustrais.',
+    explanation: '3 × 4 = 12 m coupés. 15 − 12 = 3 m.'
+  },
+  {
+    category: 'mesures',
+    text: 'On charge 4 valises de 7 kg et 1 carton de 5 kg dans le coffre. Quel est le poids total ?',
+    unit: 'kg',
+    answer: 33,
+    hint: 'Calcule le poids des valises, puis ajoute le carton.',
+    explanation: '4 × 7 = 28 kg. 28 + 5 = 33 kg.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Dans notre immeuble, chaque famille a 2 enfants. Il y a 9 familles par étage et 4 étages. Combien d\'enfants dans l\'immeuble ?',
+    unit: '',
+    answer: 72,
+    hint: 'Calcule le total de familles, puis multiplie par 2.',
+    explanation: '9 × 4 = 36 familles. 36 × 2 = 72 enfants.'
+  },
 
-  // NEW PROBLÈMES OUVERTS (10 riddles)
-  { category: 'ouvert', text: 'Julie a le double de l\'âge de son frère. Dans 6 ans, elle aura le triple de son âge actuel à lui. Quel âge a son frère maintenant ?', unit: '', answer: 6, hint: 'Frère = X, Julie = 2X. Dans 6 ans, Julie aura 2X+6 = 3X.', explanation: '2X + 6 = 3X → X = 6. Le frère a 6 ans.' },
-  { category: 'ouvert', text: 'Un randonneur parcourt 24 km en 4 heures le matin, puis 18 km en 3 heures l\'après-midi. Quelle est sa vitesse moyenne ?', unit: 'km/h', answer: 6, hint: 'Vitesse moyenne = distance totale ÷ temps total.', explanation: '42 ÷ 7 = 6 km/h.' },
-  { category: 'ouvert', text: 'On partage 48 billes entre Axel et Zoé. Axel reçoit le triple de Zoé. Combien Zoé reçoit-elle ?', unit: '', answer: 12, hint: 'Zoé = X, Axel = 3X. Total = 48.', explanation: '4X = 48 → X = 12.' },
-  { category: 'ouvert', text: 'Trois amis ramassent des châtaignes. Baptiste en ramasse 10 de plus que Chloé, et Damien 5 de moins que Baptiste. Ensemble ils en ont 75. Combien Chloé en a-t-elle ?', unit: '', answer: 20, hint: 'Chloé = X, Baptiste = X+10, Damien = X+5.', explanation: '3X + 15 = 75 → X = 20.' },
-  { category: 'ouvert', text: 'Un robinet remplit une baignoire de 120 litres. Son débit est de 6 L/min mais la bonde fuit à 2 L/min. Combien de temps pour la remplir ?', unit: 'min', answer: 30, hint: 'Débit net = 6 − 2 = 4 L/min.', explanation: '120 ÷ 4 = 30 minutes.' },
-  { category: 'ouvert', text: 'Un réservoir contient 200 litres. On ouvre un robinet qui vide 8 litres par minute. Après combien de minutes reste-t-il 40 litres ?', unit: 'min', answer: 20, hint: 'Il faut vider 200 − 40 = 160 litres.', explanation: '160 ÷ 8 = 20 minutes.' },
-  { category: 'ouvert', text: 'Un code secret a 2 chiffres différents parmi 1, 2, 3, 4 (l\'ordre compte). Combien de codes ?', unit: '', answer: 12, hint: '4 choix pour le 1er chiffre, 3 pour le 2e.', explanation: '4 × 3 = 12 codes.' },
-  { category: 'ouvert', text: 'Dans un tournoi, 6 équipes jouent chacune une fois contre les autres. Combien de matchs ?', unit: '', answer: 15, hint: 'Chaque paire joue un match.', explanation: '6 × 5 ÷ 2 = 15 matchs.' },
-  { category: 'ouvert', text: 'La somme des âges d\'un père et son fils est 50 ans. Le père a 4 fois l\'âge du fils. Quel âge a le fils ?', unit: '', answer: 10, hint: 'Fils = X, Père = 4X. Total = 50.', explanation: '5X = 50 → X = 10.' },
-  { category: 'ouvert', text: 'Emma a deux fois plus de billes que Luca. Ensemble, ils en ont 36. Combien Luca en a-t-il ?', unit: '', answer: 12, hint: 'Luca = X, Emma = 2X. Total = 36.', explanation: '3X = 36 → X = 12.' }
+  // ═══════════════════════════════════════════════════════════════════
+  // ORDINATEUR
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    category: 'calcul',
+    text: 'Un robot assemble 6 pièces par minute pendant 8 minutes. Son bras tombe en panne et 5 pièces se détachent. Combien de pièces reste-t-il ?',
+    unit: '',
+    answer: 43,
+    hint: 'Calcule le total assemblé, puis retire les pièces perdues.',
+    explanation: '6 × 8 = 48 pièces. 48 − 5 = 43.'
+  },
+  {
+    category: 'calcul',
+    text: 'Tu t\'abonnes à une application à 3 € par mois. Combien paies-tu en 1 an ?',
+    unit: '€',
+    answer: 36,
+    hint: '1 an = 12 mois.',
+    explanation: '12 × 3 = 36 €.'
+  },
+  {
+    category: 'calcul',
+    text: 'La batterie de ton smartphone est à 100 %. Chaque heure de jeu en consomme 8 %. Tu joues 7 heures. Quel pourcentage reste-t-il ?',
+    unit: '%',
+    answer: 44,
+    hint: 'Calcule la consommation totale, puis soustrais de 100.',
+    explanation: '7 × 8 = 56 %. 100 − 56 = 44 %.'
+  },
+  {
+    category: 'logique',
+    text: 'En binaire, les positions valent 8, 4, 2, 1. Le nombre 1010 vaut 1×8 + 0×4 + 1×2 + 0×1. Quel est ce nombre en décimal ?',
+    unit: '',
+    answer: 10,
+    hint: 'Additionne uniquement les positions où il y a un "1".',
+    explanation: '1×8 + 0×4 + 1×2 + 0×1 = 8 + 2 = 10.'
+  },
+  {
+    category: 'logique',
+    text: 'Un programme prend un nombre, lui ajoute 3, puis le double. Le résultat est 22. Quel était le nombre de départ ?',
+    unit: '',
+    answer: 8,
+    hint: 'Remonte à l\'envers : divise par 2, puis retire 3.',
+    explanation: '22 ÷ 2 = 11. 11 − 3 = 8. Vérif : (8 + 3) × 2 = 22. ✓'
+  },
+  {
+    category: 'logique',
+    text: 'Un virus double le nombre d\'ordinateurs infectés chaque heure. On commence avec 2. Quel est le nombre suivant : 2, 4, 8, 16, 32, ?',
+    unit: '',
+    answer: 64,
+    hint: 'Chaque nombre est le double du précédent.',
+    explanation: '32 × 2 = 64.'
+  },
+  {
+    category: 'geometrie',
+    text: 'Un écran de tablette mesure 12 cm de large et 9 cm de haut. Quelle est son aire ?',
+    unit: 'cm²',
+    answer: 108,
+    hint: 'Aire d\'un rectangle = longueur × largeur.',
+    explanation: '12 × 9 = 108 cm².'
+  },
+  {
+    category: 'geometrie',
+    text: 'Une imprimante 3D fabrique un cube de 5 cm de côté. Quelle est l\'aire d\'une seule face ?',
+    unit: 'cm²',
+    answer: 25,
+    hint: 'Chaque face est un carré.',
+    explanation: '5 × 5 = 25 cm².'
+  },
+  {
+    category: 'geometrie',
+    text: 'Un pixel art est dessiné sur une grille de 8 cases de large et 6 de haut (1 cm par case). Quel est le périmètre de la grille ?',
+    unit: 'cm',
+    answer: 28,
+    hint: 'Périmètre d\'un rectangle = 2 × (longueur + largeur).',
+    explanation: '2 × (8 + 6) = 28 cm.'
+  },
+  {
+    category: 'fractions',
+    text: 'Un disque dur de 500 Go est rempli aux 2/5. Combien de Go sont utilisés ?',
+    unit: 'Go',
+    answer: 200,
+    hint: 'Calcule 2/5 de 500.',
+    explanation: '500 ÷ 5 = 100. 100 × 2 = 200 Go.'
+  },
+  {
+    category: 'fractions',
+    text: 'Une carte mémoire de 32 Go est remplie aux 3/8. Combien de Go sont encore libres ?',
+    unit: 'Go',
+    answer: 20,
+    hint: 'Calcule les Go utilisés, puis soustrais du total.',
+    explanation: '3/8 de 32 = 12 Go utilisés. 32 − 12 = 20 Go libres.'
+  },
+  {
+    category: 'fractions',
+    text: 'Un dossier de 120 Mo contient des photos (1/4), des vidéos (1/3) et des musiques (le reste). Combien de Mo de musiques ?',
+    unit: 'Mo',
+    answer: 50,
+    hint: 'Calcule photos et vidéos, puis soustrais du total.',
+    explanation: 'Photos : 120/4 = 30 Mo. Vidéos : 120/3 = 40 Mo. Musiques : 120 − 30 − 40 = 50 Mo.'
+  },
+  {
+    category: 'mesures',
+    text: 'Tu télécharges un jeu de 48 Mo à 4 Mo/s. Combien de secondes dure le téléchargement ?',
+    unit: 's',
+    answer: 12,
+    hint: 'Temps = taille ÷ vitesse.',
+    explanation: '48 ÷ 4 = 12 secondes.'
+  },
+  {
+    category: 'mesures',
+    text: 'Lila utilise son téléphone 45 minutes par jour. Combien de minutes en une semaine ?',
+    unit: 'min',
+    answer: 315,
+    hint: '1 semaine = 7 jours.',
+    explanation: '45 × 7 = 315 minutes.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Tu crées un mot de passe : 1 lettre (A, B ou C) puis 1 chiffre (1, 2, 3 ou 4). Combien de mots de passe différents ?',
+    unit: '',
+    answer: 12,
+    hint: 'Pour chaque lettre, tu as 4 choix de chiffres.',
+    explanation: '3 × 4 = 12 mots de passe (A1, A2, …, C4).'
+  },
+  {
+    category: 'ouvert',
+    text: 'Un robot peut aller en Avant, Arrière, Gauche ou Droite. Tu programmes 2 mouvements. Combien de séquences différentes (répétitions autorisées) ?',
+    unit: '',
+    answer: 16,
+    hint: '4 choix pour chaque mouvement.',
+    explanation: '4 × 4 = 16 séquences.'
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // LITTÉRAIRE
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    category: 'calcul',
+    text: 'Dans la bibliothèque de Poudlard, 9 étagères contiennent chacune 12 livres de sorts et 7 grimoires. Combien de livres en tout ?',
+    unit: '',
+    answer: 171,
+    hint: 'Calcule le total par étagère, puis multiplie par 9.',
+    explanation: 'Par étagère : 12 + 7 = 19. Total : 9 × 19 = 171 livres.'
+  },
+  {
+    category: 'calcul',
+    text: 'Le Petit Prince visite 6 planètes. Sur chacune, il cueille 8 roses et en offre 3 au roi. Combien de roses lui reste-t-il après toutes ses visites ?',
+    unit: '',
+    answer: 30,
+    hint: 'Calcule combien il garde par planète, puis multiplie par 6.',
+    explanation: 'Par planète : 8 − 3 = 5 roses. Total : 6 × 5 = 30 roses.'
+  },
+  {
+    category: 'calcul',
+    text: 'Jules Verne écrit 4 pages par jour pendant 11 semaines. Combien de pages a-t-il écrites ?',
+    unit: '',
+    answer: 308,
+    hint: 'Calcule d\'abord le nombre de jours en 11 semaines.',
+    explanation: '11 × 7 = 77 jours. 77 × 4 = 308 pages.'
+  },
+  {
+    category: 'logique',
+    text: 'Quatre personnages de contes attendent devant une bibliothèque. Le Chaperon Rouge arrive avant le Loup, mais après Cendrillon. Le Chat Botté arrive en dernier. Qui arrive en 3e position ?',
+    unit: '',
+    answer: null,
+    textAnswer: 'le loup',
+    hint: 'Classe-les du premier au dernier.',
+    explanation: 'Cendrillon 1re, Chaperon Rouge 2e (après Cendrillon, avant le Loup), Loup 3e, Chat Botté 4e.'
+  },
+  {
+    category: 'logique',
+    text: 'Dans une bibliothèque mystérieuse, un livre rouge vaut 3 points et un bleu 5 points. Alice a 7 livres et totalise 27 points. Combien de livres rouges ?',
+    unit: '',
+    answer: 4,
+    hint: 'Si elle a x rouges, elle a (7 − x) bleus.',
+    explanation: '3x + 5(7 − x) = 27 → 3x + 35 − 5x = 27 → −2x = −8 → x = 4 livres rouges.'
+  },
+  {
+    category: 'geometrie',
+    text: 'Le théâtre du Roi Lion a une scène rectangulaire de 8 m sur 5 m. Les acteurs posent un tapis sur toute la scène. Quelle est son aire ?',
+    unit: 'm²',
+    answer: 40,
+    hint: 'Aire d\'un rectangle = longueur × largeur.',
+    explanation: '8 × 5 = 40 m².'
+  },
+  {
+    category: 'geometrie',
+    text: 'Le chapelier fou prépare une nappe triangulaire. Les trois côtés mesurent 12 cm, 9 cm et 15 cm. Quel est son périmètre ?',
+    unit: 'cm',
+    answer: 36,
+    hint: 'Périmètre d\'un triangle = somme des trois côtés.',
+    explanation: '12 + 9 + 15 = 36 cm.'
+  },
+  {
+    category: 'fractions',
+    text: 'Les trois petits cochons coupent une tarte en parts égales. Le 1er mange 1/4, le 2e mange 2/4. Quelle fraction reste pour le 3e ? Donne le dénominateur.',
+    unit: '',
+    answer: 4,
+    hint: 'Additionne les parts mangées, puis soustrais de 1.',
+    explanation: '1/4 + 2/4 = 3/4. Reste : 1 − 3/4 = 1/4. Dénominateur = 4.'
+  },
+  {
+    category: 'fractions',
+    text: 'Dans « La Belle et la Bête », la Bête possède 48 livres. Elle en offre 1/6 à Belle, puis 1/4 des restants aux serviteurs. Combien lui reste-t-il ?',
+    unit: '',
+    answer: 30,
+    hint: 'Calcule d\'abord les livres offerts à Belle. Puis 1/4 des restants.',
+    explanation: '1/6 de 48 = 8 à Belle. Reste : 40. 1/4 de 40 = 10 aux serviteurs. Reste : 30 livres.'
+  },
+  {
+    category: 'mesures',
+    text: 'Nemo nage 3 km le matin et 1 500 m l\'après-midi. Quelle distance totale en mètres ?',
+    unit: 'm',
+    answer: 4500,
+    hint: 'Convertis les km en mètres, puis additionne.',
+    explanation: '3 km = 3 000 m. 3 000 + 1 500 = 4 500 m.'
+  },
+  {
+    category: 'mesures',
+    text: 'Pinocchio part à 7h45 et arrive à l\'école à 8h20. Combien de minutes a duré son trajet ?',
+    unit: '',
+    answer: 35,
+    hint: 'Calcule la différence entre l\'heure de départ et d\'arrivée.',
+    explanation: '7h45 à 8h00 = 15 min. 8h00 à 8h20 = 20 min. Total : 35 minutes.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Un imprimeur numérote les pages 1 à 50. Les pages 1-9 ont 1 chiffre, les pages 10-50 en ont 2. Combien de chiffres écrit-il en tout ?',
+    unit: '',
+    answer: 91,
+    hint: 'Compte les chiffres des pages à 1 chiffre et à 2 chiffres séparément.',
+    explanation: 'Pages 1-9 : 9 × 1 = 9 chiffres. Pages 10-50 : 41 × 2 = 82 chiffres. Total : 9 + 82 = 91.'
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // HISTOIRE
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    category: 'calcul',
+    text: 'Les bâtisseurs de la pyramide de Khéops travaillent en équipes de 20. 8 équipes le matin, 5 l\'après-midi. Combien d\'ouvriers par jour ?',
+    unit: '',
+    answer: 260,
+    hint: 'Calcule matin et après-midi séparément, puis additionne.',
+    explanation: 'Matin : 8 × 20 = 160. Après-midi : 5 × 20 = 100. Total : 260 ouvriers.'
+  },
+  {
+    category: 'calcul',
+    text: 'Jules César a conquis la Gaule en 52 av. J.-C. Napoléon est né en 1769. Combien d\'années les séparent ?',
+    unit: 'ans',
+    answer: 1821,
+    hint: 'Pour un écart entre avant et après J.-C., additionne les deux nombres.',
+    explanation: '52 + 1769 = 1 821 ans.'
+  },
+  {
+    category: 'calcul',
+    text: 'Un corsaire capture 3 navires. Le 1er contient 144 pièces d\'or, le 2e la moitié, le 3e le double du 1er. Combien de pièces en tout ?',
+    unit: '',
+    answer: 504,
+    hint: 'Calcule chaque navire séparément, puis additionne.',
+    explanation: '144 + 72 + 288 = 504 pièces d\'or.'
+  },
+  {
+    category: 'logique',
+    text: 'Trois explorateurs — Marco, Ibn et Zheng — découvrent chacun un continent : Amérique, Afrique, Asie. Zheng découvre l\'Asie. Ibn ne découvre pas l\'Amérique. Quel continent pour Marco ?',
+    unit: '',
+    answer: null,
+    textAnswer: 'amérique',
+    hint: 'Place Zheng d\'abord, puis déduis Ibn, puis Marco.',
+    explanation: 'Zheng → Asie. Ibn pas l\'Amérique (et l\'Asie est prise) → Ibn → Afrique. Reste l\'Amérique pour Marco.'
+  },
+  {
+    category: 'geometrie',
+    text: 'La base de la Grande Pyramide est un carré de 230 m de côté. Quelle est l\'aire de sa base ?',
+    unit: 'm²',
+    answer: 52900,
+    hint: 'Aire d\'un carré = côté × côté.',
+    explanation: '230 × 230 = 52 900 m².'
+  },
+  {
+    category: 'geometrie',
+    text: 'Un forum romain est un carré de 45 m de côté. Quelle est son aire ?',
+    unit: 'm²',
+    answer: 2025,
+    hint: 'Aire d\'un carré = côté × côté.',
+    explanation: '45 × 45 = 2 025 m².'
+  },
+  {
+    category: 'fractions',
+    text: 'Un pirate partage 360 pièces d\'or. Il donne 1/4 au 1er mousse, 1/3 au 2e et 1/6 au 3e. Combien garde-t-il ?',
+    unit: 'pièces',
+    answer: 90,
+    hint: 'Calcule la part de chaque mousse, additionne, puis soustrais du total.',
+    explanation: '1/4 de 360 = 90. 1/3 de 360 = 120. 1/6 de 360 = 60. Distribué : 270. Reste : 90 pièces.'
+  },
+  {
+    category: 'fractions',
+    text: 'Les chevaliers de la Table Ronde partagent un sanglier en 8 parts. Le roi Arthur en mange 3. Quelle fraction reste pour les autres ? Donne le numérateur.',
+    unit: '',
+    answer: 5,
+    hint: 'Le sanglier entier = 8/8. Arthur mange 3/8.',
+    explanation: '8/8 − 3/8 = 5/8. Numérateur = 5.'
+  },
+  {
+    category: 'fractions',
+    text: 'Un alchimiste a 240 mL de potion. Il utilise 3/4 pour un sortilège. Combien de mL lui reste-t-il ?',
+    unit: 'mL',
+    answer: 60,
+    hint: 'Calcule 3/4 de 240, puis soustrais.',
+    explanation: '3/4 de 240 = 180 mL utilisés. Reste : 240 − 180 = 60 mL.'
+  },
+  {
+    category: 'mesures',
+    text: 'Un légionnaire romain marche 24 km par jour à 4 km/h. Combien d\'heures marche-t-il ?',
+    unit: 'heures',
+    answer: 6,
+    hint: 'Temps = distance ÷ vitesse.',
+    explanation: '24 ÷ 4 = 6 heures.'
+  },
+  {
+    category: 'mesures',
+    text: 'Les Égyptiens utilisaient la "coudée" (≈ 52 cm). Si une statue mesure 7 coudées, quelle est sa hauteur en cm ?',
+    unit: 'cm',
+    answer: 364,
+    hint: 'Multiplie le nombre de coudées par la valeur d\'une coudée.',
+    explanation: '7 × 52 = 364 cm.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Un pharaon dispose de 3 hiéroglyphes (scarabée, œil, serpent). Il crée des codes de 2 symboles différents, où l\'ordre compte. Combien de codes possibles ?',
+    unit: '',
+    answer: 6,
+    hint: 'Chaque symbole en 1re position peut être suivi de 2 autres.',
+    explanation: '3 choix × 2 choix = 6 codes différents.'
+  },
+  {
+    category: 'ouvert',
+    text: 'Un capitaine pirate veut 1 navigateur parmi 4 candidats et 1 canonnier parmi 3. Combien de duos différents peut-il former ?',
+    unit: '',
+    answer: 12,
+    hint: 'Pour chaque navigateur, il y a 3 canonniers.',
+    explanation: '4 × 3 = 12 duos.'
+  },
 ];
 
 // ── Main Entry Point ────────────────────────────────────────────────
@@ -1808,14 +2804,14 @@ const BOSS_QUESTIONS = [
     boss: 'golem',
     steps: [
       { text: "Un magasin vend 3 cartons de 24 bouteilles et 5 cartons de 12 bouteilles. Combien de bouteilles en tout ?", answer: 132, unit: '', hint: "3×24 + 5×12", explanation: "3×24=72, 5×12=60, 72+60=132" },
-      { text: "Chaque bouteille coûte 2CHF. On a une réduction de 15CHF. Quel est le prix final ?", answer: 249, unit: 'CHF', hint: "132 × 2 − 15", explanation: "132 × 2 = 264, 264 − 15 = 249CHF" },
+      { text: "Chaque bouteille coûte 2€. On a une réduction de 15€. Quel est le prix final ?", answer: 249, unit: '€', hint: "132 × 2 − 15", explanation: "132 × 2 = 264, 264 − 15 = 249€" },
     ]
   },
   {
     boss: 'golem',
     steps: [
-      { text: "Papa a 250CHF. Il achète 3 livres à 18CHF chacun. Combien lui reste-t-il ?", answer: 196, unit: 'CHF', hint: "250 − 3×18", explanation: "3×18=54, 250−54=196CHF" },
-      { text: "Il veut acheter un jeu à 45CHF et un sac à 38CHF. A-t-il assez ? Si oui, combien lui restera-t-il ?", answer: 113, unit: 'CHF', hint: "196 − 45 − 38", explanation: "45+38=83, 196−83=113CHF. Oui, il a assez !" },
+      { text: "Papa a 250€. Il achète 3 livres à 18€ chacun. Combien lui reste-t-il ?", answer: 196, unit: '€', hint: "250 − 3×18", explanation: "3×18=54, 250−54=196€" },
+      { text: "Il veut acheter un jeu à 45€ et un sac à 38€. A-t-il assez ? Si oui, combien lui restera-t-il ?", answer: 113, unit: '€', hint: "196 − 45 − 38", explanation: "45+38=83, 196−83=113€. Oui, il a assez !" },
     ]
   },
   // Sorcier de Logique

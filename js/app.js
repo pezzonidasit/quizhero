@@ -3616,10 +3616,10 @@ async function checkDailyQuestion() {
   try {
     const data = await getDailyQuestion();
     if (data.alreadyAnswered) {
-      const rank = await getDailyRank(data.date);
       btn.style.display = '';
-      btn.textContent = rank.rank > 0
-        ? '✅ Question du jour — ' + rank.rank + (rank.rank === 1 ? 'er' : 'ème') + ' sur ' + rank.total
+      const secs = data.myAnswer?.time ? (data.myAnswer.time / 1000).toFixed(1) : null;
+      btn.textContent = secs
+        ? '✅ Question du jour — ⏱ ' + secs + 's'
         : '✅ Question du jour — répondu';
       btn.onclick = null;
     } else {
@@ -3659,16 +3659,15 @@ function openDailyQuestion(data) {
     try {
       const correct = await submitDailyAnswer(data.date, Number(val), elapsed);
       document.getElementById('daily-answer-section').style.display = 'none';
-      const rank = await getDailyRank(data.date);
+      const secs = (elapsed / 1000).toFixed(1);
       let html = correct
         ? '<div style="text-align:center"><div style="font-size:2rem;margin-bottom:0.5rem">✅</div>' +
-          '<div style="font-weight:700;font-size:1.2rem;color:#4caf50">Bonne réponse !</div>'
+          '<div style="font-weight:700;font-size:1.2rem;color:#4caf50">Bonne réponse !</div>' +
+          '<div style="margin-top:0.5rem;font-size:0.95rem;color:var(--text-secondary)">⏱ ' + secs + 's</div>' +
+          '<div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary)">Classement disponible demain</div>'
         : '<div style="text-align:center"><div style="font-size:2rem;margin-bottom:0.5rem">❌</div>' +
           '<div style="font-weight:700;font-size:1.2rem;color:#f44336">Mauvaise réponse</div>' +
           '<div style="margin-top:0.5rem;color:var(--text-secondary)">Réponse : ' + q.answer + '</div>';
-      if (correct && rank.rank > 0) {
-        html += '<div class="daily-rank">' + rank.rank + (rank.rank === 1 ? 'er' : 'ème') + ' sur ' + rank.total + ' joueurs</div>';
-      }
       if (q.explanation) html += '<div style="margin-top:1rem;font-size:0.85rem;color:var(--text-secondary)">' + q.explanation + '</div>';
       html += '</div>';
       document.getElementById('daily-result').innerHTML = html;
