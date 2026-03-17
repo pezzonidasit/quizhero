@@ -80,6 +80,9 @@ const MQSync = {
       bossesDefeated: (ProfileManager.get('defeatedBosses', []) || []).length,
       gamesPlayed: ProfileManager.get('gamesPlayed', 0),
       activeTitle: ProfileManager.get('activeTitle', null),
+      catStats: ProfileManager.get('catStats', {}),
+      weeklyTimeSpent: ProfileManager.get('weeklyTimeSpent', 0),
+      contractsCompleted: ProfileManager.get('contractsCompleted', {}),
     });
 
     // Push to group dashboards
