@@ -3406,6 +3406,12 @@ body.low-perf-mode .chest-open-overlay .chest-item {
   font-size: 0.9rem;
 }
 
+.fiche-schema {
+  display: flex;
+  justify-content: center;
+  margin: 0.75rem 0 0.25rem;
+}
+
 .fiche-astuce {
   background: rgba(255, 211, 61, 0.1);
   border-left: 3px solid #ffd93d;

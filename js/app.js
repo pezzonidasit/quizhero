@@ -779,6 +779,7 @@ function showFiche(ficheKey) {
   document.getElementById('fiche-content').innerHTML = `
     <div class="fiche-section">
       <p class="fiche-intro">${fiche.intro}</p>
+      ${fiche.schema ? '<div class="fiche-schema">' + fiche.schema + '</div>' : ''}
     </div>
     <div class="fiche-section">
       <div class="fiche-section-titre">LA RÈGLE</div>
