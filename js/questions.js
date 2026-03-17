@@ -61,7 +61,7 @@ function generateCalcul(subLevel) {
       }
     ];
     const s = pick(scenarios)();
-    return { category: 'calcul', text: s.text, unit: '', answer: s.answer, hint: s.hint, explanation: s.explanation };
+    return { category: 'calcul', text: s.text, unit: '', answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: 'multiplication' };
 
   } else if (subLevel === 2) {
     // Two groups to add: n1×per1 + n2×per2
@@ -76,7 +76,8 @@ function generateCalcul(subLevel) {
       unit: '',
       answer,
       hint: `Calcule chaque groupe séparément, puis additionne.`,
-      explanation: `${n1} × ${per1} = ${n1 * per1} et ${n2} × ${per2} = ${n2 * per2}. Total = ${answer}.`
+      explanation: `${n1} × ${per1} = ${n1 * per1} et ${n2} × ${per2} = ${n2 * per2}. Total = ${answer}.`,
+      ficheKey: 'multiplication'
     };
 
   } else {
@@ -92,7 +93,8 @@ function generateCalcul(subLevel) {
       unit: '',
       answer,
       hint: `Fais les opérations une par une, dans l'ordre.`,
-      explanation: `${initial} − ${give} = ${initial - give}, + ${receive} = ${initial - give + receive}, − ${lose} = ${answer}.`
+      explanation: `${initial} − ${give} = ${initial - give}, + ${receive} = ${initial - give + receive}, − ${lose} = ${answer}.`,
+      ficheKey: 'calcul_mental'
     };
   }
 }
@@ -227,7 +229,8 @@ function generateGeometrie(subLevel) {
       unit: 'cm',
       answer,
       hint: `Périmètre = 2 × (longueur + largeur).`,
-      explanation: `2 × (${l} + ${w}) = 2 × ${l + w} = ${answer} cm.`
+      explanation: `2 × (${l} + ${w}) = 2 × ${l + w} = ${answer} cm.`,
+      ficheKey: 'perimetre'
     };
 
   } else if (subLevel === 2) {
@@ -241,7 +244,8 @@ function generateGeometrie(subLevel) {
       unit: 'cm²',
       answer,
       hint: `Aire = longueur × largeur.`,
-      explanation: `${l} × ${w} = ${answer} cm².`
+      explanation: `${l} × ${w} = ${answer} cm².`,
+      ficheKey: 'aire'
     };
 
   } else {
@@ -256,7 +260,8 @@ function generateGeometrie(subLevel) {
       unit: 'cm²',
       answer,
       hint: `Calcule l'aire de chaque forme, puis additionne.`,
-      explanation: `Rectangle : ${rl} × ${rw} = ${rl * rw}. Carré : ${side} × ${side} = ${side * side}. Total = ${answer} cm².`
+      explanation: `Rectangle : ${rl} × ${rw} = ${rl * rw}. Carré : ${side} × ${side} = ${side * side}. Total = ${answer} cm².`,
+      ficheKey: 'aire'
     };
   }
 }
@@ -273,7 +278,8 @@ function generateFractions(subLevel) {
       unit: 'parts',
       answer,
       hint: `C'est une simple soustraction.`,
-      explanation: `${total} − ${eaten} = ${answer} parts restantes.`
+      explanation: `${total} − ${eaten} = ${answer} parts restantes.`,
+      ficheKey: 'fractions_lire'
     };
 
   } else if (subLevel === 2) {
@@ -287,7 +293,8 @@ function generateFractions(subLevel) {
       unit: '',
       answer,
       hint: `Divise ${x} par ${n}.`,
-      explanation: `${x} ÷ ${n} = ${answer}.`
+      explanation: `${x} ÷ ${n} = ${answer}.`,
+      ficheKey: 'fractions_lire'
     };
 
   } else {
@@ -302,7 +309,8 @@ function generateFractions(subLevel) {
       unit: '',
       answer,
       hint: `Quand les dénominateurs sont les mêmes, on additionne les numérateurs.`,
-      explanation: `${a}/${d} + ${b}/${d} = ${a + b}/${d}. Le numérateur est ${answer}.`
+      explanation: `${a}/${d} + ${b}/${d} = ${a + b}/${d}. Le numérateur est ${answer}.`,
+      ficheKey: 'fractions_additionner'
     };
   }
 }
@@ -320,7 +328,8 @@ function generateMesures(subLevel) {
         unit: 'cm',
         answer,
         hint: `1 mètre = 100 centimètres.`,
-        explanation: `${m} × 100 + ${cm} = ${answer} cm.`
+        explanation: `${m} × 100 + ${cm} = ${answer} cm.`,
+        ficheKey: 'longueurs'
       };
     } else {
       const totalCm = rand(120, 500);
@@ -333,7 +342,8 @@ function generateMesures(subLevel) {
         unit: 'cm',
         answer,
         hint: `Convertis les mètres en cm, puis ajoute le reste.`,
-        explanation: `${m} × 100 + ${cm} = ${answer} cm.`
+        explanation: `${m} × 100 + ${cm} = ${answer} cm.`,
+        ficheKey: 'longueurs'
       };
     }
 
@@ -348,7 +358,8 @@ function generateMesures(subLevel) {
       unit: 'min',
       answer,
       hint: `1 heure = 60 minutes.`,
-      explanation: `${h} × 60 + ${m} = ${answer} minutes.`
+      explanation: `${h} × 60 + ${m} = ${answer} minutes.`,
+      ficheKey: 'durees'
     };
 
   } else {
@@ -362,7 +373,8 @@ function generateMesures(subLevel) {
       unit: 'g',
       answer,
       hint: `1 kg = 1000 g.`,
-      explanation: `${kg} × 1000 + ${g} = ${answer} g.`
+      explanation: `${kg} × 1000 + ${g} = ${answer} g.`,
+      ficheKey: 'masses'
     };
   }
 }
@@ -383,7 +395,8 @@ function generateOuvert(subLevel) {
       unit: '',
       answer: count,
       hint: `Essaie avec 0 pièces de 5, puis 1 pièce de 5, etc.`,
-      explanation: `Il y a ${count} façon(s) de combiner des pièces de 5 € et 2 € pour faire ${target} €.`
+      explanation: `Il y a ${count} façon(s) de combiner des pièces de 5 € et 2 € pour faire ${target} €.`,
+      ficheKey: 'prix'
     };
 
   } else if (subLevel === 2) {
@@ -435,7 +448,8 @@ const RIDDLE_BANK = [
     unit: '€',
     answer: 9,
     hint: 'Calcule d\'abord le total dépensé.',
-    explanation: 'Cahier : 5 €. Stylos : 2 × 3 = 6 €. Total : 11 €. Rendu : 20 − 11 = 9 €.'
+    explanation: 'Cahier : 5 €. Stylos : 2 × 3 = 6 €. Total : 11 €. Rendu : 20 − 11 = 9 €.',
+    ficheKey: 'prix'
   },
   {
     category: 'calcul',
@@ -443,7 +457,8 @@ const RIDDLE_BANK = [
     unit: '€',
     answer: 13,
     hint: 'Additionne tout, puis retire la réduction.',
-    explanation: 'Biscuits : 3 × 4 = 12 €. Jus : 2 × 3 = 6 €. Total : 18 €. Avec réduction : 18 − 5 = 13 €.'
+    explanation: 'Biscuits : 3 × 4 = 12 €. Jus : 2 × 3 = 6 €. Total : 18 €. Avec réduction : 18 − 5 = 13 €.',
+    ficheKey: 'prix'
   },
   {
     category: 'calcul',
@@ -451,7 +466,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 81,
     hint: 'Calcule le total de fournées, puis retire les croissants donnés.',
-    explanation: 'Total fournées : 5 + 3 = 8. Croissants : 8 × 12 = 96. Reste : 96 − 15 = 81.'
+    explanation: 'Total fournées : 5 + 3 = 8. Croissants : 8 × 12 = 96. Reste : 96 − 15 = 81.',
+    ficheKey: 'multiplication'
   },
   {
     category: 'calcul',
@@ -459,7 +475,8 @@ const RIDDLE_BANK = [
     unit: '€',
     answer: 20,
     hint: 'Additionne les cadeaux, puis soustrais les achats.',
-    explanation: 'Reçu : 25 + 15 + 10 = 50 €. Dépensé : 18 + 12 = 30 €. Reste : 50 − 30 = 20 €.'
+    explanation: 'Reçu : 25 + 15 + 10 = 50 €. Dépensé : 18 + 12 = 30 €. Reste : 50 − 30 = 20 €.',
+    ficheKey: 'prix'
   },
   {
     category: 'calcul',
@@ -467,7 +484,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 133,
     hint: 'Calcule d\'abord le nombre total de sièges.',
-    explanation: 'Total : 15 × 12 = 180 sièges. Libres : 180 − 47 = 133.'
+    explanation: 'Total : 15 × 12 = 180 sièges. Libres : 180 − 47 = 133.',
+    ficheKey: 'multiplication'
   },
   {
     category: 'calcul',
@@ -475,7 +493,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 140,
     hint: 'Calcule les places par étage, puis multiplie par 4.',
-    explanation: 'Par étage : 25 + 10 = 35 places. Total : 4 × 35 = 140 places.'
+    explanation: 'Par étage : 25 + 10 = 35 places. Total : 4 × 35 = 140 places.',
+    ficheKey: 'multiplication'
   },
   {
     category: 'calcul',
@@ -483,7 +502,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 168,
     hint: 'Combien de jours y a-t-il dans 3 semaines ?',
-    explanation: '3 semaines = 21 jours. 21 × 8 = 168 œufs.'
+    explanation: '3 semaines = 21 jours. 21 × 8 = 168 œufs.',
+    ficheKey: 'multiplication'
   },
   {
     category: 'calcul',
@@ -491,7 +511,8 @@ const RIDDLE_BANK = [
     unit: '€',
     answer: 4.1,
     hint: 'Calcule le prix total de chaque fruit, puis soustrais de 10 €.',
-    explanation: 'Pommes : 4 × 0,50 = 2 €. Bananes : 3 × 0,30 = 0,90 €. Pastèque : 3 €. Total : 5,90 €. Rendu : 10 − 5,90 = 4,10 €.'
+    explanation: 'Pommes : 4 × 0,50 = 2 €. Bananes : 3 × 0,30 = 0,90 €. Pastèque : 3 €. Total : 5,90 €. Rendu : 10 − 5,90 = 4,10 €.',
+    ficheKey: 'prix'
   },
   {
     category: 'calcul',
@@ -499,7 +520,8 @@ const RIDDLE_BANK = [
     unit: 'km',
     answer: 210,
     hint: 'Distance = vitesse × temps. 3h30 = 3,5 heures.',
-    explanation: '60 × 3,5 = 210 km.'
+    explanation: '60 × 3,5 = 210 km.',
+    ficheKey: 'vitesse'
   },
   {
     category: 'calcul',
@@ -507,7 +529,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 300,
     hint: '25% = un quart. Calcule les enfants, puis déduis les adultes.',
-    explanation: '25% de 400 = 100 enfants. Adultes : 400 − 100 = 300.'
+    explanation: '25% de 400 = 100 enfants. Adultes : 400 − 100 = 300.',
+    ficheKey: 'pourcentages'
   },
   {
     category: 'calcul',
@@ -515,7 +538,8 @@ const RIDDLE_BANK = [
     unit: 'g',
     answer: 700,
     hint: 'Multiplie 200 g par 3,5.',
-    explanation: '200 × 3,5 = 700 g de farine.'
+    explanation: '200 × 3,5 = 700 g de farine.',
+    ficheKey: 'proportionnalite'
   },
   {
     category: 'calcul',
@@ -523,7 +547,8 @@ const RIDDLE_BANK = [
     unit: '€',
     answer: 110,
     hint: 'Calcule d\'abord le prix réduit d\'un article.',
-    explanation: 'Prix réduit : 65 − 10 = 55 €. Pour 2 articles : 55 × 2 = 110 €.'
+    explanation: 'Prix réduit : 65 − 10 = 55 €. Pour 2 articles : 55 × 2 = 110 €.',
+    ficheKey: 'prix'
   },
   {
     category: 'calcul',
@@ -539,7 +564,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 36,
     hint: '50% + 30% = 80%. Combien reste-t-il de pourcentage ?',
-    explanation: 'Première classe : 100% − 50% − 30% = 20%. 20% de 180 = 36 passagers.'
+    explanation: 'Première classe : 100% − 50% − 30% = 20%. 20% de 180 = 36 passagers.',
+    ficheKey: 'pourcentages'
   },
   {
     category: 'calcul',
@@ -547,7 +573,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 10,
     hint: 'Calcule le stock total, puis retire les ventes.',
-    explanation: 'Stock : 5 × 24 = 120 livres. Vendus : 78 + 32 = 110. Reste : 120 − 110 = 10.'
+    explanation: 'Stock : 5 × 24 = 120 livres. Vendus : 78 + 32 = 110. Reste : 120 − 110 = 10.',
+    ficheKey: 'multiplication'
   },
   {
     category: 'calcul',
@@ -555,7 +582,8 @@ const RIDDLE_BANK = [
     unit: 'kg',
     answer: 5,
     hint: 'Calcule le nombre total de pots, puis le poids en grammes, et convertis en kg.',
-    explanation: '12 + 8 = 20 pots. 20 × 250 = 5000 g = 5 kg.'
+    explanation: '12 + 8 = 20 pots. 20 × 250 = 5000 g = 5 kg.',
+    ficheKey: 'masses'
   },
   {
     category: 'calcul',
@@ -563,7 +591,8 @@ const RIDDLE_BANK = [
     unit: '€',
     answer: 23,
     hint: 'Calcule le prix de chaque article puis le total.',
-    explanation: 'Pizzas : 2 × 8 = 16 €. Salade : 3 €. Yaourts : 4 × 1,50 = 6 €. Jus : 2 €. Total : 27 €. Reste : 50 − 27 = 23 €.'
+    explanation: 'Pizzas : 2 × 8 = 16 €. Salade : 3 €. Yaourts : 4 × 1,50 = 6 €. Jus : 2 €. Total : 27 €. Reste : 50 − 27 = 23 €.',
+    ficheKey: 'prix'
   },
   {
     category: 'calcul',
@@ -571,7 +600,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 675,
     hint: 'Voyages par jour × élèves par voyage × nombre de jours.',
-    explanation: '3 × 45 = 135 élèves/jour. 135 × 5 = 675 élèves.'
+    explanation: '3 × 45 = 135 élèves/jour. 135 × 5 = 675 élèves.',
+    ficheKey: 'multiplication'
   },
   {
     category: 'calcul',
@@ -587,7 +617,8 @@ const RIDDLE_BANK = [
     unit: 'CHF',
     answer: 420,
     hint: 'Un enfant paie la moitié du prix adulte.',
-    explanation: 'Adultes : 2 × 120 = 240 CHF. Enfants : 3 × 60 = 180 CHF. Total : 240 + 180 = 420 CHF.'
+    explanation: 'Adultes : 2 × 120 = 240 CHF. Enfants : 3 × 60 = 180 CHF. Total : 240 + 180 = 420 CHF.',
+    ficheKey: 'prix'
   },
   {
     category: 'calcul',
@@ -595,7 +626,8 @@ const RIDDLE_BANK = [
     unit: 'km',
     answer: 10.5,
     hint: 'Calcule 3/4 de 42, puis soustrais de 42.',
-    explanation: '3/4 de 42 = 31,5 km parcourus. Reste : 42 − 31,5 = 10,5 km.'
+    explanation: '3/4 de 42 = 31,5 km parcourus. Reste : 42 − 31,5 = 10,5 km.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'calcul',
@@ -839,7 +871,8 @@ const RIDDLE_BANK = [
     unit: 'cm²',
     answer: 81,
     hint: 'Trouve d\'abord la longueur d\'un côté.',
-    explanation: 'Côté = 36 ÷ 4 = 9 cm. Aire = 9 × 9 = 81 cm².'
+    explanation: 'Côté = 36 ÷ 4 = 9 cm. Aire = 9 × 9 = 81 cm².',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -847,7 +880,8 @@ const RIDDLE_BANK = [
     unit: 'cm',
     answer: 28,
     hint: 'Trouve d\'abord la longueur à partir de l\'aire.',
-    explanation: 'Longueur = 48 ÷ 6 = 8 cm. Périmètre = 2 × (8 + 6) = 28 cm.'
+    explanation: 'Longueur = 48 ÷ 6 = 8 cm. Périmètre = 2 × (8 + 6) = 28 cm.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'geometrie',
@@ -855,7 +889,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 6,
     hint: 'Pense à un dé : dessus, dessous, devant, derrière, gauche, droite.',
-    explanation: 'Un cube a 6 faces carrées.'
+    explanation: 'Un cube a 6 faces carrées.',
+    ficheKey: 'volume'
   },
   {
     category: 'geometrie',
@@ -863,7 +898,8 @@ const RIDDLE_BANK = [
     unit: 'cm',
     answer: 20,
     hint: 'Le périmètre, c\'est la somme de tous les côtés.',
-    explanation: '7 + 8 + 5 = 20 cm.'
+    explanation: '7 + 8 + 5 = 20 cm.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'geometrie',
@@ -871,7 +907,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 320,
     hint: 'C\'est le périmètre du rectangle.',
-    explanation: 'Périmètre = 2 × (100 + 60) = 2 × 160 = 320 m.'
+    explanation: 'Périmètre = 2 × (100 + 60) = 2 × 160 = 320 m.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'geometrie',
@@ -879,7 +916,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 12,
     hint: 'C\'est l\'aire du rectangle.',
-    explanation: 'Aire = 4 × 3 = 12 m². Il faut 12 carreaux.'
+    explanation: 'Aire = 4 × 3 = 12 m². Il faut 12 carreaux.',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -887,7 +925,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 12,
     hint: 'Une arête est un segment entre deux sommets. Compte les arêtes du haut, du bas, et les verticales.',
-    explanation: '4 arêtes en haut + 4 en bas + 4 verticales = 12 arêtes.'
+    explanation: '4 arêtes en haut + 4 en bas + 4 verticales = 12 arêtes.',
+    ficheKey: 'volume'
   },
   {
     category: 'geometrie',
@@ -895,7 +934,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 29,
     hint: 'Calcule le périmètre, puis retire la largeur du portillon.',
-    explanation: 'Périmètre = 2 × (10 + 5) = 30 m. On retire 1 m pour le portillon : 30 − 1 = 29 m.'
+    explanation: 'Périmètre = 2 × (10 + 5) = 30 m. On retire 1 m pour le portillon : 30 − 1 = 29 m.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'geometrie',
@@ -903,7 +943,8 @@ const RIDDLE_BANK = [
     unit: 'cm³',
     answer: 64,
     hint: 'Volume du cube = côté × côté × côté.',
-    explanation: '4 × 4 × 4 = 64 cm³.'
+    explanation: '4 × 4 × 4 = 64 cm³.',
+    ficheKey: 'volume'
   },
   {
     category: 'geometrie',
@@ -911,7 +952,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 5,
     hint: 'Compte la base et les faces triangulaires sur les côtés.',
-    explanation: '1 base carrée + 4 faces triangulaires = 5 faces.'
+    explanation: '1 base carrée + 4 faces triangulaires = 5 faces.',
+    ficheKey: 'volume'
   },
   {
     category: 'geometrie',
@@ -919,7 +961,8 @@ const RIDDLE_BANK = [
     unit: 'cm',
     answer: 5,
     hint: 'Le rayon est la moitié du diamètre.',
-    explanation: 'Rayon = diamètre ÷ 2 = 10 ÷ 2 = 5 cm.'
+    explanation: 'Rayon = diamètre ÷ 2 = 10 ÷ 2 = 5 cm.',
+    ficheKey: 'droites'
   },
   {
     category: 'geometrie',
@@ -927,7 +970,8 @@ const RIDDLE_BANK = [
     unit: '°',
     answer: 45,
     hint: 'La somme des angles d\'un triangle fait toujours 180°.',
-    explanation: '180 − 45 − 90 = 45°.'
+    explanation: '180 − 45 − 90 = 45°.',
+    ficheKey: 'angles'
   },
   {
     category: 'geometrie',
@@ -935,7 +979,8 @@ const RIDDLE_BANK = [
     unit: '€',
     answer: 240,
     hint: 'Calcule l\'aire de la chambre, puis multiplie par le prix au m².',
-    explanation: 'Aire = 5 × 4 = 20 m². Coût : 20 × 12 = 240 €.'
+    explanation: 'Aire = 5 × 4 = 20 m². Coût : 20 × 12 = 240 €.',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -943,7 +988,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 8,
     hint: 'Un sommet est un coin. Compte ceux du haut et du bas.',
-    explanation: '4 sommets en haut + 4 sommets en bas = 8 sommets.'
+    explanation: '4 sommets en haut + 4 sommets en bas = 8 sommets.',
+    ficheKey: 'volume'
   },
   {
     category: 'geometrie',
@@ -951,7 +997,8 @@ const RIDDLE_BANK = [
     unit: 'cm²',
     answer: 18,
     hint: 'Calcule l\'aire de chaque rectangle et additionne.',
-    explanation: 'Rectangle 1 : 6 × 2 = 12 cm². Rectangle 2 : 3 × 2 = 6 cm². Total : 12 + 6 = 18 cm².'
+    explanation: 'Rectangle 1 : 6 × 2 = 12 cm². Rectangle 2 : 3 × 2 = 6 cm². Total : 12 + 6 = 18 cm².',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -959,7 +1006,8 @@ const RIDDLE_BANK = [
     unit: '€',
     answer: 480,
     hint: 'Calcule d\'abord le périmètre du carré.',
-    explanation: 'Périmètre = 4 × 8 = 32 m. Coût : 32 × 15 = 480 €.'
+    explanation: 'Périmètre = 4 × 8 = 32 m. Coût : 32 × 15 = 480 €.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'geometrie',
@@ -967,7 +1015,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 4,
     hint: 'Pense aux axes horizontaux, verticaux et diagonaux.',
-    explanation: '1 horizontal + 1 vertical + 2 diagonaux = 4 axes de symétrie.'
+    explanation: '1 horizontal + 1 vertical + 2 diagonaux = 4 axes de symétrie.',
+    ficheKey: 'symetrie'
   },
   {
     category: 'geometrie',
@@ -975,7 +1024,8 @@ const RIDDLE_BANK = [
     unit: 'cm',
     answer: 9,
     hint: 'Dans un triangle équilatéral, les 3 côtés sont égaux.',
-    explanation: '27 ÷ 3 = 9 cm par côté.'
+    explanation: '27 ÷ 3 = 9 cm par côté.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'geometrie',
@@ -983,7 +1033,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 15,
     hint: 'C\'est comme calculer une aire.',
-    explanation: '5 × 3 = 15 cases.'
+    explanation: '5 × 3 = 15 cases.',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -1015,7 +1066,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 3,
     hint: 'Chaque axe passe par un sommet et le milieu du côté opposé.',
-    explanation: 'Un triangle équilatéral a 3 axes de symétrie.'
+    explanation: 'Un triangle équilatéral a 3 axes de symétrie.',
+    ficheKey: 'symetrie'
   },
   {
     category: 'geometrie',
@@ -1023,7 +1075,8 @@ const RIDDLE_BANK = [
     unit: 'cm',
     answer: 3,
     hint: 'Quel nombre multiplié par lui-même 3 fois donne 27 ?',
-    explanation: '3 × 3 × 3 = 27. Le côté mesure 3 cm.'
+    explanation: '3 × 3 × 3 = 27. Le côté mesure 3 cm.',
+    ficheKey: 'volume'
   },
   {
     category: 'geometrie',
@@ -1031,7 +1084,8 @@ const RIDDLE_BANK = [
     unit: 'cm²',
     answer: 20,
     hint: 'Calcule l\'aire de chaque rectangle séparément.',
-    explanation: 'Rectangle horizontal : 6 × 2 = 12 cm². Rectangle vertical : 2 × 4 = 8 cm². Total : 12 + 8 = 20 cm².'
+    explanation: 'Rectangle horizontal : 6 × 2 = 12 cm². Rectangle vertical : 2 × 4 = 8 cm². Total : 12 + 8 = 20 cm².',
+    ficheKey: 'aire'
   },
 
   // ═══════════════════════════════════════════════════════════════════
@@ -1043,7 +1097,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 1,
     hint: 'Soustrais les parts mangées du total.',
-    explanation: '6 − 2 − 3 = 1 part restante.'
+    explanation: '6 − 2 − 3 = 1 part restante.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1051,7 +1106,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 3,
     hint: 'Additionne les parts mangées, puis soustrais du total.',
-    explanation: '3 + 2 = 5 parts mangées. 8 − 5 = 3 parts restantes.'
+    explanation: '3 + 2 = 5 parts mangées. 8 − 5 = 3 parts restantes.',
+    ficheKey: 'fractions_additionner'
   },
   {
     category: 'fractions',
@@ -1059,7 +1115,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 10,
     hint: 'Divise le nombre d\'élèves par 3.',
-    explanation: '1/3 de 30 = 30 ÷ 3 = 10 élèves.'
+    explanation: '1/3 de 30 = 30 ÷ 3 = 10 élèves.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1067,7 +1124,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 14,
     hint: 'Calcule 1/4 de 24 et 1/6 de 24 séparément.',
-    explanation: '1/4 de 24 = 6 bonbons. 1/6 de 24 = 4 bonbons. Donné : 6 + 4 = 10. Reste : 24 − 10 = 14.'
+    explanation: '1/4 de 24 = 6 bonbons. 1/6 de 24 = 4 bonbons. Donné : 6 + 4 = 10. Reste : 24 − 10 = 14.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1075,7 +1133,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 3,
     hint: 'Mets les deux fractions au même dénominateur pour comparer.',
-    explanation: '3/4 = 9/12 et 2/3 = 8/12. Comme 9/12 > 8/12, c\'est 3/4 la plus grande. Numérateur = 3.'
+    explanation: '3/4 = 9/12 et 2/3 = 8/12. Comme 9/12 > 8/12, c\'est 3/4 la plus grande. Numérateur = 3.',
+    ficheKey: 'fractions_comparer'
   },
   {
     category: 'fractions',
@@ -1083,7 +1142,8 @@ const RIDDLE_BANK = [
     unit: 'litres',
     answer: 36,
     hint: 'Calcule d\'abord 1/5 de 60, puis multiplie par 3.',
-    explanation: '1/5 de 60 = 12 litres. 3/5 = 3 × 12 = 36 litres.'
+    explanation: '1/5 de 60 = 12 litres. 3/5 = 3 × 12 = 36 litres.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1091,7 +1151,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 12,
     hint: 'Attention : Lucas mange 1/3 de ce qui RESTE, pas de la tablette entière.',
-    explanation: 'Emma : 1/4 de 24 = 6 carrés. Reste : 24 − 6 = 18. Lucas : 1/3 de 18 = 6 carrés. Reste : 18 − 6 = 12.'
+    explanation: 'Emma : 1/4 de 24 = 6 carrés. Reste : 24 − 6 = 18. Lucas : 1/3 de 18 = 6 carrés. Reste : 18 − 6 = 12.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1099,7 +1160,8 @@ const RIDDLE_BANK = [
     unit: 'cm',
     answer: 15,
     hint: 'Calcule 3/8 de 40.',
-    explanation: '1/8 de 40 = 5 cm. 3/8 = 3 × 5 = 15 cm.'
+    explanation: '1/8 de 40 = 5 cm. 3/8 = 3 × 5 = 15 cm.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1107,7 +1169,8 @@ const RIDDLE_BANK = [
     unit: '%',
     answer: 25,
     hint: 'Divise 100 par 4.',
-    explanation: '1/4 = 1 ÷ 4 = 0,25 = 25%.'
+    explanation: '1/4 = 1 ÷ 4 = 0,25 = 25%.',
+    ficheKey: 'fractions_decimales'
   },
   {
     category: 'fractions',
@@ -1115,7 +1178,8 @@ const RIDDLE_BANK = [
     unit: '%',
     answer: 60,
     hint: '1/5 = 20%. Multiplie par 3.',
-    explanation: '3/5 = 3 ÷ 5 = 0,60 = 60%.'
+    explanation: '3/5 = 3 ÷ 5 = 0,60 = 60%.',
+    ficheKey: 'fractions_decimales'
   },
   {
     category: 'fractions',
@@ -1123,7 +1187,8 @@ const RIDDLE_BANK = [
     unit: '€',
     answer: 2000,
     hint: 'Calcule la part de l\'aîné et du cadet, puis déduis le reste.',
-    explanation: 'Aîné : 1/2 de 12 000 = 6 000 €. Cadet : 1/3 de 12 000 = 4 000 €. Benjamin : 12 000 − 6 000 − 4 000 = 2 000 €.'
+    explanation: 'Aîné : 1/2 de 12 000 = 6 000 €. Cadet : 1/3 de 12 000 = 4 000 €. Benjamin : 12 000 − 6 000 − 4 000 = 2 000 €.',
+    ficheKey: 'partage'
   },
   {
     category: 'fractions',
@@ -1131,7 +1196,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 4,
     hint: 'Plus le dénominateur est grand, plus la fraction est petite.',
-    explanation: '1/4 < 1/3 < 1/2. La plus petite est 1/4, son dénominateur est 4.'
+    explanation: '1/4 < 1/3 < 1/2. La plus petite est 1/4, son dénominateur est 4.',
+    ficheKey: 'fractions_comparer'
   },
   {
     category: 'fractions',
@@ -1139,7 +1205,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 3,
     hint: 'Divise le numérateur et le dénominateur par le même nombre.',
-    explanation: '2/6 = 1/3 (on divise par 2). Le dénominateur simplifié est 3.'
+    explanation: '2/6 = 1/3 (on divise par 2). Le dénominateur simplifié est 3.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1147,7 +1214,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 20,
     hint: 'Calcule d\'abord le nombre de filles.',
-    explanation: 'Filles : 3/8 de 32 = 12. Garçons : 32 − 12 = 20.'
+    explanation: 'Filles : 3/8 de 32 = 12. Garçons : 32 − 12 = 20.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1155,7 +1223,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 12,
     hint: 'Attention : mardi tu manges 1/4 du RESTE, pas de la tarte entière.',
-    explanation: 'Lundi : 1/3 de 24 = 8 parts mangées. Reste : 24 − 8 = 16. Mardi : 1/4 de 16 = 4 parts mangées. Reste : 16 − 4 = 12.'
+    explanation: 'Lundi : 1/3 de 24 = 8 parts mangées. Reste : 24 − 8 = 16. Mardi : 1/4 de 16 = 4 parts mangées. Reste : 16 − 4 = 12.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1163,7 +1232,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 5,
     hint: 'Mets 2/3 au dénominateur 6 : 2/3 = ?/6.',
-    explanation: '2/3 = 4/6. Donc 4/6 + 1/6 = 5/6. Le numérateur est 5.'
+    explanation: '2/3 = 4/6. Donc 4/6 + 1/6 = 5/6. Le numérateur est 5.',
+    ficheKey: 'fractions_additionner'
   },
   {
     category: 'fractions',
@@ -1171,7 +1241,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 16,
     hint: 'Calcule les rouges et les bleus, puis déduis les jaunes.',
-    explanation: 'Rouges : 2/5 de 60 = 24. Bleus : 1/3 de 60 = 20. Jaunes : 60 − 24 − 20 = 16.'
+    explanation: 'Rouges : 2/5 de 60 = 24. Bleus : 1/3 de 60 = 20. Jaunes : 60 − 24 − 20 = 16.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1179,7 +1250,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 36,
     hint: 'Calcule d\'abord 1/4 de 48.',
-    explanation: '1/4 de 48 = 12. 3/4 = 3 × 12 = 36 bonbons.'
+    explanation: '1/4 de 48 = 12. 3/4 = 3 × 12 = 36 bonbons.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1187,7 +1259,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 5,
     hint: 'Mets les deux au même dénominateur (24).',
-    explanation: '5/8 = 15/24. 7/12 = 14/24. 15/24 > 14/24. Le plus grand est 5/8, numérateur = 5.'
+    explanation: '5/8 = 15/24. 7/12 = 14/24. 15/24 > 14/24. Le plus grand est 5/8, numérateur = 5.',
+    ficheKey: 'fractions_comparer'
   },
   {
     category: 'fractions',
@@ -1195,7 +1268,8 @@ const RIDDLE_BANK = [
     unit: 'm²',
     answer: 90,
     hint: '3 parcelles sur 4, c\'est 3/4 du terrain.',
-    explanation: '3/4 de 120 = 90 m².'
+    explanation: '3/4 de 120 = 90 m².',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1203,7 +1277,8 @@ const RIDDLE_BANK = [
     unit: '%',
     answer: 50,
     hint: 'La moitié de 100, c\'est…',
-    explanation: '1/2 = 0,50 = 50%.'
+    explanation: '1/2 = 0,50 = 50%.',
+    ficheKey: 'fractions_decimales'
   },
   {
     category: 'fractions',
@@ -1211,7 +1286,8 @@ const RIDDLE_BANK = [
     unit: 'mL',
     answer: 375,
     hint: '3/4 de litre = 750 mL. La moitié de ça…',
-    explanation: '3/4 L = 750 mL. La moitié : 750 ÷ 2 = 375 mL.'
+    explanation: '3/4 L = 750 mL. La moitié : 750 ÷ 2 = 375 mL.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1219,7 +1295,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 19,
     hint: 'Calcule 2/9 de 36 et 1/4 de 36 séparément.',
-    explanation: 'Paul : 2/9 de 36 = 8. Marie : 1/4 de 36 = 9. Donné : 8 + 9 = 17. Reste : 36 − 17 = 19.'
+    explanation: 'Paul : 2/9 de 36 = 8. Marie : 1/4 de 36 = 9. Donné : 8 + 9 = 17. Reste : 36 − 17 = 19.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1227,7 +1304,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 4,
     hint: '1 heure = 60 minutes. 15/60 = ?',
-    explanation: '15/60 = 1/4. Le dénominateur est 4.'
+    explanation: '15/60 = 1/4. Le dénominateur est 4.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1247,7 +1325,8 @@ const RIDDLE_BANK = [
     unit: 'minutes',
     answer: 115,
     hint: '1h55, c\'est combien de minutes au total ?',
-    explanation: '1h55 = 60 + 55 = 115 minutes.'
+    explanation: '1h55 = 60 + 55 = 115 minutes.',
+    ficheKey: 'durees'
   },
   {
     category: 'mesures',
@@ -1255,7 +1334,8 @@ const RIDDLE_BANK = [
     unit: 'minutes',
     answer: 150,
     hint: 'Calcule d\'abord les heures, puis les minutes.',
-    explanation: 'De 9h15 à 11h15 = 2h = 120 min. De 11h15 à 11h45 = 30 min. Total : 120 + 30 = 150 minutes.'
+    explanation: 'De 9h15 à 11h15 = 2h = 120 min. De 11h15 à 11h45 = 30 min. Total : 120 + 30 = 150 minutes.',
+    ficheKey: 'durees'
   },
   {
     category: 'mesures',
@@ -1263,7 +1343,8 @@ const RIDDLE_BANK = [
     unit: 'km',
     answer: 30,
     hint: 'Distance = vitesse × temps.',
-    explanation: '15 km/h × 2 h = 30 km.'
+    explanation: '15 km/h × 2 h = 30 km.',
+    ficheKey: 'vitesse'
   },
   {
     category: 'mesures',
@@ -1271,7 +1352,8 @@ const RIDDLE_BANK = [
     unit: 'g',
     answer: 4050,
     hint: 'Convertis d\'abord tout en grammes.',
-    explanation: '2 kg 350 g = 2350 g. 1 kg 700 g = 1700 g. Total : 2350 + 1700 = 4050 g.'
+    explanation: '2 kg 350 g = 2350 g. 1 kg 700 g = 1700 g. Total : 2350 + 1700 = 4050 g.',
+    ficheKey: 'masses'
   },
   {
     category: 'mesures',
@@ -1279,7 +1361,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 15,
     hint: '16h40 + 1h35 : attention au passage au-dessus de 60 minutes.',
-    explanation: '16h40 + 1h = 17h40. 17h40 + 35 min = 18h15. Les minutes sont 15.'
+    explanation: '16h40 + 1h = 17h40. 17h40 + 35 min = 18h15. Les minutes sont 15.',
+    ficheKey: 'durees'
   },
   {
     category: 'mesures',
@@ -1287,7 +1370,8 @@ const RIDDLE_BANK = [
     unit: '€',
     answer: 4.9,
     hint: 'Calcule le total dépensé, puis soustrais de 10 €.',
-    explanation: '3 × 1,20 = 3,60 €. Total : 3,60 + 1,50 = 5,10 €. Rendu : 10 − 5,10 = 4,90 €.'
+    explanation: '3 × 1,20 = 3,60 €. Total : 3,60 + 1,50 = 5,10 €. Rendu : 10 − 5,10 = 4,90 €.',
+    ficheKey: 'prix'
   },
   {
     category: 'mesures',
@@ -1303,7 +1387,8 @@ const RIDDLE_BANK = [
     unit: 'cm',
     answer: 155,
     hint: 'Convertis d\'abord tout en centimètres.',
-    explanation: '2 m 40 cm = 240 cm. 240 − 85 = 155 cm.'
+    explanation: '2 m 40 cm = 240 cm. 240 − 85 = 155 cm.',
+    ficheKey: 'longueurs'
   },
   {
     category: 'mesures',
@@ -1311,7 +1396,8 @@ const RIDDLE_BANK = [
     unit: 'h',
     answer: 8,
     hint: 'New York est en retard sur Paris.',
-    explanation: '14h − 6h = 8h. Il est 8h du matin à New York.'
+    explanation: '14h − 6h = 8h. Il est 8h du matin à New York.',
+    ficheKey: 'durees'
   },
   {
     category: 'mesures',
@@ -1319,7 +1405,8 @@ const RIDDLE_BANK = [
     unit: 'km/h',
     answer: 36,
     hint: '100 m en 10 s → combien en 1 seconde ? Et en 1 heure (3600 secondes) ?',
-    explanation: '100 m / 10 s = 10 m/s. En km/h : 10 × 3,6 = 36 km/h.'
+    explanation: '100 m / 10 s = 10 m/s. En km/h : 10 × 3,6 = 36 km/h.',
+    ficheKey: 'vitesse'
   },
   {
     category: 'mesures',
@@ -1327,7 +1414,8 @@ const RIDDLE_BANK = [
     unit: 'km',
     answer: 35,
     hint: 'Multiplie la distance sur la carte par l\'échelle.',
-    explanation: '7 × 5 = 35 km.'
+    explanation: '7 × 5 = 35 km.',
+    ficheKey: 'conversions'
   },
   {
     category: 'mesures',
@@ -1335,7 +1423,8 @@ const RIDDLE_BANK = [
     unit: 'mL',
     answer: 750,
     hint: '1,5 L = 1500 mL. Soustrais les 3 verres.',
-    explanation: '1,5 L = 1500 mL. Versé : 3 × 250 = 750 mL. Reste : 1500 − 750 = 750 mL.'
+    explanation: '1,5 L = 1500 mL. Versé : 3 × 250 = 750 mL. Reste : 1500 − 750 = 750 mL.',
+    ficheKey: 'capacites'
   },
   {
     category: 'mesures',
@@ -1351,7 +1440,8 @@ const RIDDLE_BANK = [
     unit: 's',
     answer: 8130,
     hint: 'Convertis d\'abord les heures en minutes, puis tout en secondes.',
-    explanation: '2h = 120 min. 120 + 15 = 135 min. 135 × 60 = 8100 s. 8100 + 30 = 8130 s.'
+    explanation: '2h = 120 min. 120 + 15 = 135 min. 135 × 60 = 8100 s. 8100 + 30 = 8130 s.',
+    ficheKey: 'durees'
   },
   {
     category: 'mesures',
@@ -1359,7 +1449,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 2,
     hint: '2 kg = 2000 g. Divise par 750 g et prends la partie entière.',
-    explanation: '2000 ÷ 750 = 2,67. On ne peut faire que 2 recettes complètes.'
+    explanation: '2000 ÷ 750 = 2,67. On ne peut faire que 2 recettes complètes.',
+    ficheKey: 'masses'
   },
   {
     category: 'mesures',
@@ -1367,7 +1458,8 @@ const RIDDLE_BANK = [
     unit: 'min',
     answer: 105,
     hint: 'Additionne les deux mi-temps et la pause.',
-    explanation: '45 + 45 + 15 = 105 minutes.'
+    explanation: '45 + 45 + 15 = 105 minutes.',
+    ficheKey: 'durees'
   },
   {
     category: 'mesures',
@@ -1375,7 +1467,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 1200,
     hint: 'Le temps ne compte pas ici, seulement la distance.',
-    explanation: '3 tours × 400 m = 1200 m.'
+    explanation: '3 tours × 400 m = 1200 m.',
+    ficheKey: 'longueurs'
   },
   {
     category: 'mesures',
@@ -1383,7 +1476,8 @@ const RIDDLE_BANK = [
     unit: 'g',
     answer: 2050,
     hint: 'Convertis tout en grammes.',
-    explanation: '1 kg 250 g = 1250 g. Total : 1250 + 800 = 2050 g.'
+    explanation: '1 kg 250 g = 1250 g. Total : 1250 + 800 = 2050 g.',
+    ficheKey: 'masses'
   },
   {
     category: 'mesures',
@@ -1391,7 +1485,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 800,
     hint: '1 cm sur la carte = 10 000 cm en réalité = 100 m.',
-    explanation: '8 cm × 10 000 = 80 000 cm = 800 m.'
+    explanation: '8 cm × 10 000 = 80 000 cm = 800 m.',
+    ficheKey: 'conversions'
   },
   {
     category: 'mesures',
@@ -1399,7 +1494,8 @@ const RIDDLE_BANK = [
     unit: 'litres',
     answer: 102,
     hint: '8 min 30 s = 8,5 minutes.',
-    explanation: '12 × 8,5 = 102 litres.'
+    explanation: '12 × 8,5 = 102 litres.',
+    ficheKey: 'capacites'
   },
   {
     category: 'mesures',
@@ -1407,7 +1503,8 @@ const RIDDLE_BANK = [
     unit: 'min',
     answer: 20,
     hint: 'Minuit = 24h00.',
-    explanation: 'De 23h40 à 24h00 = 20 minutes.'
+    explanation: 'De 23h40 à 24h00 = 20 minutes.',
+    ficheKey: 'durees'
   },
   {
     category: 'mesures',
@@ -1415,7 +1512,8 @@ const RIDDLE_BANK = [
     unit: 'min',
     answer: 30,
     hint: 'Temps = distance ÷ vitesse.',
-    explanation: '60 ÷ 120 = 0,5 heure = 30 minutes.'
+    explanation: '60 ÷ 120 = 0,5 heure = 30 minutes.',
+    ficheKey: 'vitesse'
   },
   {
     category: 'mesures',
@@ -1423,7 +1521,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 5,
     hint: '10h20 + 45 min. Attention au passage au-dessus de 60.',
-    explanation: '10h20 + 40 min = 11h00. + 5 min = 11h05. Les minutes sont 5.'
+    explanation: '10h20 + 40 min = 11h00. + 5 min = 11h05. Les minutes sont 5.',
+    ficheKey: 'durees'
   },
   {
     category: 'mesures',
@@ -1431,7 +1530,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 200,
     hint: '2 minutes = 120 secondes. Combien de fois 30 s dans 120 s ?',
-    explanation: '120 ÷ 30 = 4 longueurs. 4 × 50 = 200 m.'
+    explanation: '120 ÷ 30 = 4 longueurs. 4 × 50 = 200 m.',
+    ficheKey: 'vitesse'
   },
   {
     category: 'mesures',
@@ -1439,7 +1539,8 @@ const RIDDLE_BANK = [
     unit: 'mL',
     answer: 300,
     hint: '1 dL = 100 mL.',
-    explanation: '3 dL = 3 × 100 = 300 mL.'
+    explanation: '3 dL = 3 × 100 = 300 mL.',
+    ficheKey: 'capacites'
   },
 
   // ═══════════════════════════════════════════════════════════════════
@@ -1696,7 +1797,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 400,
     hint: 'Le périmètre d\'un rectangle = 2 × (longueur + largeur).',
-    explanation: 'Périmètre = 2 × (120 + 80) = 2 × 200 = 400 m.'
+    explanation: 'Périmètre = 2 × (120 + 80) = 2 × 200 = 400 m.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'geometrie',
@@ -1704,7 +1806,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 60,
     hint: 'Le périmètre d\'un triangle = somme de ses trois côtés.',
-    explanation: 'Périmètre = 15 + 20 + 25 = 60 m de bordure.'
+    explanation: 'Périmètre = 15 + 20 + 25 = 60 m de bordure.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'geometrie',
@@ -1712,7 +1815,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 420,
     hint: 'Calcule d\'abord le périmètre du carré, puis multiplie par 3.',
-    explanation: 'Périmètre = 4 × 35 = 140 m. Distance totale = 140 × 3 = 420 m.'
+    explanation: 'Périmètre = 4 × 35 = 140 m. Distance totale = 140 × 3 = 420 m.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'fractions',
@@ -1720,7 +1824,8 @@ const RIDDLE_BANK = [
     unit: 'sorts',
     answer: 90,
     hint: 'Divise 120 par 4 pour trouver 1/4, puis multiplie par 3.',
-    explanation: '1/4 de 120 = 30 sorts. Donc 3/4 = 30 × 3 = 90 sorts.'
+    explanation: '1/4 de 120 = 30 sorts. Donc 3/4 = 30 × 3 = 90 sorts.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1728,7 +1833,8 @@ const RIDDLE_BANK = [
     unit: 'fleurs',
     answer: 28,
     hint: 'Calcule 1/6 et 1/4 de 48 séparément, puis soustrais les deux du total.',
-    explanation: '1/6 de 48 = 8 fleurs. 1/4 de 48 = 12 fleurs. Reste : 48 − 8 − 12 = 28 fleurs.'
+    explanation: '1/6 de 48 = 8 fleurs. 1/4 de 48 = 12 fleurs. Reste : 48 − 8 − 12 = 28 fleurs.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1736,7 +1842,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 6,
     hint: 'Convertis les fractions avec le même dénominateur, additionne-les, puis soustrais de 1.',
-    explanation: '2/3 = 4/6. Total rempli : 4/6 + 1/6 = 5/6. Vide : 6/6 − 5/6 = 1/6. Le dénominateur est 6.'
+    explanation: '2/3 = 4/6. Total rempli : 4/6 + 1/6 = 5/6. Vide : 6/6 − 5/6 = 1/6. Le dénominateur est 6.',
+    ficheKey: 'fractions_additionner'
   },
   {
     category: 'mesures',
@@ -1744,7 +1851,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 1650,
     hint: 'Convertis 3 km 400 m en mètres, puis soustrais.',
-    explanation: '3 km 400 m = 3 400 m. Distance restante : 3 400 − 1 750 = 1 650 m.'
+    explanation: '3 km 400 m = 3 400 m. Distance restante : 3 400 − 1 750 = 1 650 m.',
+    ficheKey: 'longueurs'
   },
   {
     category: 'mesures',
@@ -1752,7 +1860,8 @@ const RIDDLE_BANK = [
     unit: 'g',
     answer: 1450,
     hint: 'Convertis la quantité totale en grammes, puis soustrais.',
-    explanation: '2 kg 300 g = 2 300 g. Quantité manquante : 2 300 − 850 = 1 450 g.'
+    explanation: '2 kg 300 g = 2 300 g. Quantité manquante : 2 300 − 850 = 1 450 g.',
+    ficheKey: 'masses'
   },
   {
     category: 'ouvert',
@@ -1820,7 +1929,8 @@ const RIDDLE_BANK = [
     unit: 'km',
     answer: 30,
     hint: 'Circonférence = π × diamètre.',
-    explanation: 'Circonférence ≈ 3 × 10 = 30 km.'
+    explanation: 'Circonférence ≈ 3 × 10 = 30 km.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'geometrie',
@@ -1828,7 +1938,8 @@ const RIDDLE_BANK = [
     unit: 'cm²',
     answer: 1600,
     hint: 'Aire d\'un carré = côté × côté.',
-    explanation: '40 × 40 = 1 600 cm².'
+    explanation: '40 × 40 = 1 600 cm².',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -1836,7 +1947,8 @@ const RIDDLE_BANK = [
     unit: 'm²',
     answer: 24,
     hint: 'Aire d\'un triangle = (base × hauteur) ÷ 2.',
-    explanation: '(6 × 8) ÷ 2 = 48 ÷ 2 = 24 m².'
+    explanation: '(6 × 8) ÷ 2 = 48 ÷ 2 = 24 m².',
+    ficheKey: 'aire'
   },
   {
     category: 'fractions',
@@ -1844,7 +1956,8 @@ const RIDDLE_BANK = [
     unit: 'kg',
     answer: 50,
     hint: 'Calcule ce qui est mangé chaque mois, puis soustrais du total.',
-    explanation: '1/4 de 120 = 30 kg. 1/3 de 120 = 40 kg. Consommé : 70 kg. Reste : 120 − 70 = 50 kg.'
+    explanation: '1/4 de 120 = 30 kg. 1/3 de 120 = 40 kg. Consommé : 70 kg. Reste : 120 − 70 = 50 kg.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1852,7 +1965,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 18,
     hint: 'Divise 48 par 8, puis multiplie par 3.',
-    explanation: '48 ÷ 8 = 6. 6 × 3 = 18 géantes rouges.'
+    explanation: '48 ÷ 8 = 6. 6 × 3 = 18 géantes rouges.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1860,7 +1974,8 @@ const RIDDLE_BANK = [
     unit: 'jours',
     answer: 105,
     hint: 'Calcule les jours effectués, puis soustrais du total.',
-    explanation: '5/12 de 180 = 15 × 5 = 75 jours effectués. Reste : 180 − 75 = 105 jours.'
+    explanation: '5/12 de 180 = 15 × 5 = 75 jours effectués. Reste : 180 − 75 = 105 jours.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'mesures',
@@ -1868,7 +1983,8 @@ const RIDDLE_BANK = [
     unit: 'kg',
     answer: 8,
     hint: 'Multiplie le poids terrestre par 4/10.',
-    explanation: '20 × 4/10 = 20 × 0,4 = 8 kg.'
+    explanation: '20 × 4/10 = 20 × 0,4 = 8 kg.',
+    ficheKey: 'masses'
   },
   {
     category: 'mesures',
@@ -1876,7 +1992,8 @@ const RIDDLE_BANK = [
     unit: 'minutes',
     answer: 12,
     hint: 'Divise la quantité de carburant par la consommation par minute.',
-    explanation: '6 000 ÷ 500 = 12 minutes.'
+    explanation: '6 000 ÷ 500 = 12 minutes.',
+    ficheKey: 'capacites'
   },
   {
     category: 'ouvert',
@@ -1945,7 +2062,8 @@ const RIDDLE_BANK = [
     unit: 'm²',
     answer: 420,
     hint: 'Aire d\'un rectangle = longueur × largeur.',
-    explanation: '28 × 15 = 420 m².'
+    explanation: '28 × 15 = 420 m².',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -1953,7 +2071,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 400,
     hint: 'Convertis 6 m en cm, puis calcule combien de dalles par rangée.',
-    explanation: '6 m = 600 cm. Par rangée : 600 ÷ 30 = 20 dalles. Total : 20 × 20 = 400 dalles.'
+    explanation: '6 m = 600 cm. Par rangée : 600 ÷ 30 = 20 dalles. Total : 20 × 20 = 400 dalles.',
+    ficheKey: 'aire'
   },
   {
     category: 'fractions',
@@ -1961,7 +2080,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 9,
     hint: 'Calcule 3/8 de 24.',
-    explanation: '24 ÷ 8 = 3. 3 × 3 = 9 buts en première mi-temps.'
+    explanation: '24 ÷ 8 = 3. 3 × 3 = 9 buts en première mi-temps.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1969,7 +2089,8 @@ const RIDDLE_BANK = [
     unit: 'km',
     answer: 72,
     hint: 'Calcule la distance parcourue, puis la distance restante.',
-    explanation: '2/5 de 120 = 48 km parcourus. Reste : 120 − 48 = 72 km.'
+    explanation: '2/5 de 120 = 48 km parcourus. Reste : 120 − 48 = 72 km.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -1977,7 +2098,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 5,
     hint: 'Trouve d\'abord le nombre de filles, puis calcule 1/4.',
-    explanation: '1/3 de 30 = 10 garçons. Filles : 30 − 10 = 20. 1/4 de 20 = 5 filles médaillées.'
+    explanation: '1/3 de 30 = 10 garçons. Filles : 30 − 10 = 20. 1/4 de 20 = 5 filles médaillées.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'mesures',
@@ -1985,7 +2107,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 5,
     hint: 'Calcule la durée totale, puis ajoute à 14h30.',
-    explanation: '40 + 15 + 40 = 95 minutes. 14h30 + 1h35 = 16h05. Les minutes sont 05.'
+    explanation: '40 + 15 + 40 = 95 minutes. 14h30 + 1h35 = 16h05. Les minutes sont 05.',
+    ficheKey: 'durees'
   },
   {
     category: 'mesures',
@@ -1993,7 +2116,8 @@ const RIDDLE_BANK = [
     unit: 'minutes',
     answer: 315,
     hint: 'Calcule les minutes en semaine, puis ajoute le samedi.',
-    explanation: '5 × 45 = 225 min. Samedi : 1h30 = 90 min. Total : 225 + 90 = 315 minutes.'
+    explanation: '5 × 45 = 225 min. Samedi : 1h30 = 90 min. Total : 225 + 90 = 315 minutes.',
+    ficheKey: 'durees'
   },
   {
     category: 'mesures',
@@ -2001,7 +2125,8 @@ const RIDDLE_BANK = [
     unit: 'cm',
     answer: 33,
     hint: 'Convertis les deux distances en centimètres.',
-    explanation: '745 cm − 712 cm = 33 cm.'
+    explanation: '745 cm − 712 cm = 33 cm.',
+    ficheKey: 'longueurs'
   },
   {
     category: 'ouvert',
@@ -2069,7 +2194,8 @@ const RIDDLE_BANK = [
     unit: 'cm²',
     answer: 84,
     hint: 'Aire d\'un rectangle = longueur × largeur.',
-    explanation: '12 × 7 = 84 cm².'
+    explanation: '12 × 7 = 84 cm².',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -2077,7 +2203,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 36,
     hint: 'Périmètre d\'un carré = 4 × côté.',
-    explanation: '4 × 9 = 36 m de clôture.'
+    explanation: '4 × 9 = 36 m de clôture.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'fractions',
@@ -2085,7 +2212,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 12,
     hint: 'Calcule après l\'ogre, puis enlève 1/3 de ce qui reste.',
-    explanation: '24 × 1/4 = 6 contre l\'ogre. Reste 18. 18 × 1/3 = 6 contre le boss. Reste : 12 potions.'
+    explanation: '24 × 1/4 = 6 contre l\'ogre. Reste 18. 18 × 1/3 = 6 contre le boss. Reste : 12 potions.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -2093,7 +2221,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 24,
     hint: 'Multiplie le total par 3/5.',
-    explanation: '40 × 3/5 = 120 ÷ 5 = 24 archers.'
+    explanation: '40 × 3/5 = 120 ÷ 5 = 24 archers.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'mesures',
@@ -2101,7 +2230,8 @@ const RIDDLE_BANK = [
     unit: 'min',
     answer: 155,
     hint: 'Calcule la durée en heures et minutes, puis convertis en minutes.',
-    explanation: 'De 14h35 à 17h10 = 2h35 = 2 × 60 + 35 = 155 minutes.'
+    explanation: 'De 14h35 à 17h10 = 2h35 = 2 × 60 + 35 = 155 minutes.',
+    ficheKey: 'durees'
   },
   {
     category: 'mesures',
@@ -2109,7 +2239,8 @@ const RIDDLE_BANK = [
     unit: 's',
     answer: 15,
     hint: 'Divise la distance par la vitesse.',
-    explanation: '120 ÷ 8 = 15 secondes.'
+    explanation: '120 ÷ 8 = 15 secondes.',
+    ficheKey: 'vitesse'
   },
   {
     category: 'mesures',
@@ -2117,7 +2248,8 @@ const RIDDLE_BANK = [
     unit: 'heures',
     answer: 8,
     hint: 'Convertis en grammes, puis divise.',
-    explanation: '2 kg = 2 000 g. 2 000 ÷ 250 = 8 heures.'
+    explanation: '2 kg = 2 000 g. 2 000 ÷ 250 = 8 heures.',
+    ficheKey: 'masses'
   },
   {
     category: 'ouvert',
@@ -2185,7 +2317,8 @@ const RIDDLE_BANK = [
     unit: 'cm²',
     answer: 250,
     hint: 'Aire d\'un rectangle = longueur × largeur.',
-    explanation: '25 × 10 = 250 cm².'
+    explanation: '25 × 10 = 250 cm².',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -2193,7 +2326,8 @@ const RIDDLE_BANK = [
     unit: 'cm',
     answer: 90,
     hint: 'Périmètre d\'un cercle = π × diamètre.',
-    explanation: '3 × 30 = 90 cm de croûte.'
+    explanation: '3 × 30 = 90 cm de croûte.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'fractions',
@@ -2201,7 +2335,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 13,
     hint: 'Calcule 1/3 de 24 et 1/8 de 24, puis soustrais les deux du total.',
-    explanation: '1/3 de 24 = 8. 1/8 de 24 = 3. Reste : 24 − 8 − 3 = 13 macarons.'
+    explanation: '1/3 de 24 = 8. 1/8 de 24 = 3. Reste : 24 − 8 − 3 = 13 macarons.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -2209,7 +2344,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 8,
     hint: 'La moitié de 3/4 = 3/4 × 1/2.',
-    explanation: '3/4 × 1/2 = 3/8. Le dénominateur est 8.'
+    explanation: '3/4 × 1/2 = 3/8. Le dénominateur est 8.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'mesures',
@@ -2217,7 +2353,8 @@ const RIDDLE_BANK = [
     unit: 'mL',
     answer: 2000,
     hint: 'Convertis 1,5 L en mL (1 L = 1 000 mL), puis additionne.',
-    explanation: '1,5 L = 1 500 mL. Total : 1 500 + 300 + 200 = 2 000 mL.'
+    explanation: '1,5 L = 1 500 mL. Total : 1 500 + 300 + 200 = 2 000 mL.',
+    ficheKey: 'capacites'
   },
   {
     category: 'mesures',
@@ -2225,7 +2362,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 20,
     hint: 'Additionne le temps de levée et de cuisson, puis ajoute à 7h00.',
-    explanation: '1h45 + 35 min = 2h20. 7h00 + 2h20 = 9h20. Les minutes sont 20.'
+    explanation: '1h45 + 35 min = 2h20. 7h00 + 2h20 = 9h20. Les minutes sont 20.',
+    ficheKey: 'durees'
   },
   {
     category: 'mesures',
@@ -2309,7 +2447,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 20,
     hint: 'Périmètre d\'un rectangle = 2 × (longueur + largeur).',
-    explanation: '2 × (6 + 4) = 20 m.'
+    explanation: '2 × (6 + 4) = 20 m.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'geometrie',
@@ -2317,7 +2456,8 @@ const RIDDLE_BANK = [
     unit: 'm²',
     answer: 36,
     hint: 'Aire d\'un rectangle = longueur × largeur.',
-    explanation: '12 × 3 = 36 m².'
+    explanation: '12 × 3 = 36 m².',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -2325,7 +2465,8 @@ const RIDDLE_BANK = [
     unit: 'cm²',
     answer: 400,
     hint: 'Aire d\'un carré = côté × côté.',
-    explanation: '20 × 20 = 400 cm².'
+    explanation: '20 × 20 = 400 cm².',
+    ficheKey: 'aire'
   },
   {
     category: 'fractions',
@@ -2333,7 +2474,8 @@ const RIDDLE_BANK = [
     unit: '€',
     answer: 14,
     hint: 'Calcule 1/4 de 24 et 1/3 de 24 séparément.',
-    explanation: '1/4 de 24 = 6 €. 1/3 de 24 = 8 €. Total : 6 + 8 = 14 €.'
+    explanation: '1/4 de 24 = 6 €. 1/3 de 24 = 8 €. Total : 6 + 8 = 14 €.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -2341,7 +2483,8 @@ const RIDDLE_BANK = [
     unit: 'g',
     answer: 300,
     hint: 'Trouve la quantité pour 1 personne, puis multiplie par 9.',
-    explanation: '200 × 9 ÷ 6 = 1 800 ÷ 6 = 300 g.'
+    explanation: '200 × 9 ÷ 6 = 1 800 ÷ 6 = 300 g.',
+    ficheKey: 'proportionnalite'
   },
   {
     category: 'mesures',
@@ -2349,7 +2492,8 @@ const RIDDLE_BANK = [
     unit: 'h',
     answer: 3,
     hint: 'Temps = distance ÷ vitesse.',
-    explanation: '240 ÷ 80 = 3 heures.'
+    explanation: '240 ÷ 80 = 3 heures.',
+    ficheKey: 'vitesse'
   },
   {
     category: 'mesures',
@@ -2357,7 +2501,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 3,
     hint: 'Calcule la longueur totale coupée, puis soustrais.',
-    explanation: '3 × 4 = 12 m coupés. 15 − 12 = 3 m.'
+    explanation: '3 × 4 = 12 m coupés. 15 − 12 = 3 m.',
+    ficheKey: 'longueurs'
   },
   {
     category: 'mesures',
@@ -2365,7 +2510,8 @@ const RIDDLE_BANK = [
     unit: 'kg',
     answer: 33,
     hint: 'Calcule le poids des valises, puis ajoute le carton.',
-    explanation: '4 × 7 = 28 kg. 28 + 5 = 33 kg.'
+    explanation: '4 × 7 = 28 kg. 28 + 5 = 33 kg.',
+    ficheKey: 'masses'
   },
   {
     category: 'ouvert',
@@ -2433,7 +2579,8 @@ const RIDDLE_BANK = [
     unit: 'cm²',
     answer: 108,
     hint: 'Aire d\'un rectangle = longueur × largeur.',
-    explanation: '12 × 9 = 108 cm².'
+    explanation: '12 × 9 = 108 cm².',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -2441,7 +2588,8 @@ const RIDDLE_BANK = [
     unit: 'cm²',
     answer: 25,
     hint: 'Chaque face est un carré.',
-    explanation: '5 × 5 = 25 cm².'
+    explanation: '5 × 5 = 25 cm².',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -2449,7 +2597,8 @@ const RIDDLE_BANK = [
     unit: 'cm',
     answer: 28,
     hint: 'Périmètre d\'un rectangle = 2 × (longueur + largeur).',
-    explanation: '2 × (8 + 6) = 28 cm.'
+    explanation: '2 × (8 + 6) = 28 cm.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'fractions',
@@ -2457,7 +2606,8 @@ const RIDDLE_BANK = [
     unit: 'Go',
     answer: 200,
     hint: 'Calcule 2/5 de 500.',
-    explanation: '500 ÷ 5 = 100. 100 × 2 = 200 Go.'
+    explanation: '500 ÷ 5 = 100. 100 × 2 = 200 Go.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -2465,7 +2615,8 @@ const RIDDLE_BANK = [
     unit: 'Go',
     answer: 20,
     hint: 'Calcule les Go utilisés, puis soustrais du total.',
-    explanation: '3/8 de 32 = 12 Go utilisés. 32 − 12 = 20 Go libres.'
+    explanation: '3/8 de 32 = 12 Go utilisés. 32 − 12 = 20 Go libres.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -2473,7 +2624,8 @@ const RIDDLE_BANK = [
     unit: 'Mo',
     answer: 50,
     hint: 'Calcule photos et vidéos, puis soustrais du total.',
-    explanation: 'Photos : 120/4 = 30 Mo. Vidéos : 120/3 = 40 Mo. Musiques : 120 − 30 − 40 = 50 Mo.'
+    explanation: 'Photos : 120/4 = 30 Mo. Vidéos : 120/3 = 40 Mo. Musiques : 120 − 30 − 40 = 50 Mo.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'mesures',
@@ -2481,7 +2633,8 @@ const RIDDLE_BANK = [
     unit: 's',
     answer: 12,
     hint: 'Temps = taille ÷ vitesse.',
-    explanation: '48 ÷ 4 = 12 secondes.'
+    explanation: '48 ÷ 4 = 12 secondes.',
+    ficheKey: 'vitesse'
   },
   {
     category: 'mesures',
@@ -2489,7 +2642,8 @@ const RIDDLE_BANK = [
     unit: 'min',
     answer: 315,
     hint: '1 semaine = 7 jours.',
-    explanation: '45 × 7 = 315 minutes.'
+    explanation: '45 × 7 = 315 minutes.',
+    ficheKey: 'durees'
   },
   {
     category: 'ouvert',
@@ -2558,7 +2712,8 @@ const RIDDLE_BANK = [
     unit: 'm²',
     answer: 40,
     hint: 'Aire d\'un rectangle = longueur × largeur.',
-    explanation: '8 × 5 = 40 m².'
+    explanation: '8 × 5 = 40 m².',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -2566,7 +2721,8 @@ const RIDDLE_BANK = [
     unit: 'cm',
     answer: 36,
     hint: 'Périmètre d\'un triangle = somme des trois côtés.',
-    explanation: '12 + 9 + 15 = 36 cm.'
+    explanation: '12 + 9 + 15 = 36 cm.',
+    ficheKey: 'perimetre'
   },
   {
     category: 'fractions',
@@ -2574,7 +2730,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 4,
     hint: 'Additionne les parts mangées, puis soustrais de 1.',
-    explanation: '1/4 + 2/4 = 3/4. Reste : 1 − 3/4 = 1/4. Dénominateur = 4.'
+    explanation: '1/4 + 2/4 = 3/4. Reste : 1 − 3/4 = 1/4. Dénominateur = 4.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -2582,7 +2739,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 30,
     hint: 'Calcule d\'abord les livres offerts à Belle. Puis 1/4 des restants.',
-    explanation: '1/6 de 48 = 8 à Belle. Reste : 40. 1/4 de 40 = 10 aux serviteurs. Reste : 30 livres.'
+    explanation: '1/6 de 48 = 8 à Belle. Reste : 40. 1/4 de 40 = 10 aux serviteurs. Reste : 30 livres.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'mesures',
@@ -2590,7 +2748,8 @@ const RIDDLE_BANK = [
     unit: 'm',
     answer: 4500,
     hint: 'Convertis les km en mètres, puis additionne.',
-    explanation: '3 km = 3 000 m. 3 000 + 1 500 = 4 500 m.'
+    explanation: '3 km = 3 000 m. 3 000 + 1 500 = 4 500 m.',
+    ficheKey: 'longueurs'
   },
   {
     category: 'mesures',
@@ -2598,7 +2757,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 35,
     hint: 'Calcule la différence entre l\'heure de départ et d\'arrivée.',
-    explanation: '7h45 à 8h00 = 15 min. 8h00 à 8h20 = 20 min. Total : 35 minutes.'
+    explanation: '7h45 à 8h00 = 15 min. 8h00 à 8h20 = 20 min. Total : 35 minutes.',
+    ficheKey: 'durees'
   },
   {
     category: 'ouvert',
@@ -2651,7 +2811,8 @@ const RIDDLE_BANK = [
     unit: 'm²',
     answer: 52900,
     hint: 'Aire d\'un carré = côté × côté.',
-    explanation: '230 × 230 = 52 900 m².'
+    explanation: '230 × 230 = 52 900 m².',
+    ficheKey: 'aire'
   },
   {
     category: 'geometrie',
@@ -2659,7 +2820,8 @@ const RIDDLE_BANK = [
     unit: 'm²',
     answer: 2025,
     hint: 'Aire d\'un carré = côté × côté.',
-    explanation: '45 × 45 = 2 025 m².'
+    explanation: '45 × 45 = 2 025 m².',
+    ficheKey: 'aire'
   },
   {
     category: 'fractions',
@@ -2667,7 +2829,8 @@ const RIDDLE_BANK = [
     unit: 'pièces',
     answer: 90,
     hint: 'Calcule la part de chaque mousse, additionne, puis soustrais du total.',
-    explanation: '1/4 de 360 = 90. 1/3 de 360 = 120. 1/6 de 360 = 60. Distribué : 270. Reste : 90 pièces.'
+    explanation: '1/4 de 360 = 90. 1/3 de 360 = 120. 1/6 de 360 = 60. Distribué : 270. Reste : 90 pièces.',
+    ficheKey: 'partage'
   },
   {
     category: 'fractions',
@@ -2675,7 +2838,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 5,
     hint: 'Le sanglier entier = 8/8. Arthur mange 3/8.',
-    explanation: '8/8 − 3/8 = 5/8. Numérateur = 5.'
+    explanation: '8/8 − 3/8 = 5/8. Numérateur = 5.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'fractions',
@@ -2683,7 +2847,8 @@ const RIDDLE_BANK = [
     unit: 'mL',
     answer: 60,
     hint: 'Calcule 3/4 de 240, puis soustrais.',
-    explanation: '3/4 de 240 = 180 mL utilisés. Reste : 240 − 180 = 60 mL.'
+    explanation: '3/4 de 240 = 180 mL utilisés. Reste : 240 − 180 = 60 mL.',
+    ficheKey: 'fractions_lire'
   },
   {
     category: 'mesures',
@@ -2691,7 +2856,8 @@ const RIDDLE_BANK = [
     unit: 'heures',
     answer: 6,
     hint: 'Temps = distance ÷ vitesse.',
-    explanation: '24 ÷ 4 = 6 heures.'
+    explanation: '24 ÷ 4 = 6 heures.',
+    ficheKey: 'vitesse'
   },
   {
     category: 'mesures',
@@ -2699,7 +2865,8 @@ const RIDDLE_BANK = [
     unit: 'cm',
     answer: 364,
     hint: 'Multiplie le nombre de coudées par la valeur d\'une coudée.',
-    explanation: '7 × 52 = 364 cm.'
+    explanation: '7 × 52 = 364 cm.',
+    ficheKey: 'longueurs'
   },
   {
     category: 'ouvert',

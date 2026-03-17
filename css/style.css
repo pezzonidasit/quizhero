@@ -3314,3 +3314,111 @@ body.low-perf-mode .chest-open-overlay .chest-item {
   font-size: 0.85rem;
   min-height: 1.2rem;
 }
+
+/* ── Fiche d'aide ─────────────────────────────────────────── */
+.btn-fiche {
+  background: transparent;
+  border: 1.5px solid #a855f7;
+  color: #a855f7;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  width: 100%;
+  transition: background 0.2s;
+}
+.btn-fiche:active {
+  background: rgba(168, 85, 247, 0.15);
+}
+
+#screen-fiche {
+  padding: 0;
+  overflow-y: auto;
+}
+
+.fiche-header {
+  position: sticky;
+  top: 0;
+  background: var(--bg-primary, #1a1a2e);
+  padding: 1rem 1.5rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  z-index: 10;
+}
+
+.fiche-header h2 {
+  margin: 0.5rem 0 0;
+  font-size: 1.4rem;
+  color: var(--color-primary, #4a9eff);
+}
+
+.fiche-content {
+  padding: 1.25rem 1.5rem 3rem;
+  width: 100%;
+}
+
+.fiche-section {
+  margin-bottom: 1.5rem;
+}
+
+.fiche-intro {
+  color: rgba(255,255,255,0.85);
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.fiche-regle {
+  background: rgba(74, 158, 255, 0.12);
+  border-left: 3px solid #4a9eff;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  white-space: pre-line;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.fiche-section-titre {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 0.5rem;
+}
+
+.fiche-exemple {
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.fiche-exemple-enonce {
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 0.3rem;
+  font-size: 0.95rem;
+}
+
+.fiche-exemple-calcul {
+  font-family: monospace;
+  color: #4ecdc4;
+  white-space: pre-line;
+  font-size: 0.9rem;
+}
+
+.fiche-astuce {
+  background: rgba(255, 211, 61, 0.1);
+  border-left: 3px solid #ffd93d;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  color: rgba(255,255,255,0.85);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.fiche-loading {
+  text-align: center;
+  padding: 3rem;
+  color: rgba(255,255,255,0.4);
+  font-size: 1.2rem;
+}

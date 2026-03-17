@@ -70,6 +70,10 @@ const state = {
   // V3 — Contrat
   activeContract: null,
   contractGameResult: null,
+  // Fiches d'aide
+  timerPaused: false,
+  timerPausedAt: null,
+  ficheReturnScreen: 'screen-quiz',
 };
 
 // ── Difficulty ─────────────────────────────────────────────────────
@@ -677,6 +681,9 @@ function startGame() {
   state.badgesUnlocked = [];
   state.noHintCount = 0;
   state.streakLostMessage = null;
+  state.timerPaused = false;
+  state.timerPausedAt = null;
+  state.ficheReturnScreen = 'screen-quiz';
   state.gameStartTime = Date.now();
 
   // Consume active boost from inventory
@@ -729,6 +736,66 @@ document.getElementById('btn-play').addEventListener('click', async () => {
   showContractScreen();
 });
 
+// ── Fiches d'aide — Lazy loader ────────────────────────────────────────
+function loadFichesAndShow(ficheKey) {
+  if (window.FICHES) {
+    showFiche(ficheKey);
+    return;
+  }
+  // Afficher l'écran avec état de chargement
+  document.getElementById('fiche-titre').textContent = '⏳ Chargement...';
+  document.getElementById('fiche-content').innerHTML = '<div class="fiche-loading">⏳</div>';
+  showScreen('screen-fiche');
+
+  const script = document.createElement('script');
+  script.src = './js/fiches.js';
+  script.onload = () => showFiche(ficheKey);
+  script.onerror = () => {
+    document.getElementById('fiche-content').innerHTML =
+      '<div class="fiche-loading">❌ Impossible de charger la fiche (hors ligne ?)</div>';
+  };
+  document.head.appendChild(script);
+}
+
+function showFiche(ficheKey) {
+  const fiche = window.FICHES && window.FICHES[ficheKey];
+  if (!fiche) {
+    document.getElementById('fiche-titre').textContent = 'Fiche introuvable';
+    document.getElementById('fiche-content').innerHTML =
+      '<div class="fiche-loading">Fiche non disponible pour ce sujet.</div>';
+    showScreen('screen-fiche');
+    return;
+  }
+
+  document.getElementById('fiche-titre').textContent = fiche.titre;
+
+  const exempleHTML = fiche.exemples.map(e => `
+    <div class="fiche-exemple">
+      <div class="fiche-exemple-enonce">${e.enonce}</div>
+      <div class="fiche-exemple-calcul">${e.calcul}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('fiche-content').innerHTML = `
+    <div class="fiche-section">
+      <p class="fiche-intro">${fiche.intro}</p>
+    </div>
+    <div class="fiche-section">
+      <div class="fiche-section-titre">LA RÈGLE</div>
+      <div class="fiche-regle">${fiche.regle}</div>
+    </div>
+    <div class="fiche-section">
+      <div class="fiche-section-titre">EXEMPLES</div>
+      ${exempleHTML}
+    </div>
+    <div class="fiche-section">
+      <div class="fiche-astuce">${fiche.astuce}</div>
+    </div>
+  `;
+
+  showScreen('screen-fiche');
+}
+
 // ── Timer ──────────────────────────────────────────────────────────
 function startTimer() {
   stopTimer();
@@ -772,6 +839,12 @@ function showQuestion() {
   hintBtn.style.display = '';
   document.getElementById('hint-text').textContent = '';
   document.getElementById('hint-text').classList.remove('visible');
+
+  // Bouton fiche d'aide
+  const btnFiche = document.getElementById('btn-fiche');
+  if (btnFiche) {
+    btnFiche.style.display = q && q.ficheKey ? '' : 'none';
+  }
 
   state.answered = false;
   document.getElementById('answer-section').style.display = '';
@@ -831,6 +904,41 @@ document.getElementById('btn-hint').addEventListener('click', () => {
   document.getElementById('hint-text').classList.add('visible');
   const remainingHints = freeHints > 0 ? freeHints - 1 : 0;
   document.getElementById('btn-hint').textContent = freeHints > 0 ? `Indice gratuit ! (${remainingHints} restants)` : 'Indice affiché';
+});
+
+// ── Fiche d'aide listeners ─────────────────────────────────────────
+document.getElementById('btn-fiche').addEventListener('click', () => {
+  const q = state.questions[state.currentIndex];
+  const ficheKey = q && q.ficheKey;
+  if (!ficheKey) return;
+  // Pause le timer si actif (stopwatch : mémorise l'instant de pause)
+  if (state.timerInterval) {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+    state.timerPaused = true;
+    state.timerPausedAt = Date.now();
+  }
+  state.ficheReturnScreen = 'screen-quiz';
+  loadFichesAndShow(ficheKey);
+});
+
+document.getElementById('btn-fiche-back').addEventListener('click', () => {
+  // Reprendre le timer si il était pausé à cause de la fiche
+  if (state.timerPaused && state.timerPausedAt !== null) {
+    // Décaler gameStartTime pour compenser le temps passé sur la fiche
+    const pauseDuration = Date.now() - state.timerPausedAt;
+    state.gameStartTime += pauseDuration;
+    state.timerPaused = false;
+    state.timerPausedAt = null;
+    // Relancer le timer uniquement si une partie est en cours
+    if (state.timerInterval === null && state.questions.length > 0 && !state.answered) {
+      startTimer();
+    }
+  } else {
+    state.timerPaused = false;
+    state.timerPausedAt = null;
+  }
+  showScreen(state.ficheReturnScreen || 'screen-quiz');
 });
 
 // ── Answer Validation ──────────────────────────────────────────────

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quizhero-v33';
+const CACHE_NAME = 'quizhero-v34';
 const ASSETS = [
   './',
   './index.html',
@@ -12,6 +12,7 @@ const ASSETS = [
   './js/duel.js',
   './js/firebase.js',
   './js/sync.js',
+  './js/fiches.js',
 ];
 
 self.addEventListener('install', e => {
