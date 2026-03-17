@@ -932,7 +932,7 @@ function validateAnswer() {
     launchMiniConfetti();
   } else {
     const correctAnswer = q.textAnswer !== undefined ? q.textAnswer : q.answer;
-    feedbackResult.textContent = 'Tu as répondu ' + userAnswer + ' — la bonne réponse était ' + correctAnswer;
+    feedbackResult.textContent = 'Pas encore ! La réponse était ' + correctAnswer;
     feedbackResult.className = 'feedback-result incorrect';
     if (state.streakLostMessage) {
       feedbackResult.textContent += ' · ' + state.streakLostMessage;
@@ -1480,6 +1480,23 @@ document.getElementById('btn-replay').addEventListener('click', () => {
     } else {
       showContractScreen();
     }
+  }
+});
+
+document.getElementById('btn-share-score').addEventListener('click', () => {
+  const score = state.score;
+  const cat = state.category === 'all' ? 'toutes catégories' : (CATEGORIES[state.category]?.label || state.category);
+  const diff = state.difficulty === 'easy' ? 'Facile' : state.difficulty === 'hard' ? 'Difficile' : 'Moyen';
+  const text = `🎯 QuizHero — ${score} points en ${cat} (${diff}) !\nTu peux faire mieux ? 🧮`;
+  if (navigator.share) {
+    navigator.share({ title: 'QuizHero', text, url: 'https://pezzonidasit.github.io/quizhero/' }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text + '\nhttps://pezzonidasit.github.io/quizhero/').then(() => {
+      const btn = document.getElementById('btn-share-score');
+      const orig = btn.textContent;
+      btn.textContent = '✅ Copié !';
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    }).catch(() => {});
   }
 });
 
