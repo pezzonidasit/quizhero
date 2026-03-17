@@ -736,25 +736,9 @@ document.getElementById('btn-play').addEventListener('click', async () => {
   showContractScreen();
 });
 
-// ── Fiches d'aide — Lazy loader ────────────────────────────────────────
+// ── Fiches d'aide ──────────────────────────────────────────────────────
 function loadFichesAndShow(ficheKey) {
-  if (window.FICHES) {
-    showFiche(ficheKey);
-    return;
-  }
-  // Afficher l'écran avec état de chargement
-  document.getElementById('fiche-titre').textContent = '⏳ Chargement...';
-  document.getElementById('fiche-content').innerHTML = '<div class="fiche-loading">⏳</div>';
-  showScreen('screen-fiche');
-
-  const script = document.createElement('script');
-  script.src = './js/fiches.js';
-  script.onload = () => showFiche(ficheKey);
-  script.onerror = () => {
-    document.getElementById('fiche-content').innerHTML =
-      '<div class="fiche-loading">❌ Impossible de charger la fiche (hors ligne ?)</div>';
-  };
-  document.head.appendChild(script);
+  showFiche(ficheKey);
 }
 
 function showFiche(ficheKey) {
