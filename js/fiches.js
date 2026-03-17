@@ -187,7 +187,7 @@ window.FICHES = {
   'volume': {
     titre: 'Le Volume',
     schema: '<svg viewBox="0 0 220 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:220px"><polygon points="15,90 125,90 125,45 15,45" fill="rgba(168,85,247,0.25)" stroke="#a855f7" stroke-width="1.5"/><polygon points="15,45 50,27 160,27 125,45" fill="rgba(168,85,247,0.42)" stroke="#a855f7" stroke-width="1.5"/><polygon points="125,45 160,27 160,72 125,90" fill="rgba(168,85,247,0.12)" stroke="#a855f7" stroke-width="1.5"/><text x="70" y="106" text-anchor="middle" fill="#a855f7" font-size="13" font-family="sans-serif" font-weight="bold">L</text><text x="148" y="38" fill="rgba(255,255,255,0.6)" font-size="12" font-family="sans-serif" font-weight="bold">l</text><text x="150" y="62" fill="rgba(255,255,255,0.7)" font-size="13" font-family="sans-serif" font-weight="bold">h</text><text x="88" y="136" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="12" font-family="sans-serif">V = L × l × h</text></svg>',
-    intro: 'Le volume, c\'est la place occupée par un objet dans l\'espace. Comme l\'eau qui remplit une boîte ou un cube !
+    intro: 'Le volume, c\'est la place occupée par un objet dans l\'espace. Comme l\'eau qui remplit une boîte ou un cube !',
     regle: 'Cube (arête = a) :\n  V = a × a × a = a³\n\nPavé droit (longueur L, largeur l, hauteur h) :\n  V = L × l × h\n\nUnités :\n  1 cm³ = 1 millilitre (mL)\n  1 dm³ = 1 litre (L)\n  1 m³ = 1 000 litres',
     exemples: [
       {

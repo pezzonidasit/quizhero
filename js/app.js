@@ -73,7 +73,7 @@ const state = {
   // Fiches d'aide
   timerPaused: false,
   timerPausedAt: null,
-  ficheReturnScreen: 'screen-quiz',
+  ficheReturnScreen: 'screen-game',
 };
 
 // ── Difficulty ─────────────────────────────────────────────────────
@@ -683,7 +683,7 @@ function startGame() {
   state.streakLostMessage = null;
   state.timerPaused = false;
   state.timerPausedAt = null;
-  state.ficheReturnScreen = 'screen-quiz';
+  state.ficheReturnScreen = 'screen-game';
   state.gameStartTime = Date.now();
 
   // Consume active boost from inventory
@@ -919,7 +919,7 @@ document.getElementById('btn-fiche').addEventListener('click', () => {
     state.timerPaused = true;
     state.timerPausedAt = Date.now();
   }
-  state.ficheReturnScreen = 'screen-quiz';
+  state.ficheReturnScreen = 'screen-game';
   loadFichesAndShow(ficheKey);
 });
 
@@ -939,7 +939,7 @@ document.getElementById('btn-fiche-back').addEventListener('click', () => {
     state.timerPaused = false;
     state.timerPausedAt = null;
   }
-  showScreen(state.ficheReturnScreen || 'screen-quiz');
+  showScreen(state.ficheReturnScreen || 'screen-game');
 });
 
 // ── Answer Validation ──────────────────────────────────────────────
