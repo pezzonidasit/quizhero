@@ -890,7 +890,7 @@ const RIDDLE_BANK = [
     answer: 6,
     hint: 'Pense à un dé : dessus, dessous, devant, derrière, gauche, droite.',
     explanation: 'Un cube a 6 faces carrées.',
-    ficheKey: 'volume'
+    ficheKey: 'solides'
   },
   {
     category: 'geometrie',
@@ -926,7 +926,7 @@ const RIDDLE_BANK = [
     answer: 12,
     hint: 'Une arête est un segment entre deux sommets. Compte les arêtes du haut, du bas, et les verticales.',
     explanation: '4 arêtes en haut + 4 en bas + 4 verticales = 12 arêtes.',
-    ficheKey: 'volume'
+    ficheKey: 'solides'
   },
   {
     category: 'geometrie',
@@ -953,7 +953,7 @@ const RIDDLE_BANK = [
     answer: 5,
     hint: 'Compte la base et les faces triangulaires sur les côtés.',
     explanation: '1 base carrée + 4 faces triangulaires = 5 faces.',
-    ficheKey: 'volume'
+    ficheKey: 'solides'
   },
   {
     category: 'geometrie',
@@ -989,7 +989,7 @@ const RIDDLE_BANK = [
     answer: 8,
     hint: 'Un sommet est un coin. Compte ceux du haut et du bas.',
     explanation: '4 sommets en haut + 4 sommets en bas = 8 sommets.',
-    ficheKey: 'volume'
+    ficheKey: 'solides'
   },
   {
     category: 'geometrie',
@@ -1042,7 +1042,8 @@ const RIDDLE_BANK = [
     unit: '',
     answer: 5,
     hint: 'Il a 2 bases triangulaires et des faces rectangulaires sur les côtés.',
-    explanation: '2 faces triangulaires (bases) + 3 faces rectangulaires (côtés) = 5 faces.'
+    explanation: '2 faces triangulaires (bases) + 3 faces rectangulaires (côtés) = 5 faces.',
+    ficheKey: 'solides'
   },
   {
     category: 'geometrie',

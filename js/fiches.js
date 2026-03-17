@@ -184,6 +184,24 @@ window.FICHES = {
     astuce: '💡 L\'aire se mesure en unités CARRÉES (cm², m²). Si tu calcules l\'aire d\'un sol en m², tu sais combien de carreaux de 1 m × 1 m il faut pour le couvrir !'
   },
 
+  'solides': {
+    titre: 'Les Solides Géométriques',
+    schema: '<svg viewBox="0 0 220 148" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:220px"><polygon points="18,92 128,92 128,48 18,48" fill="rgba(78,205,196,0.2)" stroke="#4ecdc4" stroke-width="1.5"/><polygon points="18,48 53,30 163,30 128,48" fill="rgba(78,205,196,0.35)" stroke="#4ecdc4" stroke-width="1.5"/><polygon points="128,48 163,30 163,74 128,92" fill="rgba(78,205,196,0.1)" stroke="#4ecdc4" stroke-width="1.5"/><circle cx="73" cy="70" r="3.5" fill="#4ecdc4"/><line x1="73" y1="70" x2="155" y2="105" stroke="#4ecdc4" stroke-width="1" stroke-dasharray="3,2"/><text x="158" y="109" fill="#4ecdc4" font-size="11" font-family="sans-serif">Face</text><circle cx="73" cy="48" r="3.5" fill="#f59e0b"/><line x1="73" y1="48" x2="130" y2="16" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,2"/><text x="133" y="14" fill="#f59e0b" font-size="11" font-family="sans-serif">Arête</text><circle cx="53" cy="30" r="5" fill="#a855f7"/><line x1="53" y1="30" x2="18" y2="14" stroke="#a855f7" stroke-width="1" stroke-dasharray="3,2"/><text x="5" y="12" fill="#a855f7" font-size="11" font-family="sans-serif">Sommet</text></svg>',
+    intro: 'Un solide géométrique est une figure en 3 dimensions. Il a une longueur, une largeur ET une hauteur. Chaque solide est fait de faces, d\'arêtes et de sommets.',
+    regle: 'Face : surface plate qui forme le solide\nArête : segment où deux faces se rejoignent\nSommet : point où plusieurs arêtes se rencontrent\n\nSolides courants :\n┌──────────────┬───────┬────────┬─────────┐\n│              │ Faces │ Arêtes │ Sommets │\n├──────────────┼───────┼────────┼─────────┤\n│ Cube         │   6   │   12   │    8    │\n│ Pavé droit   │   6   │   12   │    8    │\n│ Pyramide (□) │   5   │    8   │    5    │\n│ Prisme (△)   │   5   │    9   │    6    │\n└──────────────┴───────┴────────┴─────────┘',
+    exemples: [
+      {
+        enonce: 'Combien de faces, arêtes et sommets a un cube ?',
+        calcul: '6 faces (toutes carrées)\n12 arêtes\n8 sommets'
+      },
+      {
+        enonce: 'Une pyramide à base carrée a combien de faces ?',
+        calcul: '1 base carrée\n+ 4 faces triangulaires\n= 5 faces au total'
+      }
+    ],
+    astuce: '💡 Formule d\'Euler : Faces + Sommets − Arêtes = 2. Vérifie avec le cube : 6 + 8 − 12 = 2 ✓'
+  },
+
   'volume': {
     titre: 'Le Volume',
     schema: '<svg viewBox="0 0 220 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:220px"><polygon points="15,90 125,90 125,45 15,45" fill="rgba(168,85,247,0.25)" stroke="#a855f7" stroke-width="1.5"/><polygon points="15,45 50,27 160,27 125,45" fill="rgba(168,85,247,0.42)" stroke="#a855f7" stroke-width="1.5"/><polygon points="125,45 160,27 160,72 125,90" fill="rgba(168,85,247,0.12)" stroke="#a855f7" stroke-width="1.5"/><text x="70" y="106" text-anchor="middle" fill="#a855f7" font-size="13" font-family="sans-serif" font-weight="bold">L</text><text x="148" y="38" fill="rgba(255,255,255,0.6)" font-size="12" font-family="sans-serif" font-weight="bold">l</text><text x="150" y="62" fill="rgba(255,255,255,0.7)" font-size="13" font-family="sans-serif" font-weight="bold">h</text><text x="88" y="136" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="12" font-family="sans-serif">V = L × l × h</text></svg>',
