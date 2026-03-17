@@ -61,6 +61,8 @@ const state = {
   categoryStats: {},
   pendingChests: [],
   activeBoost: null,
+  shieldActive: false,
+  coinRainActive: false,
   // V3 — Boss Fight
   bossState: null,
   pendingBoss: null,
@@ -696,6 +698,12 @@ function startGame() {
     ProfileManager.set('freeHints', current + hintsToAdd);
   }
 
+  // streak_shield boost: activate shield for this game
+  state.shieldActive = (state.activeBoost === 'streak_shield');
+
+  // coin_rain boost: flag to bypass diminishing returns
+  state.coinRainActive = (state.activeBoost === 'coin_rain');
+
   state.questions.push(generateQuestion(state.category, getSubLevel(), null));
 
   showScreen('screen-game');
@@ -870,10 +878,16 @@ function validateAnswer() {
       state.consecutiveCorrect = 0;
     }
   } else {
-    if (state.streak >= 3) {
-      state.streakLostMessage = 'Belle série de ' + state.streak + ' ! On recommence';
+    // Streak shield: absorb one wrong answer
+    if (state.shieldActive) {
+      state.shieldActive = false;
+      state.streakLostMessage = '🛡️ Bouclier activé ! Série protégée';
+    } else {
+      if (state.streak >= 3) {
+        state.streakLostMessage = 'Belle série de ' + state.streak + ' ! On recommence';
+      }
+      state.streak = 0;
     }
-    state.streak = 0;
     state.consecutiveWrong++;
     state.consecutiveCorrect = 0;
 
@@ -989,6 +1003,8 @@ const BOOSTS = [
   { id: 'coin_boost', name: 'Boost Pièces', icon: '💰', price: 60, desc: 'Pièces ×2 (×3 en difficile)', effect: 'coins' },
   { id: 'score_boost', name: 'Boost Score', icon: '🎯', price: 40, desc: 'Score ×1.5 (×2 en difficile)', effect: 'score' },
   { id: 'hint_pack', name: 'Pack Indices', icon: '💡', price: 30, desc: '3 indices gratuits pour cette partie', effect: 'hints' },
+  { id: 'streak_shield', name: 'Bouclier de série', icon: '🛡️', price: 75, desc: 'Protège ta série 1 fois (1 erreur pardonnée)', effect: 'shield' },
+  { id: 'coin_rain', name: 'Pluie de pièces', icon: '🌧️', price: 100, desc: 'Ignore le diminishing returns (1 partie)', effect: 'rain' },
 ];
 
 function getBoostMultiplier(difficulty) {
@@ -999,10 +1015,17 @@ function getBoostMultiplier(difficulty) {
 
 // ── Stickers (saisonniers — ajoutés régulièrement) ──────────────
 const STICKERS = [
+  // Printemps 2026 — Vague 1
   { id: 'stk_spring_flower', name: 'Fleur de printemps', icon: '🌸', price: 80, season: 'Printemps 2026' },
   { id: 'stk_spring_sun', name: 'Soleil doré', icon: '☀️', price: 80, season: 'Printemps 2026' },
   { id: 'stk_spring_rainbow', name: 'Arc-en-ciel', icon: '🌈', price: 120, season: 'Printemps 2026' },
   { id: 'stk_spring_butterfly', name: 'Papillon', icon: '🦋', price: 100, season: 'Printemps 2026' },
+  // Printemps 2026 — Vague 2
+  { id: 'stk_spring_bee', name: 'Abeille', icon: '🐝', price: 90, season: 'Printemps 2026' },
+  { id: 'stk_spring_ladybug', name: 'Coccinelle', icon: '🐞', price: 90, season: 'Printemps 2026' },
+  { id: 'stk_spring_tulip', name: 'Tulipe', icon: '🌷', price: 100, season: 'Printemps 2026' },
+  { id: 'stk_spring_bird', name: 'Oiseau chanteur', icon: '🐦', price: 110, season: 'Printemps 2026' },
+  { id: 'stk_spring_clover', name: 'Trèfle chanceux', icon: '🍀', price: 150, season: 'Printemps 2026' },
 ];
 
 const BADGE_DEFS = [
@@ -1210,7 +1233,7 @@ function endGame() {
 
   // ── V2: XP, coins, chest milestones, rank-up ──
   const xpBoost = ProfileManager.get('xpBoostActive', false);
-  const rewards = calculateRewards(state.score, state.difficulty, xpBoost);
+  const rewards = calculateRewards(state.score, state.difficulty, xpBoost, state.coinRainActive);
   const oldXP = ProfileManager.get('xp', 0);
   const newXP = oldXP + rewards.xp;
   ProfileManager.set('xp', newXP);

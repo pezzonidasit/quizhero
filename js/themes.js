@@ -208,6 +208,68 @@ const THEMES = {
     }
   },
 
+  // === PRESTIGE THEMES (very expensive) ===
+  aurore: {
+    id: 'aurore',
+    name: 'Aurore boréale',
+    price: 500,
+    rarity: 'legendary',
+    preview: '🏔️',
+    vars: {
+      '--bg-dark': '#020118',
+      '--bg-card': '#0a0830',
+      '--bg-card-hover': '#120e48',
+      '--text-primary': '#d0f0e8',
+      '--text-secondary': '#70b8a0',
+      '--accent-blue': '#00e5ff',
+      '--accent-green': '#00e676',
+      '--accent-orange': '#ff9100',
+      '--accent-violet': '#aa00ff',
+      '--accent-red': '#ff1744',
+      '--accent-yellow': '#eeff41'
+    }
+  },
+  cosmique: {
+    id: 'cosmique',
+    name: 'Cosmique',
+    price: 650,
+    rarity: 'legendary',
+    preview: '✨',
+    vars: {
+      '--bg-dark': '#0a0015',
+      '--bg-card': '#150028',
+      '--bg-card-hover': '#200040',
+      '--text-primary': '#f0e0ff',
+      '--text-secondary': '#a080c8',
+      '--accent-blue': '#8040ff',
+      '--accent-green': '#00ffa0',
+      '--accent-orange': '#ff6040',
+      '--accent-violet': '#e040ff',
+      '--accent-red': '#ff2080',
+      '--accent-yellow': '#ffe040'
+    }
+  },
+  or_massif: {
+    id: 'or_massif',
+    name: 'Or massif',
+    price: 800,
+    rarity: 'legendary',
+    preview: '👑',
+    vars: {
+      '--bg-dark': '#1a1400',
+      '--bg-card': '#2e2400',
+      '--bg-card-hover': '#3d3200',
+      '--text-primary': '#fff8e0',
+      '--text-secondary': '#c8b060',
+      '--accent-blue': '#60a8d0',
+      '--accent-green': '#80c840',
+      '--accent-orange': '#ffa000',
+      '--accent-violet': '#c890e0',
+      '--accent-red': '#e05040',
+      '--accent-yellow': '#ffd700'
+    }
+  },
+
   // === BOSS-EXCLUSIVE THEMES (not purchasable) ===
   boss_dragon: {
     id: 'boss_dragon',

@@ -54,12 +54,12 @@ function getRankProgress(xp) {
  * Calculate rewards for a quiz session.
  * XP = score (x1.5 if hard, x2 if boost). Coins = Math.round(score/2) × daily multiplier.
  */
-function calculateRewards(score, difficulty, xpBoostActive) {
+function calculateRewards(score, difficulty, xpBoostActive, coinRainActive) {
   let xp = score;
   if (difficulty === 'hard') xp = Math.round(xp * 1.5);
   if (xpBoostActive) xp *= 2;
   const rawCoins = Math.round(score / 2);
-  const coinMult = getDailyCoinMultiplier();
+  const coinMult = coinRainActive ? 1.0 : getDailyCoinMultiplier();
   const coins = Math.max(1, Math.round(rawCoins * coinMult));
   return { xp, coins };
 }
