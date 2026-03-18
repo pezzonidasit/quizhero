@@ -3428,3 +3428,144 @@ body.low-perf-mode .chest-open-overlay .chest-item {
   color: rgba(255,255,255,0.4);
   font-size: 1.2rem;
 }
+
+/* ── Révisions ─────────────────────────────────────────────────── */
+.revisions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.revision-card {
+  background: var(--card-bg);
+  border-radius: 1rem;
+  padding: 1rem 1.2rem;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.revision-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+.revision-card.cooldown {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.revision-card-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.revision-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.revision-card-title {
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.revision-card-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.revision-card-score {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-green);
+  flex-shrink: 0;
+}
+
+.revision-card-cooldown {
+  font-size: 0.75rem;
+  color: var(--accent-orange, #ff8c42);
+  font-weight: 600;
+}
+
+.btn-revisions {
+  position: relative;
+  font-size: 1rem;
+}
+
+.revisions-badge {
+  background: var(--accent-orange, #ff8c42);
+  color: #fff;
+  border-radius: 50%;
+  padding: 0.1em 0.45em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-left: 0.4rem;
+}
+
+.revisions-badge:empty { display: none; }
+
+.empty-message {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 2rem 1rem;
+}
+
+/* ── QCM Choices ───────────────────────────────────────────────── */
+.qcm-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.qcm-btn {
+  background: var(--card-bg);
+  border: 2px solid var(--border-color, rgba(255,255,255,0.1));
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.95rem;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  word-break: break-word;
+}
+
+.qcm-btn:hover { border-color: var(--accent-blue); transform: translateY(-1px); }
+
+.qcm-btn.correct {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: #fff;
+}
+
+.qcm-btn.incorrect {
+  background: var(--accent-red, #ff6b6b);
+  border-color: var(--accent-red, #ff6b6b);
+  color: #fff;
+}
+
+.qcm-btn.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* XP multiplier badge on end screen */
+.xp-multiplier-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #4a9eff, #a855f7);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 0.5rem;
+  padding: 0.2em 0.6em;
+  font-size: 0.85rem;
+  margin-left: 0.3rem;
+}

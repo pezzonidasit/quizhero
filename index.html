@@ -135,11 +135,20 @@
       <button id="btn-play" class="btn-primary btn-play-main" style="flex:3;min-width:0">⚔️ Jouer !</button>
       <button id="btn-duel" class="btn-primary btn-play-main" style="flex:2;min-width:0;background:linear-gradient(135deg, var(--accent-orange), var(--accent-gold, #ffd700))">🤺 Duel</button>
     </div>
+    <button id="btn-revisions" class="btn-secondary btn-revisions" style="width:100%;display:none">📚 Révisions <span id="revisions-badge" class="revisions-badge"></span></button>
 
     <div id="pet-zone" class="pet-zone"></div>
     <button id="btn-daily-question" class="btn-secondary" style="width:100%;display:none">🌟 Question du jour</button>
 
     <div id="records-display" class="records-section"></div>
+  </div>
+
+  <!-- ÉCRAN RÉVISIONS -->
+  <div id="screen-revisions" class="screen">
+    <div class="screen-header" style="cursor:pointer" id="btn-revisions-back">← Retour</div>
+    <h2>📚 Révisions</h2>
+    <div id="revisions-list" class="revisions-list"></div>
+    <p id="revisions-empty" class="empty-message" style="display:none">Aucune révision disponible pour tes groupes.</p>
   </div>
 
   <!-- ÉCRAN JEU -->
@@ -173,6 +182,7 @@
       <p id="hint-text" class="hint-text"></p>
 
       <div id="answer-section" class="answer-section">
+        <div id="qcm-choices" class="qcm-choices" style="display:none"></div>
         <input type="number" id="answer-input" class="answer-input" placeholder="Ta réponse...">
         <button id="btn-validate" class="btn-primary">Valider</button>
       </div>

@@ -74,6 +74,11 @@ const state = {
   timerPaused: false,
   timerPausedAt: null,
   ficheReturnScreen: 'screen-game',
+  // Révisions
+  revisionMode: false,
+  revisionSetId: null,
+  revisionQuestions: [],
+  xpMultiplier: 1,
 };
 
 // ── Difficulty ─────────────────────────────────────────────────────
@@ -180,6 +185,7 @@ const screenBackMap = {
   'screen-boss-end': 'screen-home',
   'screen-leaderboard': 'screen-home',
   'screen-contract': 'screen-home',
+  'screen-revisions': 'screen-home',
   'screen-groups': 'screen-home',
   'screen-group-detail': 'screen-groups',
   'screen-group-dashboard': 'screen-group-detail',
@@ -736,6 +742,167 @@ document.getElementById('btn-play').addEventListener('click', async () => {
   showContractScreen();
 });
 
+// ── Révisions ─────────────────────────────────────────────────────────
+
+/** Check if player has active revision sets and show/hide button */
+async function checkRevisionSets() {
+  const btn = document.getElementById('btn-revisions');
+  const badge = document.getElementById('revisions-badge');
+  if (!btn) return;
+  try {
+    const sets = await getActiveRevisionSets();
+    if (sets.length > 0) {
+      btn.style.display = '';
+      let newCount = 0;
+      for (const s of sets) {
+        const score = await getRevisionScore(s.id);
+        if (!score) newCount++;
+      }
+      badge.textContent = newCount > 0 ? newCount : '';
+      localStorage.setItem('mq_revision_sets_cache', JSON.stringify(sets));
+    } else {
+      btn.style.display = 'none';
+    }
+  } catch(e) {
+    const cached = localStorage.getItem('mq_revision_sets_cache');
+    if (cached && JSON.parse(cached).length > 0) {
+      btn.style.display = '';
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+}
+
+/** Show revision list screen */
+async function showRevisionsList() {
+  showScreen('screen-revisions');
+  const list = document.getElementById('revisions-list');
+  const emptyMsg = document.getElementById('revisions-empty');
+  list.innerHTML = '<p style="text-align:center;color:var(--text-secondary)">Chargement...</p>';
+
+  try {
+    const sets = await getActiveRevisionSets();
+    if (sets.length === 0) {
+      list.innerHTML = '';
+      emptyMsg.style.display = '';
+      return;
+    }
+    emptyMsg.style.display = 'none';
+
+    let html = '';
+    for (const s of sets) {
+      const score = await getRevisionScore(s.id);
+      const subjectIcon = s.subject === 'allemand' ? '🇩🇪' : '📖';
+      const inCooldown = score && score.cooldownUntil && Date.now() < score.cooldownUntil;
+      const cooldownClass = inCooldown ? ' cooldown' : '';
+
+      const metaText = s.questionCount + ' questions';
+      let scoreText = '';
+      let cooldownText = '';
+
+      if (score) {
+        scoreText = score.bestPct + '%';
+        if (inCooldown) {
+          const remaining = Math.ceil((score.cooldownUntil - Date.now()) / 60000);
+          cooldownText = '⏳ ' + (remaining >= 60 ? Math.floor(remaining / 60) + 'h' + (remaining % 60 > 0 ? String(remaining % 60).padStart(2, '0') : '') : remaining + 'min');
+        }
+      }
+
+      html += '<div class="revision-card' + cooldownClass + '" data-set-id="' + s.id + '">'
+        + '<span class="revision-card-icon">' + subjectIcon + '</span>'
+        + '<div class="revision-card-info">'
+        + '<div class="revision-card-title">' + escapeHtml(s.title) + '</div>'
+        + '<div class="revision-card-meta">' + metaText + '</div>'
+        + (cooldownText ? '<div class="revision-card-cooldown">' + cooldownText + '</div>' : '')
+        + '</div>'
+        + (scoreText ? '<div class="revision-card-score">' + scoreText + '</div>' : '')
+        + '</div>';
+    }
+    list.innerHTML = html;
+
+    list.querySelectorAll('.revision-card:not(.cooldown)').forEach(card => {
+      card.addEventListener('click', () => startRevisionGame(card.dataset.setId));
+    });
+  } catch(e) {
+    list.innerHTML = '<p style="text-align:center;color:var(--text-secondary)">Erreur de chargement. Vérifie ta connexion.</p>';
+  }
+}
+
+/** Start a revision quiz from a set */
+async function startRevisionGame(setId) {
+  const questions = await getRevisionQuestions(setId);
+  if (questions.length === 0) {
+    alert('Ce set est vide.');
+    return;
+  }
+
+  // Shuffle questions
+  for (let i = questions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [questions[i], questions[j]] = [questions[j], questions[i]];
+  }
+
+  state.revisionMode = true;
+  state.revisionSetId = setId;
+  state.revisionQuestions = questions;
+  state.xpMultiplier = 2;
+  state.questionCount = questions.length;
+  state.category = 'revision';
+
+  state.questions = [];
+  state.currentIndex = 0;
+  state.score = 0;
+  state.streak = 0;
+  state.bestStreakThisGame = 0;
+  state.hintUsed = false;
+  state.answered = false;
+  state.consecutiveCorrect = 0;
+  state.consecutiveWrong = 0;
+  state.badgesUnlocked = [];
+  state.noHintCount = 0;
+  state.streakLostMessage = null;
+  state.gameStartTime = Date.now();
+  state.activeBoost = null;
+  state.shieldActive = false;
+  state.coinRainActive = false;
+  state.activeContract = null;
+  state.contractGameResult = null;
+  state.categoryStats = {};
+
+  // Convert revision questions to game format
+  state.revisionQuestions.forEach(q => {
+    const gameQ = {
+      category: 'revision',
+      text: q.text,
+      unit: '',
+      hint: q.hint || '',
+      explanation: q.explanation || '',
+    };
+    if (q.type === 'qcm') {
+      gameQ.qcmChoices = q.choices;
+      gameQ.textAnswer = q.answer;
+    } else if (q.type === 'text') {
+      gameQ.textAnswer = q.answer;
+      gameQ.acceptedAnswers = q.acceptedAnswers || [q.answer];
+    } else {
+      gameQ.answer = Number(q.answer);
+    }
+    state.questions.push(gameQ);
+  });
+
+  showScreen('screen-game');
+  if (state.timerEnabled) {
+    document.getElementById('timer-stat').style.display = '';
+    startTimer();
+  } else {
+    document.getElementById('timer-stat').style.display = 'none';
+  }
+  showQuestion();
+}
+
+document.getElementById('btn-revisions').addEventListener('click', showRevisionsList);
+document.getElementById('btn-revisions-back').addEventListener('click', () => showScreen('screen-home'));
+
 // ── Fiches d'aide ──────────────────────────────────────────────────────
 function loadFichesAndShow(ficheKey) {
   showFiche(ficheKey);
@@ -836,13 +1003,33 @@ function showQuestion() {
   document.getElementById('feedback-section').style.display = 'none';
 
   const input = document.getElementById('answer-input');
+  const qcmDiv = document.getElementById('qcm-choices');
+  const validateBtn = document.getElementById('btn-validate');
   input.value = '';
-  if (q.textAnswer !== undefined) {
+
+  if (q.qcmChoices) {
+    // QCM mode
+    input.style.display = 'none';
+    validateBtn.style.display = 'none';
+    qcmDiv.style.display = '';
+    qcmDiv.innerHTML = q.qcmChoices.map((c, i) =>
+      '<button class="qcm-btn" data-index="' + i + '">' + escapeHtml(c) + '</button>'
+    ).join('');
+    qcmDiv.querySelectorAll('.qcm-btn').forEach(btn => {
+      btn.addEventListener('click', () => validateQCMAnswer(btn));
+    });
+  } else if (q.textAnswer !== undefined || q.acceptedAnswers) {
     input.type = 'text';
     input.placeholder = 'Ta réponse...';
+    input.style.display = '';
+    validateBtn.style.display = '';
+    qcmDiv.style.display = 'none';
   } else {
     input.type = 'number';
     input.placeholder = 'Ta réponse...';
+    input.style.display = '';
+    validateBtn.style.display = '';
+    qcmDiv.style.display = 'none';
   }
 
   document.getElementById('btn-next').textContent = 'Suivant';
@@ -927,26 +1114,9 @@ document.getElementById('btn-fiche-back').addEventListener('click', () => {
 });
 
 // ── Answer Validation ──────────────────────────────────────────────
-function validateAnswer() {
-  if (state.answered) return;
 
-  const q = state.questions[state.currentIndex];
-  const input = document.getElementById('answer-input');
-  const userAnswer = input.value.trim();
-
-  if (userAnswer === '') return;
-
-  state.answered = true;
-
-  let isCorrect = false;
-
-  if (q.textAnswer !== undefined) {
-    isCorrect = userAnswer.toLowerCase() === q.textAnswer.toLowerCase();
-  } else {
-    const numAnswer = parseFloat(userAnswer);
-    isCorrect = numAnswer === q.answer;
-  }
-
+/** Shared scoring + feedback logic for all answer types (number, text, QCM) */
+function processAnswer(isCorrect, q) {
   const elapsed = (Date.now() - state.questionStartTime) / 1000;
 
   if (isCorrect) {
@@ -1043,6 +1213,52 @@ function validateAnswer() {
   if (state.currentIndex >= state.questionCount - 1) {
     document.getElementById('btn-next').textContent = 'Voir les résultats';
   }
+}
+
+function validateAnswer() {
+  if (state.answered) return;
+
+  const q = state.questions[state.currentIndex];
+  const input = document.getElementById('answer-input');
+  const userAnswer = input.value.trim();
+
+  if (userAnswer === '') return;
+
+  state.answered = true;
+
+  let isCorrect = false;
+
+  if (q.acceptedAnswers) {
+    // Revision text mode: check against accepted answers (case insensitive)
+    isCorrect = q.acceptedAnswers.some(a => userAnswer.toLowerCase() === a.toLowerCase());
+  } else if (q.textAnswer !== undefined) {
+    isCorrect = userAnswer.toLowerCase() === q.textAnswer.toLowerCase();
+  } else {
+    const numAnswer = parseFloat(userAnswer);
+    isCorrect = numAnswer === q.answer;
+  }
+
+  processAnswer(isCorrect, q);
+}
+
+/** QCM answer validation — called when a QCM button is clicked */
+function validateQCMAnswer(btnEl) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const q = state.questions[state.currentIndex];
+  const chosen = btnEl.textContent;
+  const isCorrect = chosen === q.textAnswer;
+
+  // Highlight correct/incorrect
+  const allBtns = document.querySelectorAll('#qcm-choices .qcm-btn');
+  allBtns.forEach(b => {
+    b.classList.add('disabled');
+    if (b.textContent === q.textAnswer) b.classList.add('correct');
+  });
+  if (!isCorrect) btnEl.classList.add('incorrect');
+
+  processAnswer(isCorrect, q);
 }
 
 document.getElementById('btn-validate').addEventListener('click', validateAnswer);
@@ -1341,6 +1557,10 @@ function endGame() {
   // ── V2: XP, coins, chest milestones, rank-up ──
   const xpBoost = ProfileManager.get('xpBoostActive', false);
   const rewards = calculateRewards(state.score, state.difficulty, xpBoost, state.coinRainActive);
+  // Apply revision XP multiplier
+  if (state.xpMultiplier > 1) {
+    rewards.xp = Math.round(rewards.xp * state.xpMultiplier);
+  }
   const oldXP = ProfileManager.get('xp', 0);
   const newXP = oldXP + rewards.xp;
   ProfileManager.set('xp', newXP);
@@ -1454,7 +1674,12 @@ function endGame() {
   const newRank = getRank(finalXP);
 
   // Display rewards
-  document.getElementById('xp-earned').textContent = '+' + rewards.xp + ' XP';
+  const xpEarnedEl = document.getElementById('xp-earned');
+  if (state.xpMultiplier > 1) {
+    xpEarnedEl.innerHTML = '+' + rewards.xp + ' XP <span class="xp-multiplier-badge">×' + state.xpMultiplier + '</span>';
+  } else {
+    xpEarnedEl.textContent = '+' + rewards.xp + ' XP';
+  }
   document.getElementById('coins-earned').textContent = '+' + rewards.coins + ' \uD83E\uDE99';
   const rankUpEl = document.getElementById('rank-up-display');
   if (newRank.id !== oldRank.id) {
@@ -1531,6 +1756,25 @@ function endGame() {
 
   MQSync.syncAfterGame(rewards.xp).catch(() => {});
 
+  // Save revision score to Firebase
+  if (state.revisionMode && state.revisionSetId) {
+    const totalQ = state.questionCount;
+    const correctQ = Object.values(state.categoryStats).reduce((s, c) => s + (c.correct || 0), 0);
+    const pct = Math.round(correctQ / totalQ * 100);
+    saveRevisionScore(state.revisionSetId, state.score, totalQ, pct).then(() => {
+      // Check if cooldown should be shown
+      getRevisionScore(state.revisionSetId).then(score => {
+        if (score && score.cooldownUntil && Date.now() < score.cooldownUntil) {
+          const almostEl = document.getElementById('almost-there');
+          if (almostEl) {
+            almostEl.textContent = '🎓 Bravo, 3× parfait ! Reviens dans 2h pour rejouer ce set.';
+            almostEl.style.display = '';
+          }
+        }
+      }).catch(() => {});
+    }).catch(() => {});
+  }
+
   // V8: Majestueux notification
   const majEl = document.getElementById('pet-majestueux-display');
   if (state.pendingMajReward && majEl) {
@@ -1564,6 +1808,11 @@ function endGame() {
 
 // ── Replay / Menu ──────────────────────────────────────────────────
 document.getElementById('btn-replay').addEventListener('click', () => {
+  // Revision replay: restart same set
+  if (state.revisionMode && state.revisionSetId) {
+    startRevisionGame(state.revisionSetId);
+    return;
+  }
   if (state.pendingChests && state.pendingChests.length > 0) {
     state.replayAfterChests = true;
     showChest(state.pendingChests.shift());
@@ -1594,11 +1843,18 @@ document.getElementById('btn-share-score').addEventListener('click', () => {
 });
 
 document.getElementById('btn-menu').addEventListener('click', () => {
+  // Reset revision state
+  state.revisionMode = false;
+  state.revisionSetId = null;
+  state.revisionQuestions = [];
+  state.xpMultiplier = 1;
+
   if (state.pendingChests && state.pendingChests.length > 0) {
     showChest(state.pendingChests.shift());
   } else {
     updateProfileHeader();
     renderRecords();
+    checkRevisionSets();
     if (shouldTriggerBoss()) {
       triggerBoss();
     } else {
@@ -2212,6 +2468,8 @@ MQSync.syncOnLaunch().then(() => {
     ProfileManager.set('coinNotification', 0);
     showCoinToast(coinNotif);
   }
+  // Check for active revision sets
+  checkRevisionSets();
 }).catch(() => {});
 
 // ══════════════════════════════════════════════════════════════════════

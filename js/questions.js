@@ -7,7 +7,8 @@ const CATEGORIES = {
   geometrie: { label: 'Géométrie',       color: '#ff8c42' },
   fractions: { label: 'Fractions',       color: '#a855f7' },
   mesures:   { label: 'Mesures',         color: '#ff6b6b' },
-  ouvert:    { label: 'Problèmes ouverts', color: '#ffd93d' }
+  ouvert:    { label: 'Problèmes ouverts', color: '#ffd93d' },
+  revision:  { label: 'Révision',         color: '#10b981' }
 };
 
 // ── Utilities ───────────────────────────────────────────────────────

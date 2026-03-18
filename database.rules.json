@@ -1,0 +1,137 @@
+{
+  "rules": {
+    "admin_uid": {
+      ".read": true,
+      ".write": "!data.exists()"
+    },
+
+    "app_version": {
+      ".read": true,
+      ".write": "root.child('admin_uid').val() === auth.uid"
+    },
+
+    "players": {
+      ".read": "root.child('admin_uid').val() === auth.uid",
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "$uid === auth.uid || root.child('admin_uid').val() === auth.uid",
+
+        "parentCapable": {
+          ".write": "root.child('admin_uid').val() === auth.uid"
+        },
+
+        "isAdmin": {
+          ".write": "root.child('admin_uid').val() === auth.uid"
+        }
+      }
+    },
+
+    "groups": {
+      ".read": "root.child('admin_uid').val() === auth.uid",
+      "$code": {
+        ".read": "auth != null",
+
+        "members": {
+          "$uid": {
+            ".write": "auth != null && ($uid === auth.uid || data.parent().parent().child('createdBy').val() === auth.uid || root.child('admin_uid').val() === auth.uid)"
+          }
+        },
+
+        "parents": {
+          "$uid": {
+            ".write": "data.parent().parent().child('createdBy').val() === auth.uid || root.child('admin_uid').val() === auth.uid"
+          }
+        },
+
+        "parentRequests": {
+          "$uid": {
+            ".write": "($uid === auth.uid) || (data.parent().parent().child('createdBy').val() === auth.uid) || (root.child('admin_uid').val() === auth.uid)"
+          }
+        },
+
+        "dashboard": {
+          ".read": "data.parent().child('createdBy').val() === auth.uid || data.parent().child('parents').child(auth.uid).exists() || root.child('admin_uid').val() === auth.uid",
+          "$uid": {
+            ".write": "$uid === auth.uid"
+          }
+        },
+
+        "banned": {
+          "$uid": {
+            ".write": "data.parent().parent().child('createdBy').val() === auth.uid || root.child('admin_uid').val() === auth.uid"
+          }
+        },
+
+        "rewards": {
+          ".write": "data.parent().child('createdBy').val() === auth.uid || root.child('admin_uid').val() === auth.uid"
+        },
+
+        ".write": "auth != null && (!data.exists() || data.child('createdBy').val() === auth.uid || root.child('admin_uid').val() === auth.uid)"
+      }
+    },
+
+    "leaderboard": {
+      "weekly": {
+        "$uid": {
+          ".read": true,
+          ".write": "$uid === auth.uid || root.child('admin_uid').val() === auth.uid"
+        }
+      }
+    },
+
+    "riddles": {
+      ".read": "auth != null",
+      "$riddleId": {
+        ".write": "auth != null && (!data.exists() || data.child('createdBy').val() === auth.uid || root.child('admin_uid').val() === auth.uid)",
+
+        "upvotes": { ".write": "auth != null" },
+        "downvotes": { ".write": "auth != null" },
+        "plays": { ".write": "auth != null" },
+        "successRate": { ".write": "auth != null" }
+      }
+    },
+
+    "duels": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+    "dailyQuestion": {
+      "$date": {
+        ".read": "auth != null",
+        "question": {
+          ".write": "auth != null && !data.exists()"
+        },
+        "answers": {
+          "$uid": {
+            ".write": "$uid === auth.uid && !data.exists()"
+          }
+        }
+      }
+    },
+
+    "recovery": {
+      ".read": "root.child('admin_uid').val() === auth.uid",
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+    "revisionSets": {
+      ".read": "auth != null",
+      ".write": "root.child('admin_uid').val() === auth.uid"
+    },
+
+    "revisionScores": {
+      "$setId": {
+        "$uid": {
+          ".read": "auth != null",
+          ".write": "$uid === auth.uid"
+        }
+      }
+    }
+  }
+}

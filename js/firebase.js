@@ -754,3 +754,80 @@ async function restoreProfile() {
     return false;
   }
 }
+
+// ── Revision Sets ──
+
+/** Get active revision sets for the current player's groups */
+async function getActiveRevisionSets() {
+  if (!firebaseUid) return [];
+  const groups = await getMyGroups();
+  if (groups.length === 0) return [];
+
+  const setIds = new Set();
+  for (const g of groups) {
+    const snap = await db.ref('groups/' + g.code + '/activeRevisions').once('value');
+    if (snap.exists()) {
+      Object.keys(snap.val()).forEach(id => setIds.add(id));
+    }
+  }
+
+  const sets = [];
+  for (const setId of setIds) {
+    const snap = await db.ref('revisionSets/' + setId).once('value');
+    if (snap.exists()) {
+      sets.push({ id: setId, ...snap.val() });
+    }
+  }
+  return sets;
+}
+
+/** Get questions for a specific revision set */
+async function getRevisionQuestions(setId) {
+  const snap = await db.ref('revisionSets/' + setId + '/questions').once('value');
+  if (!snap.exists()) return [];
+  const questions = [];
+  snap.forEach(child => {
+    questions.push({ id: child.key, ...child.val() });
+  });
+  return questions;
+}
+
+/** Get the current player's score on a revision set */
+async function getRevisionScore(setId) {
+  if (!firebaseUid) return null;
+  const snap = await db.ref('revisionScores/' + setId + '/' + firebaseUid).once('value');
+  return snap.exists() ? snap.val() : null;
+}
+
+/** Save score after completing a revision set. Manages perfectStreak and cooldown. */
+async function saveRevisionScore(setId, score, total, pct) {
+  if (!firebaseUid) return;
+  const ref = db.ref('revisionScores/' + setId + '/' + firebaseUid);
+  const snap = await ref.once('value');
+  const existing = snap.exists() ? snap.val() : {};
+
+  const bestScore = Math.max(score, existing.bestScore || 0);
+  const bestPct = Math.max(pct, existing.bestPct || 0);
+  const attempts = (existing.attempts || 0) + 1;
+
+  let perfectStreak = existing.perfectStreak || 0;
+  let cooldownUntil = existing.cooldownUntil || null;
+
+  if (pct === 100) {
+    perfectStreak++;
+    if (perfectStreak >= 3) {
+      cooldownUntil = Date.now() + 7200000; // 2 hours
+    }
+  } else {
+    perfectStreak = 0;
+  }
+
+  await ref.set({
+    bestScore,
+    bestPct,
+    attempts,
+    perfectStreak,
+    cooldownUntil,
+    lastPlayed: firebase.database.ServerValue.TIMESTAMP,
+  });
+}
