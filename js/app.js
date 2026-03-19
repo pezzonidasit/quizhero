@@ -1506,83 +1506,31 @@ function checkBadges() {
   });
 }
 
-// ── End Game ───────────────────────────────────────────────────────
-function endGame() {
-  stopTimer();
-  clearGameState();
+// ── End Game (sub-functions) ─────────────────────────────────────
 
+function updateRecords() {
   const bestStreak = state.bestStreakThisGame;
   let isNewRecord = false;
-
   const recordKeys = state.category === 'all' ? ['global'] : [state.category, 'global'];
   recordKeys.forEach(key => {
-    if (!state.records[key]) {
-      state.records[key] = { score: 0, streak: 0 };
-    }
-    if (state.score > state.records[key].score || bestStreak > state.records[key].streak) {
-      isNewRecord = true;
-    }
-    if (state.score > state.records[key].score) {
-      state.records[key].score = state.score;
-    }
-    if (bestStreak > state.records[key].streak) {
-      state.records[key].streak = bestStreak;
-    }
+    if (!state.records[key]) state.records[key] = { score: 0, streak: 0 };
+    if (state.score > state.records[key].score || bestStreak > state.records[key].streak) isNewRecord = true;
+    if (state.score > state.records[key].score) state.records[key].score = state.score;
+    if (bestStreak > state.records[key].streak) state.records[key].streak = bestStreak;
   });
+  return isNewRecord;
+}
 
-  // V5: Track regularity streak (days played this week)
+function trackRegularity() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const daysPlayed = ProfileManager.get('daysPlayedThisWeek', []);
   if (!daysPlayed.includes(todayStr)) {
     daysPlayed.push(todayStr);
     ProfileManager.set('daysPlayedThisWeek', daysPlayed);
   }
+}
 
-  checkBadges();
-
-  // V6: Check mastery level-ups
-  const masteryUps = checkMasteryUp(state.category === 'all' ? 'all' : state.category);
-  masteryUps.forEach(b => {
-    state.badgesUnlocked.push(b);
-    const toast = document.createElement('div');
-    toast.className = 'coin-toast mastery-toast';
-    toast.textContent = '🌟 ' + b.name + ' !';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-  });
-
-  saveProfileData();
-
-  // Display final score
-  const finalScore = document.getElementById('final-score');
-  finalScore.textContent = state.score + ' points';
-  finalScore.classList.remove('pop-in');
-  void finalScore.offsetWidth;
-  finalScore.classList.add('pop-in');
-
-  // New record
-  const newRecordEl = document.getElementById('new-record');
-  if (isNewRecord) {
-    newRecordEl.style.display = '';
-    launchBigConfetti();
-  } else {
-    newRecordEl.style.display = 'none';
-  }
-
-  // Badges unlocked this game
-  const badgesContainer = document.getElementById('badges-unlocked');
-  if (state.badgesUnlocked.length > 0) {
-    let html = '<h3>Badges débloqués !</h3><div class="badges-grid">';
-    state.badgesUnlocked.forEach(b => {
-      html += `<div class="badge-item"><span class="badge-icon">${b.icon}</span><span class="badge-name">${b.name}</span></div>`;
-    });
-    html += '</div>';
-    badgesContainer.innerHTML = html;
-  } else {
-    badgesContainer.innerHTML = '';
-  }
-
-  // ── V2: XP, coins, chest milestones, rank-up ──
+function computeRewards() {
   const xpBoost = ProfileManager.get('xpBoostActive', false);
   const catLevel = ProfileManager.get('catLevel', {});
   const playedCats = Object.keys(state.categoryStats);
@@ -1590,17 +1538,17 @@ function endGame() {
     ? Math.round(playedCats.reduce((sum, c) => sum + (catLevel[c] || 2), 0) / playedCats.length)
     : 2;
   const rewards = calculateRewards(state.score, avgLevel, xpBoost, state.coinRainActive);
-  // Apply revision XP multiplier
   if (state.xpMultiplier > 1) {
     rewards.xp = Math.round(rewards.xp * state.xpMultiplier);
   }
   const oldXP = ProfileManager.get('xp', 0);
-  const newXP = oldXP + rewards.xp;
-  ProfileManager.set('xp', newXP);
+  ProfileManager.set('xp', oldXP + rewards.xp);
   ProfileManager.set('coins', ProfileManager.get('coins', 0) + rewards.coins);
   if (xpBoost) ProfileManager.set('xpBoostActive', false);
+  return { rewards, avgLevel, oldXP };
+}
 
-  // Apply boost if active AND perfect score
+function applyBoostRewards(rewards, avgLevel) {
   if (state.activeBoost) {
     const isPerfect = state.bestStreakThisGame >= state.questionCount;
     const boost = BOOSTS.find(b => b.id === state.activeBoost);
@@ -1617,7 +1565,6 @@ function endGame() {
         ProfileManager.set('coins', ProfileManager.get('coins', 0) + bonusCoins);
       } else if (boost.effect === 'score') {
         const bonusScore = Math.round(state.score * (mult === 1.5 ? 1 : mult === 0.75 ? 0.5 : 0.5));
-        // Score boost gives bonus XP equal to the extra score
         rewards.xp += bonusScore;
         rewards.coins += Math.round(bonusScore / 2);
         ProfileManager.set('xp', ProfileManager.get('xp', 0) + bonusScore);
@@ -1625,7 +1572,6 @@ function endGame() {
       }
     }
 
-    // Show boost result in rewards section
     const boostResultEl = document.getElementById('boost-result');
     if (boostResultEl) {
       if (boost && boost.effect === 'hints') {
@@ -1647,13 +1593,13 @@ function endGame() {
     const boostResultEl = document.getElementById('boost-result');
     if (boostResultEl) boostResultEl.style.display = 'none';
   }
+}
 
-  // V8: Pet XP + dragon skip + hunger drain
+function applyPetEffects(rewards) {
   addPetXP(state.score);
   drainPetHunger();
   checkDragonSkip(state.questionCount);
 
-  // V8: Pet passive bonus — scaled by stage (5%→25%)
   const petBonus = getPetBonus();
   const petPct = getPetBonusPct();
   if (petBonus === 'xp' && petPct > 0) {
@@ -1666,14 +1612,11 @@ function endGame() {
     ProfileManager.set('coins', ProfileManager.get('coins', 0) + bonusPetCoins);
   }
 
-  // V8: First time reaching Majestueux → reward
   const majReward = checkPetMajestueux();
   if (majReward) state.pendingMajReward = majReward;
+}
 
-  // Re-read XP after potential boost bonus
-  const finalXP = ProfileManager.get('xp', 0);
-
-  // Game streak for chest milestones
+function updateGameStreak() {
   let gamesPlayed = ProfileManager.get('gamesPlayed', 0) + 1;
   ProfileManager.set('gamesPlayed', gamesPlayed);
   incrementDailyGameCount();
@@ -1688,25 +1631,41 @@ function endGame() {
   }
   ProfileManager.set('goodGamesStreak', goodStreak);
 
-  // Check chests (V5: max 3/day)
+  const finalXP = ProfileManager.get('xp', 0);
   const chestsOpened = ProfileManager.get('chestsOpened', []);
   const allPending = checkChestMilestones(gamesPlayed, finalXP, chestsOpened);
   state.pendingChests = canOpenChestToday() ? allPending : [];
+  const chestWaiting = !canOpenChestToday() && allPending.length > 0;
 
-  // V5: Show hint when chests are pending but capped
-  if (!canOpenChestToday() && allPending.length > 0) {
-    const almostEl = document.getElementById('almost-there');
-    if (almostEl) {
-      almostEl.textContent = '🎁 Coffres en attente ! Reviens demain pour les ouvrir.';
-      almostEl.style.display = '';
-    }
+  return { gamesPlayed, finalXP, chestWaiting };
+}
+
+function renderEndScreen(isNewRecord, rewards, oldXP, finalXP, gamesPlayed, chestWaiting) {
+  // Score
+  const finalScore = document.getElementById('final-score');
+  finalScore.textContent = state.score + ' points';
+  finalScore.classList.remove('pop-in');
+  void finalScore.offsetWidth;
+  finalScore.classList.add('pop-in');
+
+  // Record
+  const newRecordEl = document.getElementById('new-record');
+  newRecordEl.style.display = isNewRecord ? '' : 'none';
+  if (isNewRecord) launchBigConfetti();
+
+  // Badges
+  const badgesContainer = document.getElementById('badges-unlocked');
+  if (state.badgesUnlocked.length > 0) {
+    let html = '<h3>Badges débloqués !</h3><div class="badges-grid">';
+    state.badgesUnlocked.forEach(b => {
+      html += `<div class="badge-item"><span class="badge-icon">${b.icon}</span><span class="badge-name">${b.name}</span></div>`;
+    });
+    badgesContainer.innerHTML = html + '</div>';
+  } else {
+    badgesContainer.innerHTML = '';
   }
 
-  // Check rank up
-  const oldRank = getRank(oldXP);
-  const newRank = getRank(finalXP);
-
-  // Display rewards
+  // XP + coins
   const xpEarnedEl = document.getElementById('xp-earned');
   if (state.xpMultiplier > 1) {
     xpEarnedEl.innerHTML = '+' + rewards.xp + ' XP <span class="xp-multiplier-badge">×' + state.xpMultiplier + '</span>';
@@ -1714,6 +1673,10 @@ function endGame() {
     xpEarnedEl.textContent = '+' + rewards.xp + ' XP';
   }
   document.getElementById('coins-earned').textContent = '+' + rewards.coins + ' \uD83E\uDE99';
+
+  // Rank up
+  const oldRank = getRank(oldXP);
+  const newRank = getRank(finalXP);
   const rankUpEl = document.getElementById('rank-up-display');
   if (newRank.id !== oldRank.id) {
     rankUpEl.style.display = '';
@@ -1726,76 +1689,92 @@ function endGame() {
   document.getElementById('xp-bar-end-fill').style.width = (progress.progress * 100) + '%';
   document.getElementById('xp-bar-end-text').textContent = progress.next ? progress.xpInLevel + '/' + progress.xpNeeded + ' XP' : 'MAX';
 
-  // V5: "Tu étais si près !" — show distance to next goal
+  // "Tu étais si près !" — chest-waiting has priority
   const almostEl = document.getElementById('almost-there');
-  const almostHints = [];
-  const nextGameChest = GAME_MILESTONES.find(m => m > gamesPlayed);
-  if (nextGameChest && nextGameChest - gamesPlayed <= 3) {
-    almostHints.push('Plus que ' + (nextGameChest - gamesPlayed) + ' partie' + (nextGameChest - gamesPlayed > 1 ? 's' : '') + ' pour un coffre !');
-  }
-  const nextXPChest = XP_MILESTONES.find(m => m > finalXP);
-  if (nextXPChest && nextXPChest - finalXP <= 100) {
-    almostHints.push('Plus que ' + (nextXPChest - finalXP) + ' XP pour un coffre !');
-  }
-  const nextRankInfo = getNextRank(finalXP);
-  if (nextRankInfo && nextRankInfo.xp - finalXP <= 150) {
-    almostHints.push('Plus que ' + (nextRankInfo.xp - finalXP) + ' XP pour ' + nextRankInfo.icon + ' ' + nextRankInfo.name + ' !');
-  }
-  if (almostHints.length > 0) {
-    almostEl.textContent = almostHints[0];
+  if (chestWaiting) {
+    almostEl.textContent = '🎁 Coffres en attente ! Reviens demain pour les ouvrir.';
     almostEl.style.display = '';
   } else {
-    almostEl.style.display = 'none';
-  }
-
-  // V3: Evaluate contract
-  if (state.activeContract && state.contractGameResult) {
-    const contractMet = state.activeContract.check(state.contractGameResult);
-    const contractEl = document.createElement('div');
-    contractEl.className = 'contract-result ' + (contractMet ? 'success' : 'failure');
-
-    if (contractMet) {
-      const bonus = state.activeContract.bonus;
-      ProfileManager.set('coins', ProfileManager.get('coins', 0) + bonus);
-      contractEl.textContent = `${state.activeContract.icon} Contrat ${state.activeContract.tier === 'gold' ? 'Or' : state.activeContract.tier === 'silver' ? 'Argent' : 'Bronze'} rempli ! +${bonus} 🪙`;
-      const contractsCompleted = ProfileManager.get('contractsCompleted', { bronze: 0, silver: 0, gold: 0, goldStreak: 0 });
-      contractsCompleted[state.activeContract.tier]++;
-      if (state.activeContract.tier === 'gold') {
-        contractsCompleted.goldStreak++;
-      } else {
-        contractsCompleted.goldStreak = 0;
-      }
-      ProfileManager.set('contractsCompleted', contractsCompleted);
-      checkContractBadges(contractsCompleted);
-    } else {
-      contractEl.textContent = `${state.activeContract.icon} Contrat non rempli — la prochaine fois !`;
-      const contractsCompleted = ProfileManager.get('contractsCompleted', { bronze: 0, silver: 0, gold: 0, goldStreak: 0 });
-      contractsCompleted.goldStreak = 0;
-      ProfileManager.set('contractsCompleted', contractsCompleted);
+    const almostHints = [];
+    const nextGameChest = GAME_MILESTONES.find(m => m > gamesPlayed);
+    if (nextGameChest && nextGameChest - gamesPlayed <= 3) {
+      almostHints.push('Plus que ' + (nextGameChest - gamesPlayed) + ' partie' + (nextGameChest - gamesPlayed > 1 ? 's' : '') + ' pour un coffre !');
     }
-
-    const rewardsSection = document.getElementById('rewards-section');
-    const existing = document.querySelector('.contract-result');
-    if (existing) existing.remove();
-    rewardsSection.parentNode.insertBefore(contractEl, rewardsSection);
-
-    state.activeContract = null;
-    state.contractGameResult = null;
+    const nextXPChest = XP_MILESTONES.find(m => m > finalXP);
+    if (nextXPChest && nextXPChest - finalXP <= 100) {
+      almostHints.push('Plus que ' + (nextXPChest - finalXP) + ' XP pour un coffre !');
+    }
+    const nextRankInfo = getNextRank(finalXP);
+    if (nextRankInfo && nextRankInfo.xp - finalXP <= 150) {
+      almostHints.push('Plus que ' + (nextRankInfo.xp - finalXP) + ' XP pour ' + nextRankInfo.icon + ' ' + nextRankInfo.name + ' !');
+    }
+    if (almostHints.length > 0) {
+      almostEl.textContent = almostHints[0];
+      almostEl.style.display = '';
+    } else {
+      almostEl.style.display = 'none';
+    }
   }
 
-  // V4: Sync to Firebase
+  // Majestueux notification
+  const majEl = document.getElementById('pet-majestueux-display');
+  if (state.pendingMajReward && majEl) {
+    const r = state.pendingMajReward;
+    majEl.style.display = '';
+    majEl.innerHTML = r.emoji + ' Ton ' + r.name + ' est devenu <strong>Majestueux</strong> ! +200🪙 · Badge · Titre débloqué !';
+    launchBigConfetti();
+    state.pendingMajReward = null;
+  } else if (majEl) {
+    majEl.style.display = 'none';
+  }
+}
+
+function evaluateContract() {
+  if (!state.activeContract || !state.contractGameResult) return;
+
+  const contractMet = state.activeContract.check(state.contractGameResult);
+  const contractEl = document.createElement('div');
+  contractEl.className = 'contract-result ' + (contractMet ? 'success' : 'failure');
+
+  if (contractMet) {
+    const bonus = state.activeContract.bonus;
+    ProfileManager.set('coins', ProfileManager.get('coins', 0) + bonus);
+    contractEl.textContent = `${state.activeContract.icon} Contrat ${state.activeContract.tier === 'gold' ? 'Or' : state.activeContract.tier === 'silver' ? 'Argent' : 'Bronze'} rempli ! +${bonus} 🪙`;
+    const contractsCompleted = ProfileManager.get('contractsCompleted', { bronze: 0, silver: 0, gold: 0, goldStreak: 0 });
+    contractsCompleted[state.activeContract.tier]++;
+    if (state.activeContract.tier === 'gold') {
+      contractsCompleted.goldStreak++;
+    } else {
+      contractsCompleted.goldStreak = 0;
+    }
+    ProfileManager.set('contractsCompleted', contractsCompleted);
+    checkContractBadges(contractsCompleted);
+  } else {
+    contractEl.textContent = `${state.activeContract.icon} Contrat non rempli — la prochaine fois !`;
+    const contractsCompleted = ProfileManager.get('contractsCompleted', { bronze: 0, silver: 0, gold: 0, goldStreak: 0 });
+    contractsCompleted.goldStreak = 0;
+    ProfileManager.set('contractsCompleted', contractsCompleted);
+  }
+
+  const rewardsSection = document.getElementById('rewards-section');
+  const existing = document.querySelector('.contract-result');
+  if (existing) existing.remove();
+  rewardsSection.parentNode.insertBefore(contractEl, rewardsSection);
+
+  state.activeContract = null;
+  state.contractGameResult = null;
+}
+
+function syncToFirebase(rewards) {
   const gameElapsed = Math.round((Date.now() - state.gameStartTime) / 1000);
   ProfileManager.set('weeklyTimeSpent', (ProfileManager.get('weeklyTimeSpent', 0)) + gameElapsed);
-
   MQSync.syncAfterGame(rewards.xp).catch(() => {});
 
-  // Save revision score to Firebase
   if (state.revisionMode && state.revisionSetId) {
     const totalQ = state.questionCount;
     const correctQ = Object.values(state.categoryStats).reduce((s, c) => s + (c.correct || 0), 0);
     const pct = Math.round(correctQ / totalQ * 100);
     saveRevisionScore(state.revisionSetId, state.score, totalQ, pct).then(() => {
-      // Check if cooldown should be shown
       getRevisionScore(state.revisionSetId).then(score => {
         if (score && score.cooldownUntil && Date.now() < score.cooldownUntil) {
           const almostEl = document.getElementById('almost-there');
@@ -1807,20 +1786,9 @@ function endGame() {
       }).catch(() => {});
     }).catch(() => {});
   }
+}
 
-  // V8: Majestueux notification
-  const majEl = document.getElementById('pet-majestueux-display');
-  if (state.pendingMajReward && majEl) {
-    const r = state.pendingMajReward;
-    majEl.style.display = '';
-    majEl.innerHTML = r.emoji + ' Ton ' + r.name + ' est devenu <strong>Majestueux</strong> ! +200🪙 · Badge · Titre débloqué !';
-    launchBigConfetti();
-    state.pendingMajReward = null;
-  } else if (majEl) {
-    majEl.style.display = 'none';
-  }
-
-  // V5: Session limit check (30 min gentle nudge)
+function checkSessionLimit() {
   const sessionMinutes = (Date.now() - sessionStartTime) / 60000;
   const alreadyNudged = sessionStorage.getItem('mq_session_nudged');
   if (sessionMinutes >= 30 && !alreadyNudged) {
@@ -1829,12 +1797,46 @@ function endGame() {
       document.getElementById('session-limit-overlay').style.display = 'flex';
     }, 1500);
   }
+}
 
+// ── End Game ───────────────────────────────────────────────────────
+function endGame() {
+  stopTimer();
+  clearGameState();
+
+  const isNewRecord = updateRecords();
+  trackRegularity();
+  checkBadges();
+
+  // Check mastery level-ups
+  const masteryUps = checkMasteryUp(state.category === 'all' ? 'all' : state.category);
+  masteryUps.forEach(b => {
+    state.badgesUnlocked.push(b);
+    const toast = document.createElement('div');
+    toast.className = 'coin-toast mastery-toast';
+    toast.textContent = '🌟 ' + b.name + ' !';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  });
+
+  saveProfileData();
+
+  // Rewards pipeline — NB: rewards object is mutated by boost and pet effects
+  const { rewards, avgLevel, oldXP } = computeRewards();
+  applyBoostRewards(rewards, avgLevel);
+  applyPetEffects(rewards);
+  const { gamesPlayed, finalXP, chestWaiting } = updateGameStreak();
+
+  // Render
+  renderEndScreen(isNewRecord, rewards, oldXP, finalXP, gamesPlayed, chestWaiting);
+  evaluateContract();
+  syncToFirebase(rewards);
+  checkSessionLimit();
   renderRegularityStreak();
 
   showScreen('screen-end');
 
-  // V3: Track games since boss
+  // Track games since boss
   state.gamesSinceBoss++;
   saveBossState();
 }
