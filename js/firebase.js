@@ -417,7 +417,8 @@ async function backupProfile(profileId) {
   const pm = ProfileManager;
   const fields = ['xp', 'coins', 'gamesPlayed', 'goodGamesStreak', 'records', 'badges',
     'catStats', 'ownedThemes', 'activeTheme', 'ownedStickers', 'boosts', 'chestsOpened',
-    'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames', 'recoveryCode', 'bossTitles', 'activeTitle'];
+    'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames', 'recoveryCode', 'bossTitles', 'activeTitle',
+    'age', 'catLevel', 'catStreak'];
 
   const data = {};
   fields.forEach(f => {
@@ -427,7 +428,7 @@ async function backupProfile(profileId) {
   // Also save profile metadata
   const profile = pm.getAll().find(p => p.id === profileId);
   if (profile) {
-    data._meta = { name: profile.name, theme: profile.theme, createdAt: profile.createdAt };
+    data._meta = { name: profile.name, theme: profile.theme, age: profile.age || 10, createdAt: profile.createdAt };
   }
 
   data.backedUpAt = firebase.database.ServerValue.TIMESTAMP;
@@ -734,13 +735,14 @@ async function restoreProfile() {
     const alreadyExists = existing.some(p => p.name === data._meta.name);
     if (alreadyExists) return false; // don't duplicate
 
-    // Create the profile
-    const profile = pm.create(data._meta.name, data._meta.theme || 'nuit');
+    // Create the profile with age
+    const profile = pm.create(data._meta.name, data._meta.theme || 'nuit', data._meta.age || 10);
 
     // Restore all fields
     const fields = ['xp', 'coins', 'gamesPlayed', 'goodGamesStreak', 'records', 'badges',
       'catStats', 'ownedThemes', 'activeTheme', 'ownedStickers', 'boosts', 'chestsOpened',
-      'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames', 'bossTitles', 'activeTitle'];
+      'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames', 'bossTitles', 'activeTitle',
+      'age', 'catLevel', 'catStreak'];
 
     fields.forEach(f => {
       if (data[f] !== null && data[f] !== undefined) {

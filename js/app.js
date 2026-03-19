@@ -2200,6 +2200,33 @@ async function renderProfileDetail() {
   statsHtml += '</div></div>';
   document.getElementById('profile-card').innerHTML += statsHtml;
 
+  // === Age selector ===
+  const currentAge = ProfileManager.get('age', 10);
+  let ageHtml = '<div class="profile-age-selector"><h3>🎂 Mon âge</h3><div class="pill-group" data-setting="profile-age">';
+  [8, 9, 10, 11, 12].forEach(a => {
+    ageHtml += '<button class="pill ' + (a === currentAge ? 'active' : '') + '" data-value="' + a + '">' + a + ' ans</button>';
+  });
+  ageHtml += '</div></div>';
+  document.getElementById('profile-card').innerHTML += ageHtml;
+
+  // Age selector click handler
+  document.querySelectorAll('[data-setting="profile-age"] .pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const newAge = parseInt(pill.dataset.value, 10);
+      ProfileManager.set('age', newAge);
+      // Update profile metadata
+      ProfileManager.updateMeta(ProfileManager.getActiveId(), { age: newAge });
+      // Recalculate catLevel based on new age
+      const newLevel = newAge <= 9 ? 1 : newAge >= 11 ? 3 : 2;
+      const catLevel = {};
+      ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert'].forEach(k => { catLevel[k] = newLevel; });
+      ProfileManager.set('catLevel', catLevel);
+      ProfileManager.set('catStreak', {});
+      renderProfileDetail();
+      renderCatLevelIndicators();
+    });
+  });
+
   // === Theme selector ===
   const ownedThemeIds = ProfileManager.get('ownedThemes', []);
   const activeThemeId = ProfileManager.get('activeTheme', 'nuit');
