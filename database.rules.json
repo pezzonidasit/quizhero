@@ -94,7 +94,7 @@
     "duels": {
       "$code": {
         ".read": "auth != null",
-        ".write": "auth != null"
+        ".write": "auth != null && (!data.exists() || data.child('players/a/uid').val() === auth.uid || data.child('players/b/uid').val() === auth.uid || root.child('admin_uid').val() === auth.uid)"
       }
     },
 
@@ -132,6 +132,11 @@
           ".write": "$uid === auth.uid"
         }
       }
+    },
+
+    "feedback": {
+      ".read": "root.child('admin_uid').val() === auth.uid",
+      ".write": "auth != null"
     }
   }
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quizhero-v40';
+const CACHE_NAME = 'quizhero-v41';
 const ASSETS = [
   './',
   './index.html',
@@ -32,10 +32,16 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+  // Only cache same-origin assets — never cache Firebase/CDN responses (stale data risk)
+  const isSameOrigin = url.origin === self.location.origin;
+
   e.respondWith(
     fetch(e.request).then(response => {
-      const clone = response.clone();
-      caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+      if (isSameOrigin) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+      }
       return response;
     }).catch(() => caches.match(e.request))
   );

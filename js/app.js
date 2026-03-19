@@ -3,14 +3,11 @@
 const APP_VERSION = '6.0';
 
 // ── HTML Sanitization ────────────────────────────────────────────
+const _escapeDiv = document.createElement('div');
 function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  _escapeDiv.textContent = str;
+  return _escapeDiv.innerHTML;
 }
-
-// ── PIN Gate ──────────────────────────────────────────────────────
-const PIN_CODE = '2609';
 
 // V4: No PIN gate — app opens directly
 initApp();
@@ -275,7 +272,7 @@ function renderProfilesList() {
     const rank = getRank(xp);
     return `<div class="profile-card-select" data-id="${p.id}">
       <span class="rank-icon">${rank.icon}</span>
-      <div><div class="profile-name">${p.name}</div><div class="profile-rank-name">${rank.name}</div></div>
+      <div><div class="profile-name">${escapeHtml(p.name)}</div><div class="profile-rank-name">${rank.name}</div></div>
       <span class="profile-xp">${xp} XP</span>
     </div>`;
   }).join('');
@@ -861,11 +858,7 @@ async function startRevisionGame(setId) {
     return;
   }
 
-  // Shuffle questions
-  for (let i = questions.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [questions[i], questions[j]] = [questions[j], questions[i]];
-  }
+  shuffleArray(questions);
 
   state.revisionMode = true;
   state.revisionSetId = setId;
@@ -2154,7 +2147,7 @@ async function renderProfileDetail() {
 
   document.getElementById('profile-card').innerHTML = `
     <span class="rank-icon">${rp.current.icon}</span>
-    <span class="profile-name">${profile.name}</span>
+    <span class="profile-name">${escapeHtml(profile.name)}</span>
     <span class="rank-name">${rp.current.name}</span>
     <div class="xp-bar-container" style="width:100%;height:12px">
       <div class="xp-bar" style="width:${rp.progress * 100}%"></div>
@@ -3270,8 +3263,8 @@ async function renderGroupDetail(code) {
     const canViewDashboard = isAdmin || isParent;
     const memberCount = group.membersList ? group.membersList.length : 0;
 
-    headerEl.innerHTML = '<div class="gd-group-name">' + group.name + '</div>' +
-      '<div class="gd-group-code">' + code + '</div>' +
+    headerEl.innerHTML = '<div class="gd-group-name">' + escapeHtml(group.name) + '</div>' +
+      '<div class="gd-group-code">' + escapeHtml(code) + '</div>' +
       '<div class="gd-member-count">' + memberCount + ' membre' + (memberCount > 1 ? 's' : '') + '</div>';
 
     // Generate QR code for joining
@@ -3416,12 +3409,12 @@ async function showDashboard(code) {
     const catLabels = { calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes' };
     const allCats = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert'];
 
-    let html = '<h3 style="text-align:center">' + group.name + '</h3>';
+    let html = '<h3 style="text-align:center">' + escapeHtml(group.name) + '</h3>';
 
     for (const member of group.membersList) {
       const data = dashData[member.uid];
       if (!data) {
-        html += '<div class="dash-member"><div class="dash-member-name">👤 ' + member.name + '</div><p style="color:var(--text-secondary);font-size:0.8rem">Pas de données</p></div>';
+        html += '<div class="dash-member"><div class="dash-member-name">👤 ' + escapeHtml(member.name) + '</div><p style="color:var(--text-secondary);font-size:0.8rem">Pas de données</p></div>';
         continue;
       }
 
@@ -3437,7 +3430,7 @@ async function showDashboard(code) {
 
       html += '<div class="dash-member">';
       html += '<div class="dash-member-header" onclick="document.getElementById(\'' + memberId + '\').classList.toggle(\'open\')">';
-      html += '<span class="dash-member-name">👤 ' + member.name + '</span>';
+      html += '<span class="dash-member-name">👤 ' + escapeHtml(member.name) + '</span>';
       html += '<span class="dash-member-summary">' + overallPct + '% · ' + (data.weeklyGames || 0) + ' parties · ' + timeMin + 'min</span>';
       html += '<span class="dash-expand-icon">▸</span>';
       html += '</div>';
@@ -3472,7 +3465,7 @@ async function showDashboard(code) {
 
       // Admin actions for this member (parents can't ban)
       if (dashIsAdmin && member.uid !== firebaseUid) {
-        html += '<div style="margin-top:0.5rem;text-align:right"><button class="btn-danger" style="font-size:0.75rem;padding:0.3rem 0.75rem" onclick="banMemberAction(\'' + code + '\',\'' + member.uid + '\',\'' + member.name + '\')">Bannir</button></div>';
+        html += '<div style="margin-top:0.5rem;text-align:right"><button class="btn-danger" style="font-size:0.75rem;padding:0.3rem 0.75rem" onclick="banMemberAction(\'' + code + '\',\'' + member.uid + '\',\'' + escapeHtml(member.name).replace(/'/g, '&#39;') + '\')">Bannir</button></div>';
       }
 
       html += '</div>'; // close details
@@ -3696,7 +3689,7 @@ async function renderAdminPlayers(el) {
     const detailId = 'admin-player-' + p.uid.slice(0, 8);
 
     html += '<div class="dash-member">';
-    html += '<div class="dash-member-name">' + rankIcon + ' ' + (p.name || 'Joueur') + (isMe ? ' <span style="font-size:0.65rem;color:var(--accent-green)">(toi)</span>' : '') + '</div>';
+    html += '<div class="dash-member-name">' + rankIcon + ' ' + escapeHtml(p.name || 'Joueur') + (isMe ? ' <span style="font-size:0.65rem;color:var(--accent-green)">(toi)</span>' : '') + '</div>';
 
     // Stats row
     html += '<div style="font-size:0.8rem;color:var(--text-secondary)">';
@@ -3766,7 +3759,7 @@ async function renderAdminPlayers(el) {
     if (!isMe) {
       const isPC = p.parentCapable === true;
       html += '<button class="btn-secondary" style="font-size:0.7rem;padding:0.2rem 0.6rem;margin-top:0.4rem" onclick="toggleParentCapable(\'' + p.uid + '\',' + !isPC + ')">' + (isPC ? '👪 Retirer parent' : '👪 Marquer parent') + '</button> ';
-      html += '<button class="btn-danger" style="font-size:0.7rem;padding:0.2rem 0.6rem;margin-top:0.4rem" onclick="adminDeletePlayerAction(\'' + p.uid + '\',\'' + (p.name || 'Joueur').replace(/'/g, '') + '\')">Supprimer ce joueur</button>';
+      html += '<button class="btn-danger" style="font-size:0.7rem;padding:0.2rem 0.6rem;margin-top:0.4rem" onclick="adminDeletePlayerAction(\'' + p.uid + '\',\'' + escapeHtml((p.name || 'Joueur').replace(/'/g, '')) + '\')">Supprimer ce joueur</button>';
     }
 
     html += '</div>';

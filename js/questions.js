@@ -20,6 +20,14 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 // ── Generators ──────────────────────────────────────────────────────
 
 function generateCalcul(subLevel) {
@@ -145,11 +153,12 @@ function generateCalcul(subLevel) {
         };
       },
       () => {
-        const a = rand(5, 12);
-        const b = rand(3, 8);
-        const c = rand(2, 6);
-        const d = rand(2, 9);
-        const answer = a * b - c * d;
+        let a, b, c, d, answer;
+        do {
+          a = rand(5, 12); b = rand(3, 8);
+          c = rand(2, 6); d = rand(2, 9);
+          answer = a * b - c * d;
+        } while (answer <= 0);
         return {
           text: `Combien font ${a} × ${b} − ${c} × ${d} ?`,
           answer,

@@ -615,7 +615,7 @@ function generateContracts(category, catLevelValue, questionCount, catStats) {
     { id: 'streak_3', label: 'série de 3 minimum', check: (r) => r.bestStreak >= 3 },
   ];
 
-  const shuffled = conditionPool.sort(() => Math.random() - 0.5);
+  const shuffled = shuffleArray([...conditionPool]);
   const silverCondition = shuffled[0];
   const goldConditions = [shuffled[0], shuffled[1] || shuffled[0]];
   if (!goldConditions.find(c => c.id === 'no_hint')) {
