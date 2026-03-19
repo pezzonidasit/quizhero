@@ -858,6 +858,19 @@ async function startRevisionGame(setId) {
     return;
   }
 
+  // Load context as a temporary fiche if available
+  const setSnap = await firebase.database().ref('revisionSets/' + setId + '/context').once('value');
+  const context = setSnap.val();
+  if (context && window.FICHES) {
+    window.FICHES['_rev_' + setId] = {
+      titre: context.titre || 'Aide — Révision',
+      intro: context.intro || '',
+      regle: context.regle || '',
+      exemples: context.exemples || [],
+      astuce: context.astuce || ''
+    };
+  }
+
   shuffleArray(questions);
 
   state.revisionMode = true;
@@ -896,6 +909,7 @@ async function startRevisionGame(setId) {
       hint: q.hint || '',
       explanation: q.explanation || '',
     };
+    if (context) gameQ.ficheKey = '_rev_' + setId;
     if (q.type === 'qcm') {
       gameQ.qcmChoices = q.choices;
       gameQ.textAnswer = q.answer;

@@ -1,7 +1,13 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-// ── PIN Gate ──────────────────────────────────────────────────────
-const PIN_CODE = '2609';
+const APP_VERSION = '6.0';
+
+// ── HTML Sanitization ────────────────────────────────────────────
+const _escapeDiv = document.createElement('div');
+function escapeHtml(str) {
+  _escapeDiv.textContent = str;
+  return _escapeDiv.innerHTML;
+}
 
 // V4: No PIN gate — app opens directly
 initApp();
@@ -22,6 +28,9 @@ function initApp() {
     }
   });
 })();
+
+// ── Session start time (V5: session limit nudge) ─────────────────
+const sessionStartTime = Date.now();
 
 // ── State ──────────────────────────────────────────────────────────
 const state = {
@@ -49,6 +58,8 @@ const state = {
   categoryStats: {},
   pendingChests: [],
   activeBoost: null,
+  shieldActive: false,
+  coinRainActive: false,
   // V3 — Boss Fight
   bossState: null,
   pendingBoss: null,
@@ -56,14 +67,27 @@ const state = {
   // V3 — Contrat
   activeContract: null,
   contractGameResult: null,
+  // Fiches d'aide
+  timerPaused: false,
+  timerPausedAt: null,
+  ficheReturnScreen: 'screen-game',
+  // Révisions
+  revisionMode: false,
+  revisionSetId: null,
+  revisionQuestions: [],
+  xpMultiplier: 1,
 };
 
 // ── Difficulty ─────────────────────────────────────────────────────
 const DIFFICULTY_BASE = { easy: 1, medium: 2, hard: 3 };
 
-function getSubLevel() {
-  const base = DIFFICULTY_BASE[state.difficulty];
-  return Math.max(1, Math.min(3, base + (state.subLevel - 2)));
+function getSubLevel(category) {
+  const catLevel = ProfileManager.get('catLevel', null);
+  if (!catLevel) return 2;
+  // If no specific category (e.g. 'all' mode), return the full map
+  // so generateQuestion can resolve per-category after picking
+  if (!category) return catLevel;
+  return Math.max(1, Math.min(3, catLevel[category] || 2));
 }
 
 // ── Profile-aware Persistence ──────────────────────────────────────
@@ -82,7 +106,6 @@ function saveProfileData() {
 function saveGameState() {
   ProfileManager.set('gameState', {
     category: state.category,
-    difficulty: state.difficulty,
     questionCount: state.questionCount,
     timerEnabled: state.timerEnabled,
     questions: state.questions,
@@ -90,7 +113,6 @@ function saveGameState() {
     score: state.score,
     streak: state.streak,
     bestStreakThisGame: state.bestStreakThisGame,
-    subLevel: state.subLevel,
     consecutiveCorrect: state.consecutiveCorrect,
     consecutiveWrong: state.consecutiveWrong,
     noHintCount: state.noHintCount,
@@ -124,10 +146,72 @@ function saveBossState() {
 }
 
 // ── Screen Navigation ──────────────────────────────────────────────
-function showScreen(screenId) {
+// ── Navigation history (browser back button support) ────────────
+const screenHistory = [];
+
+function showScreen(screenId, opts) {
+  const replace = opts && opts.replace;
+  const fromPop = opts && opts.fromPop;
+  const current = document.querySelector('.screen.active');
+  const currentId = current ? current.id : null;
+
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(screenId).classList.add('active');
+
+  // Push to browser history so back button works
+  if (!fromPop) {
+    if (replace) {
+      history.replaceState({ screen: screenId }, '');
+    } else {
+      if (currentId && currentId !== screenId) {
+        screenHistory.push(currentId);
+      }
+      history.pushState({ screen: screenId }, '');
+    }
+  }
 }
+
+// Map screens to their "back" destination
+const screenBackMap = {
+  'screen-home': 'screen-profiles',
+  'screen-game': 'screen-home',
+  'screen-end': 'screen-home',
+  'screen-shop': 'screen-home',
+  'screen-chest': 'screen-home',
+  'screen-profile-detail': 'screen-home',
+  'screen-boss-appear': 'screen-home',
+  'screen-boss-fight': 'screen-home',
+  'screen-boss-end': 'screen-home',
+  'screen-leaderboard': 'screen-home',
+  'screen-contract': 'screen-home',
+  'screen-revisions': 'screen-home',
+  'screen-groups': 'screen-home',
+  'screen-group-detail': 'screen-groups',
+  'screen-group-dashboard': 'screen-group-detail',
+  'screen-create-profile': 'screen-profiles',
+  'screen-duel-create': 'screen-home',
+  'screen-duel-join': 'screen-home',
+  'screen-duel-fight': 'screen-home',
+  'screen-duel-end': 'screen-home',
+};
+
+window.addEventListener('popstate', (e) => {
+  if (e.state && e.state.screen) {
+    showScreen(e.state.screen, { fromPop: true });
+  } else if (screenHistory.length > 0) {
+    const prev = screenHistory.pop();
+    showScreen(prev, { fromPop: true });
+  } else {
+    // Fallback: use the back map based on current screen
+    const current = document.querySelector('.screen.active');
+    if (current && screenBackMap[current.id]) {
+      showScreen(screenBackMap[current.id], { fromPop: true });
+    }
+  }
+});
+
+// Initialize history state
+history.replaceState({ screen: 'screen-profiles' }, '');
 
 // ── Pill Selection ─────────────────────────────────────────────────
 document.querySelectorAll('.pill-group').forEach(group => {
@@ -142,8 +226,9 @@ document.querySelectorAll('.pill-group').forEach(group => {
     const value = pill.dataset.value;
 
     if (setting === 'category') state.category = value;
-    else if (setting === 'difficulty') { state.difficulty = value; renderBoostSelector(); }
+    else if (setting === 'age') selectedAge = parseInt(value, 10);
     else if (setting === 'count') state.questionCount = parseInt(value, 10);
+    updateSettingsSummary();
   });
 });
 
@@ -151,6 +236,28 @@ document.querySelectorAll('.pill-group').forEach(group => {
 document.getElementById('timer-toggle').addEventListener('change', (e) => {
   state.timerEnabled = e.target.checked;
 });
+
+function updateSettingsSummary() {
+  const catLabels = { all: '🎯 Toutes', calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes' };
+  const el = document.getElementById('settings-summary-text');
+  if (el) el.textContent = (catLabels[state.category] || 'Toutes') + ' · #' + state.questionCount;
+  renderCatLevelIndicators();
+}
+
+function renderCatLevelIndicators() {
+  const catLevel = ProfileManager.get('catLevel', {});
+  document.querySelectorAll('[data-setting="category"] .pill').forEach(pill => {
+    const cat = pill.dataset.value;
+    if (cat === 'all') return;
+    const existing = pill.querySelector('.cat-level');
+    if (existing) existing.remove();
+    const level = catLevel[cat] || 2;
+    const span = document.createElement('span');
+    span.className = 'cat-level';
+    span.textContent = '⭐'.repeat(level);
+    pill.appendChild(span);
+  });
+}
 
 // ── Profile Selection Screen ──────────────────────────────────────
 function renderProfilesList() {
@@ -165,7 +272,7 @@ function renderProfilesList() {
     const rank = getRank(xp);
     return `<div class="profile-card-select" data-id="${p.id}">
       <span class="rank-icon">${rank.icon}</span>
-      <div><div class="profile-name">${p.name}</div><div class="profile-rank-name">${rank.name}</div></div>
+      <div><div class="profile-name">${escapeHtml(p.name)}</div><div class="profile-rank-name">${rank.name}</div></div>
       <span class="profile-xp">${xp} XP</span>
     </div>`;
   }).join('');
@@ -176,10 +283,15 @@ function renderProfilesList() {
 
 // ── Profile Creation ──────────────────────────────────────────────
 let selectedTheme = 'nuit';
+let selectedAge = 10;
 
 document.getElementById('btn-new-profile').addEventListener('click', () => {
   renderThemePicker();
   document.getElementById('profile-name-input').value = '';
+  selectedAge = 10;
+  document.querySelectorAll('[data-setting="age"] .pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.value === '10');
+  });
   showScreen('screen-create-profile');
 });
 
@@ -223,8 +335,15 @@ function renderThemePicker() {
 document.getElementById('btn-create-profile').addEventListener('click', () => {
   const name = document.getElementById('profile-name-input').value.trim();
   if (!name) return;
-  const profile = ProfileManager.create(name, selectedTheme);
+  const profile = ProfileManager.create(name, selectedTheme, selectedAge);
   selectProfile(profile.id);
+
+  // V4: Sign in to Firebase on first profile creation
+  if (!firebaseUid) {
+    firebaseSignIn().then(() => {
+      MQSync._pushAll().catch(() => {});
+    }).catch(() => {});
+  }
 
   // V4: Generate and save recovery code
   if (typeof generateRecoveryCode === 'function') {
@@ -237,6 +356,7 @@ document.getElementById('btn-create-profile').addEventListener('click', () => {
 // ── Select Profile (entry point to home) ──────────────────────────
 function selectProfile(id) {
   ProfileManager.setActive(id);
+  ProfileManager.migrate(id);
   applyTheme(ProfileManager.get('activeTheme', 'nuit'));
   loadProfileData();
   loadBossState();
@@ -246,7 +366,6 @@ function selectProfile(id) {
   const savedGame = loadGameState();
   if (savedGame) {
     state.category = savedGame.category;
-    state.difficulty = savedGame.difficulty;
     state.questionCount = savedGame.questionCount;
     state.timerEnabled = savedGame.timerEnabled;
     state.questions = savedGame.questions;
@@ -254,7 +373,6 @@ function selectProfile(id) {
     state.score = savedGame.score;
     state.streak = savedGame.streak;
     state.bestStreakThisGame = savedGame.bestStreakThisGame;
-    state.subLevel = savedGame.subLevel;
     state.consecutiveCorrect = savedGame.consecutiveCorrect;
     state.consecutiveWrong = savedGame.consecutiveWrong;
     state.noHintCount = savedGame.noHintCount;
@@ -266,7 +384,7 @@ function selectProfile(id) {
       clearGameState();
     } else {
       const lastCat = state.questions[state.currentIndex - 1]?.category;
-      state.questions.push(generateQuestion(state.category, getSubLevel(), lastCat));
+      state.questions.push(generateQuestion(state.category, getSubLevel(lastCat || state.category), lastCat));
       showScreen('screen-game');
       if (state.timerEnabled) {
         document.getElementById('timer-stat').style.display = '';
@@ -279,7 +397,83 @@ function selectProfile(id) {
   } else {
     showScreen('screen-home');
     renderBossWaitingIcon();
+    MQSync.checkWeeklyReset();
+    renderRegularityStreak();
+    checkLoginReward();
   }
+}
+
+// ── V5: Weekly Ceremony ──────────────────────────────────────────
+function checkWeeklyCeremony() {
+  if (!ProfileManager.get('showWeeklyCeremony', false)) return;
+  const stats = ProfileManager.get('lastWeekStats', null);
+  if (!stats) { ProfileManager.set('showWeeklyCeremony', false); return; }
+
+  const grid = document.getElementById('weekly-ceremony-stats');
+  grid.innerHTML =
+    '<div class="weekly-stat"><span class="weekly-stat-value">' + stats.xp + '</span><span class="weekly-stat-label">XP gagnés</span></div>' +
+    '<div class="weekly-stat"><span class="weekly-stat-value">' + stats.games + '</span><span class="weekly-stat-label">Parties jouées</span></div>';
+
+  document.getElementById('weekly-ceremony-overlay').style.display = 'flex';
+  if (typeof launchBigConfetti === 'function') launchBigConfetti();
+
+  document.getElementById('btn-close-ceremony').onclick = () => {
+    ProfileManager.set('showWeeklyCeremony', false);
+    document.getElementById('weekly-ceremony-overlay').style.display = 'none';
+  };
+}
+
+// ── V5: Daily Login Reward ──────────────────────────────────────────
+const LOGIN_REWARDS = [15, 20, 25, 30, 35, 40, 0]; // Day 7 = chest
+
+function checkLoginReward() {
+  const today = new Date().toISOString().slice(0, 10);
+  const lastLogin = ProfileManager.get('lastLoginDate', '');
+  if (lastLogin === today) { checkWeeklyCeremony(); return; }
+
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  let loginStreak = ProfileManager.get('loginStreak', 0);
+  if (lastLogin === yesterday) {
+    loginStreak = Math.min(loginStreak + 1, 6);
+  } else if (lastLogin !== today) {
+    loginStreak = 0;
+  }
+
+  const dayReward = LOGIN_REWARDS[loginStreak];
+  const isChestDay = loginStreak === 6;
+
+  const dotsEl = document.getElementById('login-reward-streak');
+  let dotsHtml = '';
+  for (let i = 0; i < 7; i++) {
+    const cls = i < loginStreak ? 'claimed' : i === loginStreak ? 'today' : 'future';
+    const label = i === 6 ? '🎁' : 'J' + (i + 1);
+    dotsHtml += '<div class="login-dot ' + cls + '">' + label + '</div>';
+  }
+  dotsEl.innerHTML = dotsHtml;
+
+  const amountEl = document.getElementById('login-reward-amount');
+  if (isChestDay) {
+    amountEl.innerHTML = '🎁 Coffre bonus !';
+  } else {
+    amountEl.innerHTML = '+' + dayReward + ' 🪙';
+  }
+
+  document.getElementById('login-reward-overlay').style.display = 'flex';
+
+  document.getElementById('btn-claim-login').onclick = () => {
+    if (isChestDay) {
+      const loot = generateChestLoot('small', ProfileManager.get('ownedThemes', []));
+      loot.forEach(item => applyLootItem(item));
+      recordChestOpened();
+    } else {
+      ProfileManager.set('coins', ProfileManager.get('coins', 0) + dayReward);
+    }
+    ProfileManager.set('lastLoginDate', today);
+    ProfileManager.set('loginStreak', loginStreak);
+    document.getElementById('login-reward-overlay').style.display = 'none';
+    updateProfileHeader();
+    checkWeeklyCeremony();
+  };
 }
 
 // ── Update Profile Header ─────────────────────────────────────────
@@ -299,6 +493,11 @@ function updateProfileHeader() {
   renderNextGoals();
   // Render boost selector
   renderBoostSelector();
+  // V8: Settings summary
+  updateSettingsSummary();
+  // V8: Pet + Daily Question
+  renderPetZone();
+  checkDailyQuestion();
 
   // V4: Admin button only visible for admins (set manually in Firebase)
   const adminBtn = document.getElementById('btn-admin');
@@ -314,8 +513,8 @@ function updateProfileHeader() {
     noGroupBanner = document.createElement('div');
     noGroupBanner.id = 'no-group-banner';
     noGroupBanner.className = 'no-group-banner';
-    const playBtn = document.getElementById('btn-play');
-    playBtn.parentNode.insertBefore(noGroupBanner, playBtn);
+    const playBtnWrapper = document.getElementById('btn-play').parentNode;
+    playBtnWrapper.parentNode.insertBefore(noGroupBanner, playBtnWrapper);
   }
 
   getMyGroups().then(groups => {
@@ -333,15 +532,15 @@ function updateProfileHeader() {
           '<button class="btn-primary" onclick="renderGroupsScreen(&quot;screen-home&quot;)" style="font-size:0.85rem">Rejoindre un groupe</button>';
       });
       noGroupBanner.style.display = '';
-      document.getElementById('btn-play').style.display = 'none';
+      document.getElementById('btn-play').parentNode.style.display = 'none';
     } else {
       noGroupBanner.style.display = 'none';
-      document.getElementById('btn-play').style.display = '';
+      document.getElementById('btn-play').parentNode.style.display = '';
     }
   }).catch(() => {
     // Offline — allow play
     noGroupBanner.style.display = 'none';
-    document.getElementById('btn-play').style.display = '';
+    document.getElementById('btn-play').parentNode.style.display = '';
   });
 }
 
@@ -352,7 +551,7 @@ function renderBoostSelector() {
   const hasBoosts = Object.values(boosts).some(v => v > 0);
 
   if (!hasBoosts) {
-    container.innerHTML = '';
+    container.innerHTML = '<div class="boost-hint">⚡ Boosts disponibles en boutique</div>';
     state.activeBoost = null;
     return;
   }
@@ -370,9 +569,12 @@ function renderBoostSelector() {
 
   // Show difficulty warning
   if (state.activeBoost) {
-    const mult = getBoostMultiplier(state.difficulty);
-    const pctLabel = mult === 0.5 ? '50%' : mult === 1 ? '100%' : '×2';
-    html += `<div class="boost-warning">⚠️ Effet ${pctLabel} en ${state.difficulty === 'easy' ? 'Facile' : state.difficulty === 'hard' ? 'Difficile' : 'Moyen'} — perdu si pas 100% correct !</div>`;
+    const catLevel = ProfileManager.get('catLevel', {});
+    const currentLevel = state.category !== 'all' ? (catLevel[state.category] || 2) : 2;
+    const mult = getBoostMultiplier(currentLevel);
+    const pctLabel = mult === 0.75 ? '75%' : mult === 1.5 ? '×1.5' : '100%';
+    const levelLabel = currentLevel === 1 ? 'Débutant' : currentLevel === 3 ? 'Avancé' : 'Normal';
+    html += `<div class="boost-warning">⚠️ Effet ${pctLabel} en ${levelLabel} — perdu si pas 100% correct !</div>`;
   }
 
   container.innerHTML = html;
@@ -388,12 +590,16 @@ function renderBoostSelector() {
 function renderNextGoals() {
   let container = document.getElementById('next-goals');
   if (!container) {
-    // Create container after profile header
+    // Create container after records display (bottom of home)
     container = document.createElement('div');
     container.id = 'next-goals';
     container.className = 'next-goals';
-    const header = document.getElementById('profile-header');
-    header.parentNode.insertBefore(container, header.nextSibling);
+    const records = document.getElementById('records-display');
+    if (records) records.parentNode.insertBefore(container, records);
+    else {
+      const header = document.getElementById('profile-header');
+      header.parentNode.insertBefore(container, header.nextSibling);
+    }
   }
 
   // Find the 3 closest unfinished badges with progress
@@ -427,6 +633,47 @@ function renderNextGoals() {
     `).join('');
 }
 
+// ── V5: Regularity Streak ──────────────────────────────────────────
+function renderRegularityStreak() {
+  const container = document.getElementById('regularity-streak');
+  if (!container) return;
+  if (!ProfileManager.getActiveId()) { container.innerHTML = ''; return; }
+
+  const daysPlayed = ProfileManager.get('daysPlayedThisWeek', []);
+  const dayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const now = new Date();
+  const currentDay = now.getDay();
+
+  const weekStart = new Date(now);
+  const diff = currentDay === 0 ? -6 : 1 - currentDay;
+  weekStart.setDate(now.getDate() + diff);
+  weekStart.setHours(0, 0, 0, 0);
+
+  let html = '<div class="regularity-header">📅 Cette semaine</div><div class="regularity-dots">';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const played = daysPlayed.includes(dateStr);
+    const isToday = dateStr === now.toISOString().slice(0, 10);
+    const isFuture = d > now && !isToday;
+    let cls = 'reg-dot';
+    if (played) cls += ' played';
+    else if (isToday) cls += ' today';
+    else if (isFuture) cls += ' future';
+    else cls += ' missed';
+    html += '<div class="' + cls + '"><span class="reg-label">' + dayLabels[i] + '</span></div>';
+  }
+  html += '</div>';
+  const count = daysPlayed.length;
+  if (count >= 5) {
+    html += '<div class="regularity-msg">🔥 Super régulier cette semaine !</div>';
+  } else if (count >= 3) {
+    html += '<div class="regularity-msg">👍 Bon rythme, continue !</div>';
+  }
+  container.innerHTML = html;
+}
+
 // ── Records Display ────────────────────────────────────────────────
 function renderRecords() {
   const container = document.getElementById('records-display');
@@ -455,11 +702,14 @@ function startGame() {
   state.bestStreakThisGame = 0;
   state.hintUsed = false;
   state.answered = false;
-  state.subLevel = 2;
   state.consecutiveCorrect = 0;
   state.consecutiveWrong = 0;
   state.badgesUnlocked = [];
   state.noHintCount = 0;
+  state.streakLostMessage = null;
+  state.timerPaused = false;
+  state.timerPausedAt = null;
+  state.ficheReturnScreen = 'screen-game';
   state.gameStartTime = Date.now();
 
   // Consume active boost from inventory
@@ -476,12 +726,20 @@ function startGame() {
   // hint_pack boost: add free hints immediately
   if (state.activeBoost === 'hint_pack') {
     const current = ProfileManager.get('freeHints', 0);
-    const mult = getBoostMultiplier(state.difficulty);
-    const hintsToAdd = Math.round(3 * (mult === 0.5 ? 1 : mult === 2 ? 2 : 1)); // 3 hints base, 6 in hard
+    const catLevel = ProfileManager.get('catLevel', {});
+    const currentLevel = state.category !== 'all' ? (catLevel[state.category] || 2) : 2;
+    const hintsToAdd = currentLevel === 3 ? 6 : 3;
     ProfileManager.set('freeHints', current + hintsToAdd);
   }
 
-  state.questions.push(generateQuestion(state.category, getSubLevel(), null));
+  // streak_shield boost: activate shield for this game
+  state.shieldActive = (state.activeBoost === 'streak_shield');
+
+  // coin_rain boost: flag to bypass diminishing returns
+  state.coinRainActive = (state.activeBoost === 'coin_rain');
+
+  const firstCat = state.category === 'all' ? null : state.category;
+  state.questions.push(generateQuestion(state.category, getSubLevel(firstCat), null));
 
   showScreen('screen-game');
 
@@ -505,6 +763,222 @@ document.getElementById('btn-play').addEventListener('click', async () => {
   }
   showContractScreen();
 });
+
+// ── Révisions ─────────────────────────────────────────────────────────
+
+/** Check if player has active revision sets and show/hide button */
+async function checkRevisionSets() {
+  const btn = document.getElementById('btn-revisions');
+  const badge = document.getElementById('revisions-badge');
+  if (!btn) return;
+  try {
+    const sets = await getActiveRevisionSets();
+    if (sets.length > 0) {
+      btn.style.display = '';
+      let newCount = 0;
+      for (const s of sets) {
+        const score = await getRevisionScore(s.id);
+        if (!score) newCount++;
+      }
+      badge.textContent = newCount > 0 ? newCount : '';
+      localStorage.setItem('mq_revision_sets_cache', JSON.stringify(sets));
+    } else {
+      btn.style.display = 'none';
+    }
+  } catch(e) {
+    const cached = localStorage.getItem('mq_revision_sets_cache');
+    if (cached && JSON.parse(cached).length > 0) {
+      btn.style.display = '';
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+}
+
+/** Show revision list screen */
+async function showRevisionsList() {
+  showScreen('screen-revisions');
+  const list = document.getElementById('revisions-list');
+  const emptyMsg = document.getElementById('revisions-empty');
+  list.innerHTML = '<p style="text-align:center;color:var(--text-secondary)">Chargement...</p>';
+
+  try {
+    const sets = await getActiveRevisionSets();
+    if (sets.length === 0) {
+      list.innerHTML = '';
+      emptyMsg.style.display = '';
+      return;
+    }
+    emptyMsg.style.display = 'none';
+
+    let html = '';
+    for (const s of sets) {
+      const score = await getRevisionScore(s.id);
+      const subjectIcon = s.subject === 'allemand' ? '🇩🇪' : '📖';
+      const inCooldown = score && score.cooldownUntil && Date.now() < score.cooldownUntil;
+      const cooldownClass = inCooldown ? ' cooldown' : '';
+
+      const metaText = s.questionCount + ' questions';
+      let scoreText = '';
+      let cooldownText = '';
+
+      if (score) {
+        scoreText = score.bestPct + '%';
+        if (inCooldown) {
+          const remaining = Math.ceil((score.cooldownUntil - Date.now()) / 60000);
+          cooldownText = '⏳ ' + (remaining >= 60 ? Math.floor(remaining / 60) + 'h' + (remaining % 60 > 0 ? String(remaining % 60).padStart(2, '0') : '') : remaining + 'min');
+        }
+      }
+
+      html += '<div class="revision-card' + cooldownClass + '" data-set-id="' + s.id + '">'
+        + '<span class="revision-card-icon">' + subjectIcon + '</span>'
+        + '<div class="revision-card-info">'
+        + '<div class="revision-card-title">' + escapeHtml(s.title) + '</div>'
+        + '<div class="revision-card-meta">' + metaText + '</div>'
+        + (cooldownText ? '<div class="revision-card-cooldown">' + cooldownText + '</div>' : '')
+        + '</div>'
+        + (scoreText ? '<div class="revision-card-score">' + scoreText + '</div>' : '')
+        + '</div>';
+    }
+    list.innerHTML = html;
+
+    list.querySelectorAll('.revision-card:not(.cooldown)').forEach(card => {
+      card.addEventListener('click', () => startRevisionGame(card.dataset.setId));
+    });
+  } catch(e) {
+    list.innerHTML = '<p style="text-align:center;color:var(--text-secondary)">Erreur de chargement. Vérifie ta connexion.</p>';
+  }
+}
+
+/** Start a revision quiz from a set */
+async function startRevisionGame(setId) {
+  const questions = await getRevisionQuestions(setId);
+  if (questions.length === 0) {
+    alert('Ce set est vide.');
+    return;
+  }
+
+  // Load context as a temporary fiche if available
+  const setSnap = await firebase.database().ref('revisionSets/' + setId + '/context').once('value');
+  const context = setSnap.val();
+  if (context && window.FICHES) {
+    window.FICHES['_rev_' + setId] = {
+      titre: context.titre || 'Aide — Révision',
+      intro: context.intro || '',
+      regle: context.regle || '',
+      exemples: context.exemples || [],
+      astuce: context.astuce || ''
+    };
+  }
+
+  shuffleArray(questions);
+
+  state.revisionMode = true;
+  state.revisionSetId = setId;
+  state.revisionQuestions = questions;
+  state.xpMultiplier = 2;
+  state.questionCount = questions.length;
+  state.category = 'revision';
+
+  state.questions = [];
+  state.currentIndex = 0;
+  state.score = 0;
+  state.streak = 0;
+  state.bestStreakThisGame = 0;
+  state.hintUsed = false;
+  state.answered = false;
+  state.consecutiveCorrect = 0;
+  state.consecutiveWrong = 0;
+  state.badgesUnlocked = [];
+  state.noHintCount = 0;
+  state.streakLostMessage = null;
+  state.gameStartTime = Date.now();
+  state.activeBoost = null;
+  state.shieldActive = false;
+  state.coinRainActive = false;
+  state.activeContract = null;
+  state.contractGameResult = null;
+  state.categoryStats = {};
+
+  // Convert revision questions to game format
+  state.revisionQuestions.forEach(q => {
+    const gameQ = {
+      category: 'revision',
+      text: q.text,
+      unit: '',
+      hint: q.hint || '',
+      explanation: q.explanation || '',
+    };
+    if (context) gameQ.ficheKey = '_rev_' + setId;
+    if (q.type === 'qcm') {
+      gameQ.qcmChoices = q.choices;
+      gameQ.textAnswer = q.answer;
+    } else if (q.type === 'text') {
+      gameQ.textAnswer = q.answer;
+      gameQ.acceptedAnswers = q.acceptedAnswers || [q.answer];
+    } else {
+      gameQ.answer = Number(q.answer);
+    }
+    state.questions.push(gameQ);
+  });
+
+  showScreen('screen-game');
+  if (state.timerEnabled) {
+    document.getElementById('timer-stat').style.display = '';
+    startTimer();
+  } else {
+    document.getElementById('timer-stat').style.display = 'none';
+  }
+  showQuestion();
+}
+
+document.getElementById('btn-revisions').addEventListener('click', showRevisionsList);
+document.getElementById('btn-revisions-back').addEventListener('click', () => showScreen('screen-home'));
+
+// ── Fiches d'aide ──────────────────────────────────────────────────────
+function loadFichesAndShow(ficheKey) {
+  showFiche(ficheKey);
+}
+
+function showFiche(ficheKey) {
+  const fiche = window.FICHES && window.FICHES[ficheKey];
+  if (!fiche) {
+    document.getElementById('fiche-titre').textContent = 'Fiche introuvable';
+    document.getElementById('fiche-content').innerHTML =
+      '<div class="fiche-loading">Fiche non disponible pour ce sujet.</div>';
+    showScreen('screen-fiche');
+    return;
+  }
+
+  document.getElementById('fiche-titre').textContent = fiche.titre;
+
+  const exempleHTML = fiche.exemples.map(e => `
+    <div class="fiche-exemple">
+      <div class="fiche-exemple-enonce">${e.enonce}</div>
+      <div class="fiche-exemple-calcul">${e.calcul}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('fiche-content').innerHTML = `
+    <div class="fiche-section">
+      <p class="fiche-intro">${fiche.intro}</p>
+      ${fiche.schema ? '<div class="fiche-schema">' + fiche.schema + '</div>' : ''}
+    </div>
+    <div class="fiche-section">
+      <div class="fiche-section-titre">LA RÈGLE</div>
+      <div class="fiche-regle">${fiche.regle}</div>
+    </div>
+    <div class="fiche-section">
+      <div class="fiche-section-titre">EXEMPLES</div>
+      ${exempleHTML}
+    </div>
+    <div class="fiche-section">
+      <div class="fiche-astuce">${fiche.astuce}</div>
+    </div>
+  `;
+
+  showScreen('screen-fiche');
+}
 
 // ── Timer ──────────────────────────────────────────────────────────
 function startTimer() {
@@ -550,18 +1024,44 @@ function showQuestion() {
   document.getElementById('hint-text').textContent = '';
   document.getElementById('hint-text').classList.remove('visible');
 
+  // Bouton fiche d'aide
+  const btnFiche = document.getElementById('btn-fiche');
+  if (btnFiche) {
+    btnFiche.style.display = q && q.ficheKey ? '' : 'none';
+  }
+
   state.answered = false;
   document.getElementById('answer-section').style.display = '';
   document.getElementById('feedback-section').style.display = 'none';
 
   const input = document.getElementById('answer-input');
+  const qcmDiv = document.getElementById('qcm-choices');
+  const validateBtn = document.getElementById('btn-validate');
   input.value = '';
-  if (q.textAnswer !== undefined) {
+
+  if (q.qcmChoices) {
+    // QCM mode
+    input.style.display = 'none';
+    validateBtn.style.display = 'none';
+    qcmDiv.style.display = '';
+    qcmDiv.innerHTML = q.qcmChoices.map((c, i) =>
+      '<button class="qcm-btn" data-index="' + i + '">' + escapeHtml(c) + '</button>'
+    ).join('');
+    qcmDiv.querySelectorAll('.qcm-btn').forEach(btn => {
+      btn.addEventListener('click', () => validateQCMAnswer(btn));
+    });
+  } else if (q.textAnswer !== undefined || q.acceptedAnswers) {
     input.type = 'text';
     input.placeholder = 'Ta réponse...';
+    input.style.display = '';
+    validateBtn.style.display = '';
+    qcmDiv.style.display = 'none';
   } else {
     input.type = 'number';
     input.placeholder = 'Ta réponse...';
+    input.style.display = '';
+    validateBtn.style.display = '';
+    qcmDiv.style.display = 'none';
   }
 
   document.getElementById('btn-next').textContent = 'Suivant';
@@ -589,6 +1089,8 @@ function showQuestion() {
   card.classList.add('slide-in');
 
   setTimeout(() => input.focus(), 100);
+
+  renderSkipButton();
 }
 
 // ── Hint System (with free hints support) ─────────────────────────
@@ -608,27 +1110,45 @@ document.getElementById('btn-hint').addEventListener('click', () => {
   document.getElementById('btn-hint').textContent = freeHints > 0 ? `Indice gratuit ! (${remainingHints} restants)` : 'Indice affiché';
 });
 
-// ── Answer Validation ──────────────────────────────────────────────
-function validateAnswer() {
-  if (state.answered) return;
-
+// ── Fiche d'aide listeners ─────────────────────────────────────────
+document.getElementById('btn-fiche').addEventListener('click', () => {
   const q = state.questions[state.currentIndex];
-  const input = document.getElementById('answer-input');
-  const userAnswer = input.value.trim();
-
-  if (userAnswer === '') return;
-
-  state.answered = true;
-
-  let isCorrect = false;
-
-  if (q.textAnswer !== undefined) {
-    isCorrect = userAnswer.toLowerCase() === q.textAnswer.toLowerCase();
-  } else {
-    const numAnswer = parseFloat(userAnswer);
-    isCorrect = numAnswer === q.answer;
+  const ficheKey = q && q.ficheKey;
+  if (!ficheKey) return;
+  // Pause le timer si actif (stopwatch : mémorise l'instant de pause)
+  if (state.timerInterval) {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+    state.timerPaused = true;
+    state.timerPausedAt = Date.now();
   }
+  state.ficheReturnScreen = 'screen-game';
+  loadFichesAndShow(ficheKey);
+});
 
+document.getElementById('btn-fiche-back').addEventListener('click', () => {
+  // Reprendre le timer si il était pausé à cause de la fiche
+  if (state.timerPaused && state.timerPausedAt !== null) {
+    // Décaler gameStartTime pour compenser le temps passé sur la fiche
+    const pauseDuration = Date.now() - state.timerPausedAt;
+    state.gameStartTime += pauseDuration;
+    state.timerPaused = false;
+    state.timerPausedAt = null;
+    // Relancer le timer uniquement si une partie est en cours
+    if (state.timerInterval === null && state.questions.length > 0 && !state.answered) {
+      startTimer();
+    }
+  } else {
+    state.timerPaused = false;
+    state.timerPausedAt = null;
+  }
+  showScreen(state.ficheReturnScreen || 'screen-game');
+});
+
+// ── Answer Validation ──────────────────────────────────────────────
+
+/** Shared scoring + feedback logic for all answer types (number, text, QCM) */
+function processAnswer(isCorrect, q) {
   const elapsed = (Date.now() - state.questionStartTime) / 1000;
 
   if (isCorrect) {
@@ -649,16 +1169,35 @@ function validateAnswer() {
     if (!state.hintUsed) state.noHintCount++;
 
     if (state.consecutiveCorrect >= 3) {
-      state.subLevel = Math.min(3, state.subLevel + 1);
+      const cat = q.category;
+      if (cat && cat !== 'revision') {
+        const catLevel = ProfileManager.get('catLevel', {});
+        catLevel[cat] = Math.min(3, (catLevel[cat] || 2) + 1);
+        ProfileManager.set('catLevel', catLevel);
+      }
       state.consecutiveCorrect = 0;
     }
   } else {
-    state.streak = 0;
+    // Streak shield: absorb one wrong answer
+    if (state.shieldActive) {
+      state.shieldActive = false;
+      state.streakLostMessage = '🛡️ Bouclier activé ! Série protégée';
+    } else {
+      if (state.streak >= 3) {
+        state.streakLostMessage = 'Belle série de ' + state.streak + ' ! On recommence';
+      }
+      state.streak = 0;
+    }
     state.consecutiveWrong++;
     state.consecutiveCorrect = 0;
 
     if (state.consecutiveWrong >= 2) {
-      state.subLevel = Math.max(1, state.subLevel - 1);
+      const cat = q.category;
+      if (cat && cat !== 'revision') {
+        const catLevel = ProfileManager.get('catLevel', {});
+        catLevel[cat] = Math.max(1, (catLevel[cat] || 2) - 1);
+        ProfileManager.set('catLevel', catLevel);
+      }
       state.consecutiveWrong = 0;
     }
   }
@@ -698,11 +1237,12 @@ function validateAnswer() {
     launchMiniConfetti();
   } else {
     const correctAnswer = q.textAnswer !== undefined ? q.textAnswer : q.answer;
-    feedbackResult.textContent = 'Incorrect — la réponse était ' + correctAnswer;
+    feedbackResult.textContent = 'Pas encore ! La réponse était ' + correctAnswer;
     feedbackResult.className = 'feedback-result incorrect';
-    const card = document.getElementById('question-card');
-    card.classList.add('shake');
-    setTimeout(() => card.classList.remove('shake'), 500);
+    if (state.streakLostMessage) {
+      feedbackResult.textContent += ' · ' + state.streakLostMessage;
+      state.streakLostMessage = null;
+    }
   }
 
   feedbackExplanation.textContent = q.explanation;
@@ -715,6 +1255,52 @@ function validateAnswer() {
   if (state.currentIndex >= state.questionCount - 1) {
     document.getElementById('btn-next').textContent = 'Voir les résultats';
   }
+}
+
+function validateAnswer() {
+  if (state.answered) return;
+
+  const q = state.questions[state.currentIndex];
+  const input = document.getElementById('answer-input');
+  const userAnswer = input.value.trim();
+
+  if (userAnswer === '') return;
+
+  state.answered = true;
+
+  let isCorrect = false;
+
+  if (q.acceptedAnswers) {
+    // Revision text mode: check against accepted answers (case insensitive)
+    isCorrect = q.acceptedAnswers.some(a => userAnswer.toLowerCase() === a.toLowerCase());
+  } else if (q.textAnswer !== undefined) {
+    isCorrect = userAnswer.toLowerCase() === q.textAnswer.toLowerCase();
+  } else {
+    const numAnswer = parseFloat(userAnswer);
+    isCorrect = numAnswer === q.answer;
+  }
+
+  processAnswer(isCorrect, q);
+}
+
+/** QCM answer validation — called when a QCM button is clicked */
+function validateQCMAnswer(btnEl) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const q = state.questions[state.currentIndex];
+  const chosen = btnEl.textContent;
+  const isCorrect = chosen === q.textAnswer;
+
+  // Highlight correct/incorrect
+  const allBtns = document.querySelectorAll('#qcm-choices .qcm-btn');
+  allBtns.forEach(b => {
+    b.classList.add('disabled');
+    if (b.textContent === q.textAnswer) b.classList.add('correct');
+  });
+  if (!isCorrect) btnEl.classList.add('incorrect');
+
+  processAnswer(isCorrect, q);
 }
 
 document.getElementById('btn-validate').addEventListener('click', validateAnswer);
@@ -749,7 +1335,7 @@ document.getElementById('btn-next').addEventListener('click', () => {
     endGame();
   } else {
     const lastCat = state.questions[state.currentIndex - 1]?.category;
-    state.questions.push(generateQuestion(state.category, getSubLevel(), lastCat));
+    state.questions.push(generateQuestion(state.category, getSubLevel(lastCat || state.category), lastCat));
     showQuestion();
   }
 });
@@ -768,20 +1354,29 @@ const BOOSTS = [
   { id: 'coin_boost', name: 'Boost Pièces', icon: '💰', price: 60, desc: 'Pièces ×2 (×3 en difficile)', effect: 'coins' },
   { id: 'score_boost', name: 'Boost Score', icon: '🎯', price: 40, desc: 'Score ×1.5 (×2 en difficile)', effect: 'score' },
   { id: 'hint_pack', name: 'Pack Indices', icon: '💡', price: 30, desc: '3 indices gratuits pour cette partie', effect: 'hints' },
+  { id: 'streak_shield', name: 'Bouclier de série', icon: '🛡️', price: 75, desc: 'Protège ta série 1 fois (1 erreur pardonnée)', effect: 'shield' },
+  { id: 'coin_rain', name: 'Pluie de pièces', icon: '🌧️', price: 100, desc: 'Ignore le diminishing returns (1 partie)', effect: 'rain' },
 ];
 
-function getBoostMultiplier(difficulty) {
-  if (difficulty === 'easy') return 0.5;
-  if (difficulty === 'hard') return 2;
-  return 1; // medium
+function getBoostMultiplier(catLevelValue) {
+  if (catLevelValue === 1) return 0.75;
+  if (catLevelValue === 3) return 1.5;
+  return 1;
 }
 
 // ── Stickers (saisonniers — ajoutés régulièrement) ──────────────
 const STICKERS = [
+  // Printemps 2026 — Vague 1
   { id: 'stk_spring_flower', name: 'Fleur de printemps', icon: '🌸', price: 80, season: 'Printemps 2026' },
   { id: 'stk_spring_sun', name: 'Soleil doré', icon: '☀️', price: 80, season: 'Printemps 2026' },
   { id: 'stk_spring_rainbow', name: 'Arc-en-ciel', icon: '🌈', price: 120, season: 'Printemps 2026' },
   { id: 'stk_spring_butterfly', name: 'Papillon', icon: '🦋', price: 100, season: 'Printemps 2026' },
+  // Printemps 2026 — Vague 2
+  { id: 'stk_spring_bee', name: 'Abeille', icon: '🐝', price: 90, season: 'Printemps 2026' },
+  { id: 'stk_spring_ladybug', name: 'Coccinelle', icon: '🐞', price: 90, season: 'Printemps 2026' },
+  { id: 'stk_spring_tulip', name: 'Tulipe', icon: '🌷', price: 100, season: 'Printemps 2026' },
+  { id: 'stk_spring_bird', name: 'Oiseau chanteur', icon: '🐦', price: 110, season: 'Printemps 2026' },
+  { id: 'stk_spring_clover', name: 'Trèfle chanceux', icon: '🍀', price: 150, season: 'Printemps 2026' },
 ];
 
 const BADGE_DEFS = [
@@ -800,15 +1395,15 @@ const BADGE_DEFS = [
   { id: 'no_hints_10', name: 'Cerveau d\'acier', icon: '🦾', category: 'perf', check: () => state.noHintCount >= 10, hint: '10 réponses sans indice en 1 partie' },
   { id: 'speedster', name: 'Rapide', icon: '⚡', category: 'perf', check: () => state.timerEnabled && (Date.now() - state.gameStartTime) < 120000, hint: 'Finis en moins de 2 min (chrono)' },
   { id: 'flash', name: 'Flash', icon: '💨', category: 'perf', check: () => state.timerEnabled && (Date.now() - state.gameStartTime) < 60000, hint: 'Finis en moins de 1 min (chrono)' },
-  { id: 'hard_mode', name: 'Mode difficile', icon: '💪', category: 'perf', check: () => state.difficulty === 'hard', hint: 'Joue en mode Difficile' },
-  { id: 'hard_perfect', name: 'Difficile parfait', icon: '🏅', category: 'perf', check: () => state.difficulty === 'hard' && state.bestStreakThisGame >= state.questionCount, hint: 'Score parfait en Difficile' },
+  { id: 'hard_mode', name: 'Mode avancé', icon: '💪', category: 'perf', check: () => { const cl = ProfileManager.get('catLevel', {}); return Object.values(cl).some(v => v === 3); }, hint: 'Atteins le niveau 3 dans une catégorie' },
+  { id: 'hard_perfect', name: 'Avancé parfait', icon: '🏅', category: 'perf', check: () => { const cl = ProfileManager.get('catLevel', {}); return Object.values(cl).some(v => v === 3) && state.bestStreakThisGame >= state.questionCount; }, hint: 'Score parfait avec un niveau 3' },
   { id: 'score_100', name: 'Score 100+', icon: '📈', category: 'perf', check: () => state.score >= 100, hint: 'Atteins 100 points en 1 partie' },
   { id: 'score_200', name: 'Score 200+', icon: '📊', category: 'perf', check: () => state.score >= 200, hint: 'Atteins 200 points en 1 partie' },
   { id: 'score_300', name: 'Score 300+', icon: '🚀', category: 'perf', check: () => state.score >= 300, hint: 'Atteins 300 points en 1 partie' },
 
   // ── Exploration ──
   { id: 'explorer', name: 'Explorateur', icon: '🌍', category: 'explore', check: () => Object.keys(state.categoryStats).length >= 6, progress: () => ({ cur: Object.keys(state.categoryStats).length, max: 6 }), hint: 'Joue dans les 6 catégories' },
-  { id: 'try_easy', name: 'Échauffement', icon: '😊', category: 'explore', check: () => state.difficulty === 'easy', hint: 'Joue en mode Facile' },
+  { id: 'try_easy', name: 'Échauffement', icon: '😊', category: 'explore', check: () => { const cl = ProfileManager.get('catLevel', {}); return Object.values(cl).some(v => v === 1); }, hint: 'Avoir un niveau 1 dans une catégorie' },
   { id: 'try_chrono', name: 'Contre la montre', icon: '⏱️', category: 'explore', check: () => state.timerEnabled, hint: 'Active le chronomètre' },
   { id: 'marathon', name: 'Marathon', icon: '🏃', category: 'explore', check: () => state.questionCount === 20, hint: 'Joue une partie de 20 questions' },
 
@@ -888,6 +1483,32 @@ const BADGE_DEFS = [
   { id: 'contract_all_bronze', name: 'Tout Bronze', icon: '🥉', category: 'contrat', hidden: true,
     check: () => (ProfileManager.get('contractsCompleted', {}).bronze || 0) >= 20 },
 
+  // ═══ REGULARITY BADGES ═══
+  { id: 'regular_5', name: 'Régulier', icon: '📅', category: 'xp',
+    description: '5 jours joués en une semaine',
+    check: () => (ProfileManager.get('daysPlayedThisWeek', []).length >= 5),
+    progress: () => ({ cur: ProfileManager.get('daysPlayedThisWeek', []).length, max: 5 }),
+  },
+  { id: 'regular_7', name: 'Marathonien', icon: '🏃', category: 'xp',
+    description: '7 jours joués en une semaine',
+    check: () => (ProfileManager.get('daysPlayedThisWeek', []).length >= 7),
+    progress: () => ({ cur: ProfileManager.get('daysPlayedThisWeek', []).length, max: 7 }),
+  },
+
+  // ── Compagnons Majestueux ──
+  { id: 'pet_majestueux_dragon', name: 'Dragon Majestueux', icon: '🐉', category: 'pet',
+    description: 'Faire évoluer le Dragon jusqu\'au stade Majestueux',
+    check: () => ProfileManager.get('petMajestueuxRewarded_dragon', false),
+  },
+  { id: 'pet_majestueux_robot', name: 'Robot Majestueux', icon: '🤖', category: 'pet',
+    description: 'Faire évoluer le Robot jusqu\'au stade Majestueux',
+    check: () => ProfileManager.get('petMajestueuxRewarded_robot', false),
+  },
+  { id: 'pet_majestueux_fox', name: 'Renard Majestueux', icon: '🦊', category: 'pet',
+    description: 'Faire évoluer le Renard jusqu\'au stade Majestueux',
+    check: () => ProfileManager.get('petMajestueuxRewarded_fox', false),
+  },
+
 ];
 
 function checkBadges() {
@@ -899,76 +1520,53 @@ function checkBadges() {
   });
 }
 
-// ── End Game ───────────────────────────────────────────────────────
-function endGame() {
-  stopTimer();
-  clearGameState();
+// ── End Game (sub-functions) ─────────────────────────────────────
 
+function updateRecords() {
   const bestStreak = state.bestStreakThisGame;
   let isNewRecord = false;
-
   const recordKeys = state.category === 'all' ? ['global'] : [state.category, 'global'];
   recordKeys.forEach(key => {
-    if (!state.records[key]) {
-      state.records[key] = { score: 0, streak: 0 };
-    }
-    if (state.score > state.records[key].score || bestStreak > state.records[key].streak) {
-      isNewRecord = true;
-    }
-    if (state.score > state.records[key].score) {
-      state.records[key].score = state.score;
-    }
-    if (bestStreak > state.records[key].streak) {
-      state.records[key].streak = bestStreak;
-    }
+    if (!state.records[key]) state.records[key] = { score: 0, streak: 0 };
+    if (state.score > state.records[key].score || bestStreak > state.records[key].streak) isNewRecord = true;
+    if (state.score > state.records[key].score) state.records[key].score = state.score;
+    if (bestStreak > state.records[key].streak) state.records[key].streak = bestStreak;
   });
+  return isNewRecord;
+}
 
-  checkBadges();
-  saveProfileData();
-
-  // Display final score
-  const finalScore = document.getElementById('final-score');
-  finalScore.textContent = state.score + ' points';
-  finalScore.classList.remove('pop-in');
-  void finalScore.offsetWidth;
-  finalScore.classList.add('pop-in');
-
-  // New record
-  const newRecordEl = document.getElementById('new-record');
-  if (isNewRecord) {
-    newRecordEl.style.display = '';
-    launchBigConfetti();
-  } else {
-    newRecordEl.style.display = 'none';
+function trackRegularity() {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const daysPlayed = ProfileManager.get('daysPlayedThisWeek', []);
+  if (!daysPlayed.includes(todayStr)) {
+    daysPlayed.push(todayStr);
+    ProfileManager.set('daysPlayedThisWeek', daysPlayed);
   }
+}
 
-  // Badges unlocked this game
-  const badgesContainer = document.getElementById('badges-unlocked');
-  if (state.badgesUnlocked.length > 0) {
-    let html = '<h3>Badges débloqués !</h3><div class="badges-grid">';
-    state.badgesUnlocked.forEach(b => {
-      html += `<div class="badge-item"><span class="badge-icon">${b.icon}</span><span class="badge-name">${b.name}</span></div>`;
-    });
-    html += '</div>';
-    badgesContainer.innerHTML = html;
-  } else {
-    badgesContainer.innerHTML = '';
-  }
-
-  // ── V2: XP, coins, chest milestones, rank-up ──
+function computeRewards() {
   const xpBoost = ProfileManager.get('xpBoostActive', false);
-  const rewards = calculateRewards(state.score, state.difficulty, xpBoost);
+  const catLevel = ProfileManager.get('catLevel', {});
+  const playedCats = Object.keys(state.categoryStats);
+  const avgLevel = playedCats.length > 0
+    ? Math.round(playedCats.reduce((sum, c) => sum + (catLevel[c] || 2), 0) / playedCats.length)
+    : 2;
+  const rewards = calculateRewards(state.score, avgLevel, xpBoost, state.coinRainActive);
+  if (state.xpMultiplier > 1) {
+    rewards.xp = Math.round(rewards.xp * state.xpMultiplier);
+  }
   const oldXP = ProfileManager.get('xp', 0);
-  const newXP = oldXP + rewards.xp;
-  ProfileManager.set('xp', newXP);
+  ProfileManager.set('xp', oldXP + rewards.xp);
   ProfileManager.set('coins', ProfileManager.get('coins', 0) + rewards.coins);
   if (xpBoost) ProfileManager.set('xpBoostActive', false);
+  return { rewards, avgLevel, oldXP };
+}
 
-  // Apply boost if active AND perfect score
+function applyBoostRewards(rewards, avgLevel) {
   if (state.activeBoost) {
     const isPerfect = state.bestStreakThisGame >= state.questionCount;
     const boost = BOOSTS.find(b => b.id === state.activeBoost);
-    const mult = getBoostMultiplier(state.difficulty);
+    const mult = getBoostMultiplier(avgLevel);
 
     if (isPerfect && boost) {
       if (boost.effect === 'xp') {
@@ -980,8 +1578,7 @@ function endGame() {
         rewards.coins += bonusCoins;
         ProfileManager.set('coins', ProfileManager.get('coins', 0) + bonusCoins);
       } else if (boost.effect === 'score') {
-        const bonusScore = Math.round(state.score * (mult === 2 ? 1 : mult === 0.5 ? 0.5 : 0.5));
-        // Score boost gives bonus XP equal to the extra score
+        const bonusScore = Math.round(state.score * (mult === 1.5 ? 1 : mult === 0.75 ? 0.5 : 0.5));
         rewards.xp += bonusScore;
         rewards.coins += Math.round(bonusScore / 2);
         ProfileManager.set('xp', ProfileManager.get('xp', 0) + bonusScore);
@@ -989,7 +1586,6 @@ function endGame() {
       }
     }
 
-    // Show boost result in rewards section
     const boostResultEl = document.getElementById('boost-result');
     if (boostResultEl) {
       if (boost && boost.effect === 'hints') {
@@ -1011,13 +1607,33 @@ function endGame() {
     const boostResultEl = document.getElementById('boost-result');
     if (boostResultEl) boostResultEl.style.display = 'none';
   }
+}
 
-  // Re-read XP after potential boost bonus
-  const finalXP = ProfileManager.get('xp', 0);
+function applyPetEffects(rewards) {
+  addPetXP(state.score);
+  drainPetHunger();
+  checkDragonSkip(state.questionCount);
 
-  // Game streak for chest milestones
+  const petBonus = getPetBonus();
+  const petPct = getPetBonusPct();
+  if (petBonus === 'xp' && petPct > 0) {
+    const bonusPetXP = Math.round(rewards.xp * petPct);
+    rewards.xp += bonusPetXP;
+    ProfileManager.set('xp', ProfileManager.get('xp', 0) + bonusPetXP);
+  } else if (petBonus === 'coins' && petPct > 0) {
+    const bonusPetCoins = Math.round(rewards.coins * petPct);
+    rewards.coins += bonusPetCoins;
+    ProfileManager.set('coins', ProfileManager.get('coins', 0) + bonusPetCoins);
+  }
+
+  const majReward = checkPetMajestueux();
+  if (majReward) state.pendingMajReward = majReward;
+}
+
+function updateGameStreak() {
   let gamesPlayed = ProfileManager.get('gamesPlayed', 0) + 1;
   ProfileManager.set('gamesPlayed', gamesPlayed);
+  incrementDailyGameCount();
   let goodStreak = ProfileManager.get('goodGamesStreak', 0);
   const maxPossible = state.questionCount * 15;
   if (state.score >= maxPossible * 0.5) {
@@ -1029,17 +1645,52 @@ function endGame() {
   }
   ProfileManager.set('goodGamesStreak', goodStreak);
 
-  // Check chests
+  const finalXP = ProfileManager.get('xp', 0);
   const chestsOpened = ProfileManager.get('chestsOpened', []);
-  state.pendingChests = checkChestMilestones(gamesPlayed, finalXP, chestsOpened);
+  const allPending = checkChestMilestones(gamesPlayed, finalXP, chestsOpened);
+  state.pendingChests = canOpenChestToday() ? allPending : [];
+  const chestWaiting = !canOpenChestToday() && allPending.length > 0;
 
-  // Check rank up
+  return { gamesPlayed, finalXP, chestWaiting };
+}
+
+function renderEndScreen(isNewRecord, rewards, oldXP, finalXP, gamesPlayed, chestWaiting) {
+  // Score
+  const finalScore = document.getElementById('final-score');
+  finalScore.textContent = state.score + ' points';
+  finalScore.classList.remove('pop-in');
+  void finalScore.offsetWidth;
+  finalScore.classList.add('pop-in');
+
+  // Record
+  const newRecordEl = document.getElementById('new-record');
+  newRecordEl.style.display = isNewRecord ? '' : 'none';
+  if (isNewRecord) launchBigConfetti();
+
+  // Badges
+  const badgesContainer = document.getElementById('badges-unlocked');
+  if (state.badgesUnlocked.length > 0) {
+    let html = '<h3>Badges débloqués !</h3><div class="badges-grid">';
+    state.badgesUnlocked.forEach(b => {
+      html += `<div class="badge-item"><span class="badge-icon">${b.icon}</span><span class="badge-name">${b.name}</span></div>`;
+    });
+    badgesContainer.innerHTML = html + '</div>';
+  } else {
+    badgesContainer.innerHTML = '';
+  }
+
+  // XP + coins
+  const xpEarnedEl = document.getElementById('xp-earned');
+  if (state.xpMultiplier > 1) {
+    xpEarnedEl.innerHTML = '+' + rewards.xp + ' XP <span class="xp-multiplier-badge">×' + state.xpMultiplier + '</span>';
+  } else {
+    xpEarnedEl.textContent = '+' + rewards.xp + ' XP';
+  }
+  document.getElementById('coins-earned').textContent = '+' + rewards.coins + ' \uD83E\uDE99';
+
+  // Rank up
   const oldRank = getRank(oldXP);
   const newRank = getRank(finalXP);
-
-  // Display rewards
-  document.getElementById('xp-earned').textContent = '+' + rewards.xp + ' XP';
-  document.getElementById('coins-earned').textContent = '+' + rewards.coins + ' \uD83E\uDE99';
   const rankUpEl = document.getElementById('rank-up-display');
   if (newRank.id !== oldRank.id) {
     rankUpEl.style.display = '';
@@ -1052,55 +1703,165 @@ function endGame() {
   document.getElementById('xp-bar-end-fill').style.width = (progress.progress * 100) + '%';
   document.getElementById('xp-bar-end-text').textContent = progress.next ? progress.xpInLevel + '/' + progress.xpNeeded + ' XP' : 'MAX';
 
-  // V3: Evaluate contract
-  if (state.activeContract && state.contractGameResult) {
-    const contractMet = state.activeContract.check(state.contractGameResult);
-    const contractEl = document.createElement('div');
-    contractEl.className = 'contract-result ' + (contractMet ? 'success' : 'failure');
-
-    if (contractMet) {
-      const bonus = state.activeContract.bonus;
-      ProfileManager.set('coins', ProfileManager.get('coins', 0) + bonus);
-      contractEl.textContent = `${state.activeContract.icon} Contrat ${state.activeContract.tier === 'gold' ? 'Or' : state.activeContract.tier === 'silver' ? 'Argent' : 'Bronze'} rempli ! +${bonus} 🪙`;
-      const contractsCompleted = ProfileManager.get('contractsCompleted', { bronze: 0, silver: 0, gold: 0, goldStreak: 0 });
-      contractsCompleted[state.activeContract.tier]++;
-      if (state.activeContract.tier === 'gold') {
-        contractsCompleted.goldStreak++;
-      } else {
-        contractsCompleted.goldStreak = 0;
-      }
-      ProfileManager.set('contractsCompleted', contractsCompleted);
-      checkContractBadges(contractsCompleted);
-    } else {
-      contractEl.textContent = `${state.activeContract.icon} Contrat non rempli — la prochaine fois !`;
-      const contractsCompleted = ProfileManager.get('contractsCompleted', { bronze: 0, silver: 0, gold: 0, goldStreak: 0 });
-      contractsCompleted.goldStreak = 0;
-      ProfileManager.set('contractsCompleted', contractsCompleted);
+  // "Tu étais si près !" — chest-waiting has priority
+  const almostEl = document.getElementById('almost-there');
+  if (chestWaiting) {
+    almostEl.textContent = '🎁 Coffres en attente ! Reviens demain pour les ouvrir.';
+    almostEl.style.display = '';
+  } else {
+    const almostHints = [];
+    const nextGameChest = GAME_MILESTONES.find(m => m > gamesPlayed);
+    if (nextGameChest && nextGameChest - gamesPlayed <= 3) {
+      almostHints.push('Plus que ' + (nextGameChest - gamesPlayed) + ' partie' + (nextGameChest - gamesPlayed > 1 ? 's' : '') + ' pour un coffre !');
     }
-
-    const rewardsSection = document.getElementById('rewards-section');
-    const existing = document.querySelector('.contract-result');
-    if (existing) existing.remove();
-    rewardsSection.parentNode.insertBefore(contractEl, rewardsSection);
-
-    state.activeContract = null;
-    state.contractGameResult = null;
+    const nextXPChest = XP_MILESTONES.find(m => m > finalXP);
+    if (nextXPChest && nextXPChest - finalXP <= 100) {
+      almostHints.push('Plus que ' + (nextXPChest - finalXP) + ' XP pour un coffre !');
+    }
+    const nextRankInfo = getNextRank(finalXP);
+    if (nextRankInfo && nextRankInfo.xp - finalXP <= 150) {
+      almostHints.push('Plus que ' + (nextRankInfo.xp - finalXP) + ' XP pour ' + nextRankInfo.icon + ' ' + nextRankInfo.name + ' !');
+    }
+    if (almostHints.length > 0) {
+      almostEl.textContent = almostHints[0];
+      almostEl.style.display = '';
+    } else {
+      almostEl.style.display = 'none';
+    }
   }
 
-  // V4: Sync to Firebase
+  // Majestueux notification
+  const majEl = document.getElementById('pet-majestueux-display');
+  if (state.pendingMajReward && majEl) {
+    const r = state.pendingMajReward;
+    majEl.style.display = '';
+    majEl.innerHTML = r.emoji + ' Ton ' + r.name + ' est devenu <strong>Majestueux</strong> ! +200🪙 · Badge · Titre débloqué !';
+    launchBigConfetti();
+    state.pendingMajReward = null;
+  } else if (majEl) {
+    majEl.style.display = 'none';
+  }
+}
+
+function evaluateContract() {
+  if (!state.activeContract || !state.contractGameResult) return;
+
+  const contractMet = state.activeContract.check(state.contractGameResult);
+  const contractEl = document.createElement('div');
+  contractEl.className = 'contract-result ' + (contractMet ? 'success' : 'failure');
+
+  if (contractMet) {
+    const bonus = state.activeContract.bonus;
+    ProfileManager.set('coins', ProfileManager.get('coins', 0) + bonus);
+    contractEl.textContent = `${state.activeContract.icon} Contrat ${state.activeContract.tier === 'gold' ? 'Or' : state.activeContract.tier === 'silver' ? 'Argent' : 'Bronze'} rempli ! +${bonus} 🪙`;
+    const contractsCompleted = ProfileManager.get('contractsCompleted', { bronze: 0, silver: 0, gold: 0, goldStreak: 0 });
+    contractsCompleted[state.activeContract.tier]++;
+    if (state.activeContract.tier === 'gold') {
+      contractsCompleted.goldStreak++;
+    } else {
+      contractsCompleted.goldStreak = 0;
+    }
+    ProfileManager.set('contractsCompleted', contractsCompleted);
+    checkContractBadges(contractsCompleted);
+  } else {
+    contractEl.textContent = `${state.activeContract.icon} Contrat non rempli — la prochaine fois !`;
+    const contractsCompleted = ProfileManager.get('contractsCompleted', { bronze: 0, silver: 0, gold: 0, goldStreak: 0 });
+    contractsCompleted.goldStreak = 0;
+    ProfileManager.set('contractsCompleted', contractsCompleted);
+  }
+
+  const rewardsSection = document.getElementById('rewards-section');
+  const existing = document.querySelector('.contract-result');
+  if (existing) existing.remove();
+  rewardsSection.parentNode.insertBefore(contractEl, rewardsSection);
+
+  state.activeContract = null;
+  state.contractGameResult = null;
+}
+
+function syncToFirebase(rewards) {
   const gameElapsed = Math.round((Date.now() - state.gameStartTime) / 1000);
   ProfileManager.set('weeklyTimeSpent', (ProfileManager.get('weeklyTimeSpent', 0)) + gameElapsed);
   MQSync.syncAfterGame(rewards.xp).catch(() => {});
 
+  if (state.revisionMode && state.revisionSetId) {
+    const totalQ = state.questionCount;
+    const correctQ = Object.values(state.categoryStats).reduce((s, c) => s + (c.correct || 0), 0);
+    const pct = Math.round(correctQ / totalQ * 100);
+    saveRevisionScore(state.revisionSetId, state.score, totalQ, pct).then(() => {
+      getRevisionScore(state.revisionSetId).then(score => {
+        if (score && score.cooldownUntil && Date.now() < score.cooldownUntil) {
+          const almostEl = document.getElementById('almost-there');
+          if (almostEl) {
+            almostEl.textContent = '🎓 Bravo, 3× parfait ! Reviens dans 2h pour rejouer ce set.';
+            almostEl.style.display = '';
+          }
+        }
+      }).catch(() => {});
+    }).catch(() => {});
+  }
+}
+
+function checkSessionLimit() {
+  const sessionMinutes = (Date.now() - sessionStartTime) / 60000;
+  const alreadyNudged = sessionStorage.getItem('mq_session_nudged');
+  if (sessionMinutes >= 30 && !alreadyNudged) {
+    sessionStorage.setItem('mq_session_nudged', 'true');
+    setTimeout(() => {
+      document.getElementById('session-limit-overlay').style.display = 'flex';
+    }, 1500);
+  }
+}
+
+// ── End Game ───────────────────────────────────────────────────────
+function endGame() {
+  stopTimer();
+  clearGameState();
+
+  const isNewRecord = updateRecords();
+  trackRegularity();
+  checkBadges();
+
+  // Check mastery level-ups
+  const masteryUps = checkMasteryUp(state.category === 'all' ? 'all' : state.category);
+  masteryUps.forEach(b => {
+    state.badgesUnlocked.push(b);
+    const toast = document.createElement('div');
+    toast.className = 'coin-toast mastery-toast';
+    toast.textContent = '🌟 ' + b.name + ' !';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  });
+
+  saveProfileData();
+
+  // Rewards pipeline — NB: rewards object is mutated by boost and pet effects
+  const { rewards, avgLevel, oldXP } = computeRewards();
+  applyBoostRewards(rewards, avgLevel);
+  applyPetEffects(rewards);
+  const { gamesPlayed, finalXP, chestWaiting } = updateGameStreak();
+
+  // Render
+  renderEndScreen(isNewRecord, rewards, oldXP, finalXP, gamesPlayed, chestWaiting);
+  evaluateContract();
+  syncToFirebase(rewards);
+  checkSessionLimit();
+  renderRegularityStreak();
+
   showScreen('screen-end');
 
-  // V3: Track games since boss
+  // Track games since boss
   state.gamesSinceBoss++;
   saveBossState();
 }
 
 // ── Replay / Menu ──────────────────────────────────────────────────
 document.getElementById('btn-replay').addEventListener('click', () => {
+  // Revision replay: restart same set
+  if (state.revisionMode && state.revisionSetId) {
+    startRevisionGame(state.revisionSetId);
+    return;
+  }
   if (state.pendingChests && state.pendingChests.length > 0) {
     state.replayAfterChests = true;
     showChest(state.pendingChests.shift());
@@ -1113,12 +1874,41 @@ document.getElementById('btn-replay').addEventListener('click', () => {
   }
 });
 
+document.getElementById('btn-share-score').addEventListener('click', () => {
+  const score = state.score;
+  const cat = state.category === 'all' ? 'toutes catégories' : (CATEGORIES[state.category]?.label || state.category);
+  const catLevel = ProfileManager.get('catLevel', {});
+  const playedCats2 = Object.keys(state.categoryStats);
+  const avgLevel2 = playedCats2.length > 0
+    ? Math.round(playedCats2.reduce((sum, c) => sum + (catLevel[c] || 2), 0) / playedCats2.length)
+    : 2;
+  const diff = avgLevel2 === 1 ? 'Débutant' : avgLevel2 === 3 ? 'Avancé' : 'Normal';
+  const text = `🎯 QuizHero — ${score} points en ${cat} (${diff}) !\nTu peux faire mieux ? 🧮`;
+  if (navigator.share) {
+    navigator.share({ title: 'QuizHero', text, url: 'https://pezzonidasit.github.io/quizhero/' }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text + '\nhttps://pezzonidasit.github.io/quizhero/').then(() => {
+      const btn = document.getElementById('btn-share-score');
+      const orig = btn.textContent;
+      btn.textContent = '✅ Copié !';
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    }).catch(() => {});
+  }
+});
+
 document.getElementById('btn-menu').addEventListener('click', () => {
+  // Reset revision state
+  state.revisionMode = false;
+  state.revisionSetId = null;
+  state.revisionQuestions = [];
+  state.xpMultiplier = 1;
+
   if (state.pendingChests && state.pendingChests.length > 0) {
     showChest(state.pendingChests.shift());
   } else {
     updateProfileHeader();
     renderRecords();
+    checkRevisionSets();
     if (shouldTriggerBoss()) {
       triggerBoss();
     } else {
@@ -1312,8 +2102,11 @@ function showChest(chest) {
   const box = document.getElementById('chest-box');
   const itemsContainer = document.getElementById('chest-items');
   const closeBtn = document.getElementById('btn-chest-close');
-  box.className = 'chest-box';
-  box.textContent = '\uD83C\uDF81';
+  const screenEl = document.getElementById('screen-chest');
+  const isBig = chest.tier === 'big';
+  box.className = 'chest-box' + (isBig ? ' chest-big' : '');
+  screenEl.classList.toggle('chest-screen-big', isBig);
+  box.textContent = isBig ? '👑' : '🎁';
   itemsContainer.innerHTML = '';
   closeBtn.style.display = 'none';
 
@@ -1322,7 +2115,7 @@ function showChest(chest) {
     setTimeout(() => {
       box.classList.remove('shaking');
       box.classList.add('opened');
-      box.textContent = '\uD83C\uDF89';
+      box.textContent = isBig ? '💎' : '🎉';
       loot.forEach((item, i) => {
         applyLootItem(item);
         setTimeout(() => {
@@ -1337,6 +2130,7 @@ function showChest(chest) {
       const co = ProfileManager.get('chestsOpened', []);
       co.push(chest.id);
       ProfileManager.set('chestsOpened', co);
+      recordChestOpened();
     }, 800);
   };
 }
@@ -1369,7 +2163,7 @@ async function renderProfileDetail() {
 
   document.getElementById('profile-card').innerHTML = `
     <span class="rank-icon">${rp.current.icon}</span>
-    <span class="profile-name">${profile.name}</span>
+    <span class="profile-name">${escapeHtml(profile.name)}</span>
     <span class="rank-name">${rp.current.name}</span>
     <div class="xp-bar-container" style="width:100%;height:12px">
       <div class="xp-bar" style="width:${rp.progress * 100}%"></div>
@@ -1380,6 +2174,50 @@ async function renderProfileDetail() {
       <div class="stat-box"><span class="stat-value">\uD83E\uDE99 ${coins}</span><span class="stat-label">Pièces</span></div>
       <div class="stat-box"><span class="stat-value">${gamesPlayed}</span><span class="stat-label">Parties</span></div>
     </div>`;
+
+  // === Stats de jeu ===
+  const catStats = ProfileManager.get('catStats', {});
+  const totalQ = Object.values(catStats).reduce((s, c) => s + (c.total || 0), 0);
+  const totalC = Object.values(catStats).reduce((s, c) => s + (c.correct || 0), 0);
+  const pct = totalQ > 0 ? Math.round(totalC / totalQ * 100) : 0;
+  const timeSpent = ProfileManager.get('weeklyTimeSpent', 0);
+  const timeMin = Math.round(timeSpent / 60);
+  const contracts = ProfileManager.get('contractsCompleted', { bronze: 0, silver: 0, gold: 0 });
+  const totalContracts = (contracts.bronze || 0) + (contracts.silver || 0) + (contracts.gold || 0);
+
+  let statsHtml = '<div class="profile-game-stats"><h3>📊 Mes Stats</h3>';
+  statsHtml += '<div class="stat-grid">';
+  statsHtml += '<div class="stat-box"><span class="stat-value">' + totalQ + '</span><span class="stat-label">Questions</span></div>';
+  statsHtml += '<div class="stat-box"><span class="stat-value">' + pct + '%</span><span class="stat-label">Réussite</span></div>';
+  statsHtml += '<div class="stat-box"><span class="stat-value">' + timeMin + 'min</span><span class="stat-label">Temps</span></div>';
+  statsHtml += '<div class="stat-box"><span class="stat-value">' + totalContracts + '</span><span class="stat-label">Contrats</span></div>';
+  statsHtml += '</div>';
+
+  const catLabels = { calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes' };
+  const catColors = { calcul: '#4a9eff', logique: '#a855f7', geometrie: '#4ecdc4', fractions: '#ff8c42', mesures: '#ff6b6b', ouvert: '#ffd93d' };
+  statsHtml += '<div class="category-bars">';
+  for (const [cat, label] of Object.entries(catLabels)) {
+    const cs = catStats[cat] || { correct: 0, total: 0 };
+    const catPct = cs.total > 0 ? Math.round(cs.correct / cs.total * 100) : 0;
+    const barColor = catPct >= 60 ? (catColors[cat] || '#4a9eff') : '#ff6b6b';
+    statsHtml += '<div class="cat-bar-row">' +
+      '<span class="cat-bar-label">' + label + '</span>' +
+      '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:' + catPct + '%;background:' + barColor + '"></div></div>' +
+      '<span class="cat-bar-pct" style="color:' + barColor + '">' + catPct + '%</span>' +
+      (catPct < 50 ? ' <span style="font-size:0.7rem">⚠️</span>' : '') +
+      '</div>';
+  }
+  statsHtml += '</div></div>';
+  document.getElementById('profile-card').innerHTML += statsHtml;
+
+  // === Age selector ===
+  const currentAge = ProfileManager.get('age', 10);
+  let ageHtml = '<div class="profile-age-selector"><h3>🎂 Mon âge</h3><div class="pill-group" data-setting="profile-age">';
+  [8, 9, 10, 11, 12].forEach(a => {
+    ageHtml += '<button class="pill ' + (a === currentAge ? 'active' : '') + '" data-value="' + a + '">' + a + ' ans</button>';
+  });
+  ageHtml += '</div></div>';
+  document.getElementById('profile-card').innerHTML += ageHtml;
 
   // === Theme selector ===
   const ownedThemeIds = ProfileManager.get('ownedThemes', []);
@@ -1404,11 +2242,29 @@ async function renderProfileDetail() {
   themeHtml += '</div>';
   document.getElementById('profile-card').innerHTML += themeHtml;
 
+  // V5: Title selector
+  const ownedTitles = ProfileManager.get('bossTitles', []) || [];
+  if (ownedTitles.length > 0) {
+    const activeTitle = ProfileManager.get('activeTitle', null);
+    let titleHtml = '<div class="title-section"><h3>🏆 Titres</h3><div class="title-chips">';
+    titleHtml += '<button class="title-chip ' + (!activeTitle ? 'active' : '') + '" data-title="">Aucun</button>';
+    ownedTitles.forEach(t => {
+      const name = TITLE_NAMES[t] || t;
+      titleHtml += '<button class="title-chip ' + (activeTitle === t ? 'active' : '') + '" data-title="' + t + '">' + name + '</button>';
+    });
+    titleHtml += '</div></div>';
+    document.getElementById('profile-card').innerHTML += titleHtml;
+  }
+
   // V4: Groups + Riddle creation buttons
   document.getElementById('profile-card').innerHTML += `
     <div style="display:flex;gap:0.5rem;margin-top:1rem;width:100%">
       <button class="btn-primary" id="btn-profile-groups" style="flex:1;font-size:0.85rem">👥 Mes Groupes</button>
       <button class="btn-secondary" id="btn-profile-riddle" style="flex:1;font-size:0.85rem">📝 Créer une énigme</button>
+      <button class="btn-secondary" id="btn-profile-progression" style="flex:1;font-size:0.85rem">📊 Progression</button>
+    </div>
+    <div style="display:flex;gap:0.5rem;margin-top:0.5rem;width:100%">
+      <button class="btn-secondary" id="btn-profile-pet" style="flex:1;font-size:0.85rem">🐾 Mon compagnon</button>
     </div>
     <div style="margin-top:0.75rem;font-size:0.75rem;color:var(--text-secondary);text-align:center">
       Code de récupération : <strong style="color:var(--accent-yellow);letter-spacing:1px">${ProfileManager.get('recoveryCode', '...')}</strong>
@@ -1429,11 +2285,40 @@ async function renderProfileDetail() {
     });
   });
 
+  // V5: Title chip click handlers
+  document.querySelectorAll('.title-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const titleId = chip.dataset.title;
+      ProfileManager.set('activeTitle', titleId || null);
+      renderProfileDetail();
+    });
+  });
+
+  // V6: Age selector click handler
+  document.querySelectorAll('[data-setting="profile-age"] .pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const newAge = parseInt(pill.dataset.value, 10);
+      ProfileManager.set('age', newAge);
+      ProfileManager.updateMeta(ProfileManager.getActiveId(), { age: newAge });
+      const newLevel = newAge <= 9 ? 1 : newAge >= 11 ? 3 : 2;
+      const catLevel = {};
+      ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert'].forEach(k => { catLevel[k] = newLevel; });
+      ProfileManager.set('catLevel', catLevel);
+      ProfileManager.set('catStreak', {});
+      renderProfileDetail();
+      renderCatLevelIndicators();
+    });
+  });
+
   // V4: Groups + Riddle nav from profile
   const groupsBtn = document.getElementById('btn-profile-groups');
   if (groupsBtn) groupsBtn.addEventListener('click', () => renderGroupsScreen('screen-profile-detail'));
   const riddleBtn = document.getElementById('btn-profile-riddle');
   if (riddleBtn) riddleBtn.addEventListener('click', () => showCreateRiddleScreen());
+  const progressionBtn = document.getElementById('btn-profile-progression');
+  if (progressionBtn) progressionBtn.addEventListener('click', () => renderProgressionScreen());
+  const petProfileBtn = document.getElementById('btn-profile-pet');
+  if (petProfileBtn) petProfileBtn.addEventListener('click', () => showMyPet());
 
   const allBadges = [...BADGE_DEFS, {id:'collector',name:'Collectionneur',icon:'🏅',category:'hidden',hidden:true}, {id:'lucky',name:'Chanceux',icon:'🍀',category:'hidden',hidden:true}];
 
@@ -1575,7 +2460,10 @@ function createParticle(x, y, vx, vy) {
   };
 }
 
+const _lowPerf = () => document.body.classList.contains('low-perf-mode');
+
 function launchMiniConfetti() {
+  if (_lowPerf()) return;
   const particles = [];
   const cx = confettiCanvas.width / 2;
   const cy = confettiCanvas.height / 2;
@@ -1588,8 +2476,9 @@ function launchMiniConfetti() {
 }
 
 function launchBigConfetti() {
+  const count = _lowPerf() ? 25 : 120;
   const particles = [];
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < count; i++) {
     const x = Math.random() * confettiCanvas.width;
     const y = -10 - Math.random() * 50;
     const vx = (Math.random() - 0.5) * 4;
@@ -1658,6 +2547,8 @@ MQSync.syncOnLaunch().then(() => {
     ProfileManager.set('coinNotification', 0);
     showCoinToast(coinNotif);
   }
+  // Check for active revision sets
+  checkRevisionSets();
 }).catch(() => {});
 
 // ══════════════════════════════════════════════════════════════════════
@@ -1732,7 +2623,7 @@ function startBossFight(boss) {
   const isEnraged = defeated.includes(boss.id);
   const maxPlayerHP = 3;
   const maxBossHP = isEnraged ? boss.hp + 2 : boss.hp;
-  const subLevel = Math.min(3, getSubLevel() + 1);
+  const subLevel = Math.min(3, getSubLevel(boss.category) + 1);
   const phase1Questions = [];
   let lastCat = null;
   for (let i = 0; i < 3; i++) {
@@ -1932,7 +2823,7 @@ function handleBossAnswer(timedOut) {
     const correctAnswer = q.textAnswer !== undefined ? q.textAnswer : q.answer;
     feedbackResult.textContent = timedOut
       ? 'Temps écoulé ! La réponse était ' + correctAnswer
-      : 'Incorrect — la réponse était ' + correctAnswer;
+      : 'Tu as répondu ' + userAnswer + ' — la bonne réponse était ' + correctAnswer;
     feedbackResult.className = 'feedback-result incorrect';
   }
   feedbackExplanation.textContent = q.explanation || '';
@@ -2005,6 +2896,14 @@ function endBossFight(victory) {
     if (!defeated.includes(boss.id)) defeated.push(boss.id);
     ProfileManager.set('defeatedBosses', defeated);
     ProfileManager.set('lastBossCategory', boss.category);
+    // Award boss title on every boss defeat
+    const titleId = 'boss_' + boss.id;
+    if (TITLE_NAMES[titleId]) {
+      const titles = ProfileManager.get('bossTitles', []) || [];
+      if (!titles.includes(titleId)) {
+        ProfileManager.set('bossTitles', [...titles, titleId]);
+      }
+    }
     const loot = applyBossLoot(boss);
     let rewardsHtml = `<div class="reward-row"><span>Pièces gagnées</span><span class="reward-value">+${reward.coins} 🪙</span></div>`;
     rewardsHtml += `<div class="reward-row"><span>XP gagnés</span><span class="reward-value">+${reward.xp} XP</span></div>`;
@@ -2029,6 +2928,7 @@ function endBossFight(victory) {
     document.getElementById('boss-end-message').textContent = boss.name + ' a gagné cette fois. Il reviendra... prépare-toi !';
     document.getElementById('boss-end-rewards').innerHTML = `<div class="reward-row"><span>Mise perdue</span><span class="reward-value" style="color:var(--accent-red)">−${boss.stake} 🪙</span></div>`;
     document.getElementById('boss-end-loot').style.display = 'none';
+    onBossLost();
   }
   state.pendingBoss = null;
   state.gamesSinceBoss = 0;
@@ -2099,8 +2999,10 @@ function renderBossWaitingIcon() {
 // ══════════════════════════════════════════════════════════════════════
 
 function showContractScreen() {
+  const catLevel = ProfileManager.get('catLevel', {});
+  const contractLevel = state.category !== 'all' ? (catLevel[state.category] || 2) : 2;
   const contracts = generateContracts(
-    state.category, state.difficulty, state.questionCount, state.categoryStats
+    state.category, contractLevel, state.questionCount, state.categoryStats
   );
   const container = document.getElementById('contract-options');
   container.innerHTML = contracts.map(c => {
@@ -2185,10 +3087,18 @@ async function renderLeaderboard() {
   try { lbGroups = await getMyGroups(); } catch(e) {}
 
   const tabsEl = document.getElementById('lb-tabs');
-  let tabsHtml = '<button class="lb-tab ' + (currentLbTab === 'global' ? 'active' : '') + '" data-tab="global">🌍 Global</button>';
+  let tabsHtml = '';
+  if (lbGroups.length > 1) {
+    tabsHtml += '<button class="lb-tab ' + (currentLbTab === 'global' ? 'active' : '') + '" data-tab="global">🌍 Tous</button>';
+  }
   lbGroups.forEach(g => {
     tabsHtml += '<button class="lb-tab ' + (currentLbTab === g.code ? 'active' : '') + '" data-tab="' + g.code + '">' + g.name + '</button>';
   });
+  // Default to first group if no tab selected or only 1 group
+  if (!currentLbTab || currentLbTab === 'global') {
+    if (lbGroups.length === 1) currentLbTab = lbGroups[0].code;
+    else if (lbGroups.length > 1) currentLbTab = 'global';
+  }
   tabsEl.innerHTML = tabsHtml;
 
   tabsEl.querySelectorAll('.lb-tab').forEach(tab => {
@@ -2207,12 +3117,26 @@ async function renderLeaderboard() {
 
   try {
     if (currentLbTab === 'global') {
-      entries = isOnline() ? await getWeeklyLeaderboard(50) : MQSync.getCachedLeaderboard();
+      // Merge all group leaderboards (deduplicate by uid)
+      const seen = new Set();
+      for (const g of lbGroups) {
+        const groupEntries = await getGroupLeaderboard(g.code);
+        groupEntries.forEach(e => {
+          if (!seen.has(e.uid)) { seen.add(e.uid); entries.push(e); }
+        });
+      }
+      entries.sort((a, b) => b.xp - a.xp);
     } else {
       entries = await getGroupLeaderboard(currentLbTab);
     }
   } catch(e) {
-    entries = MQSync.getCachedLeaderboard();
+    entries = [];
+  }
+
+  if (lbGroups.length === 0) {
+    listEl.innerHTML = '<div class="lb-empty">Rejoins un groupe pour voir le classement !</div>';
+    meEl.innerHTML = '';
+    return;
   }
 
   if (entries.length === 0) {
@@ -2228,10 +3152,19 @@ async function renderLeaderboard() {
     const isChampion = i === 0;
     const rankNum = i + 1;
     const rankDisplay = rankNum <= 3 ? ['👑', '🥈', '🥉'][i] : rankNum;
+    // V5: Show active title
+    let titleDisplay = '';
+    if (isMe) {
+      const myTitle = ProfileManager.get('activeTitle', null);
+      if (myTitle && TITLE_NAMES[myTitle]) titleDisplay = '<div class="player-title">' + TITLE_NAMES[myTitle] + '</div>';
+    } else if (e.activeTitle && TITLE_NAMES[e.activeTitle]) {
+      titleDisplay = '<div class="player-title">' + TITLE_NAMES[e.activeTitle] + '</div>';
+    }
     return '<div class="lb-entry ' + (isMe ? 'me' : '') + ' ' + (isChampion ? 'champion' : '') + '">' +
       '<span class="lb-rank">' + rankDisplay + '</span>' +
       '<span class="lb-rank-icon">' + (rankIcons[e.rank] || '🥉') + '</span>' +
       '<div class="lb-info"><div class="lb-name">' + (e.name || 'Joueur') + '</div>' +
+      titleDisplay +
       '<div class="lb-stats">Streak: ' + (e.bestStreak || 0) + ' | Boss: ' + (e.bossesDefeated || 0) + '</div></div>' +
       '<span class="lb-xp">' + (e.xp || 0) + ' XP</span>' +
       '</div>';
@@ -2290,7 +3223,7 @@ async function renderGroupsScreen(backTo) {
         '<span class="group-icon">👥</span>' +
         '<div class="group-info">' +
         '<div class="group-name">' + g.name + '</div>' +
-        '<div class="group-code">Code : ' + g.code + '</div>' +
+        '<div class="group-code">Code : ' + g.code + ' · ' + g.memberCount + ' membre' + (g.memberCount > 1 ? 's' : '') + '</div>' +
         '</div></div>';
     }).join('');
 
@@ -2342,10 +3275,12 @@ async function renderGroupDetail(code) {
     if (!group) { alert('Groupe introuvable'); return; }
 
     const isAdmin = group.createdBy === firebaseUid;
+    const isParent = isParentInGroup(group);
+    const canViewDashboard = isAdmin || isParent;
     const memberCount = group.membersList ? group.membersList.length : 0;
 
-    headerEl.innerHTML = '<div class="gd-group-name">' + group.name + '</div>' +
-      '<div class="gd-group-code">' + code + '</div>' +
+    headerEl.innerHTML = '<div class="gd-group-name">' + escapeHtml(group.name) + '</div>' +
+      '<div class="gd-group-code">' + escapeHtml(code) + '</div>' +
       '<div class="gd-member-count">' + memberCount + ' membre' + (memberCount > 1 ? 's' : '') + '</div>';
 
     // Generate QR code for joining
@@ -2355,7 +3290,8 @@ async function renderGroupDetail(code) {
     qr.make();
     const qrSize = 4;
     headerEl.innerHTML += '<div class="gd-qr">' + qr.createSvgTag(qrSize, 0) + '</div>' +
-      '<p class="gd-qr-hint">Scanne pour rejoindre</p>';
+      '<p class="gd-qr-hint">Scanne pour rejoindre</p>' +
+      '<a href="' + joinUrl + '" class="gd-join-link" onclick="event.preventDefault();navigator.clipboard.writeText(\'' + joinUrl + '\').then(()=>{this.textContent=\'✅ Lien copié !\';setTimeout(()=>{this.textContent=\'' + joinUrl + '\'},2000)})">' + joinUrl + '</a>';
 
     // Group leaderboard
     const entries = await getGroupLeaderboard(code);
@@ -2367,23 +3303,86 @@ async function renderGroupDetail(code) {
           const isMe = e.uid === firebaseUid;
           const rankNum = i + 1;
           const rankDisplay = rankNum <= 3 ? ['👑', '🥈', '🥉'][i] : rankNum;
+          let gTitleDisplay = '';
+          if (isMe) {
+            const myT = ProfileManager.get('activeTitle', null);
+            if (myT && TITLE_NAMES[myT]) gTitleDisplay = '<div class="player-title">' + TITLE_NAMES[myT] + '</div>';
+          } else if (e.activeTitle && TITLE_NAMES[e.activeTitle]) {
+            gTitleDisplay = '<div class="player-title">' + TITLE_NAMES[e.activeTitle] + '</div>';
+          }
           return '<div class="lb-entry ' + (isMe ? 'me' : '') + ' ' + (i === 0 ? 'champion' : '') + '">' +
             '<span class="lb-rank">' + rankDisplay + '</span>' +
             '<span class="lb-rank-icon">' + (rankIcons[e.rank] || '🥉') + '</span>' +
-            '<div class="lb-info"><div class="lb-name">' + (e.name || 'Joueur') + '</div></div>' +
+            '<div class="lb-info"><div class="lb-name">' + (e.name || 'Joueur') + '</div>' +
+            gTitleDisplay + '</div>' +
             '<span class="lb-xp">' + (e.xp || 0) + ' XP</span>' +
             '</div>';
         }).join('');
     }
 
     // Actions
-    let actHtml = '<button class="btn-secondary" onclick="leaveGroupAction(\'' + code + '\')">Quitter le groupe</button>';
+    let actHtml = '';
 
+    // Dashboard visible for admin and parents
+    if (canViewDashboard) {
+      actHtml += '<button class="btn-primary" onclick="showDashboard(\'' + code + '\')">📊 Dashboard</button>';
+    }
+
+    // Admin-only actions
     if (isAdmin) {
-      actHtml = '<button class="btn-primary" onclick="showDashboard(\'' + code + '\')">📊 Dashboard</button>' + actHtml;
       actHtml += '<button class="btn-danger" style="margin-top:0.5rem" onclick="regenerateCodeAction(\'' + code + '\')">🔄 Régénérer le code</button>';
       actHtml += '<button class="btn-primary" style="margin-top:0.5rem;font-size:0.85rem" onclick="addRewardToGroup(\'' + code + '\')">🎁 Ajouter une récompense</button>';
+
+      // Show parent requests for admin
+      const requests = group.parentRequests || {};
+      const requestKeys = Object.keys(requests);
+      if (requestKeys.length > 0) {
+        actHtml += '<div style="margin-top:1rem;padding:0.75rem;background:rgba(255,215,0,0.1);border:1px solid var(--accent-gold, #ffd700);border-radius:8px">';
+        actHtml += '<p style="font-weight:600;margin-bottom:0.5rem">👪 Demandes de rôle parent :</p>';
+        requestKeys.forEach(uid => {
+          const req = requests[uid];
+          actHtml += '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem">' +
+            '<span>' + escapeHtml(req.name || 'Joueur') + '</span>' +
+            '<button class="btn-primary" style="font-size:0.7rem;padding:0.2rem 0.5rem" onclick="acceptParentAction(\'' + code + '\',\'' + uid + '\')">✅ Accepter</button>' +
+            '<button class="btn-danger" style="font-size:0.7rem;padding:0.2rem 0.5rem" onclick="rejectParentAction(\'' + code + '\',\'' + uid + '\')">❌ Refuser</button>' +
+            '</div>';
+        });
+        actHtml += '</div>';
+      }
+
+      // Show current parents list (admin can remove)
+      const parentUids = Object.keys(group.parents || {}).filter(uid => uid !== group.createdBy);
+      if (parentUids.length > 0) {
+        actHtml += '<div style="margin-top:0.75rem;padding:0.75rem;background:rgba(255,255,255,0.03);border:1px solid var(--bg-card-hover);border-radius:8px">';
+        actHtml += '<p style="font-weight:600;margin-bottom:0.5rem;font-size:0.85rem">👪 Parents actuels :</p>';
+        for (const uid of parentUids) {
+          const member = group.membersList.find(m => m.uid === uid);
+          const name = member ? member.name : 'Joueur';
+          actHtml += '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem">' +
+            '<span style="font-size:0.85rem">' + escapeHtml(name) + '</span>' +
+            '<button class="btn-danger" style="font-size:0.65rem;padding:0.15rem 0.4rem" onclick="removeParentAction(\'' + code + '\',\'' + uid + '\')">Retirer</button>' +
+            '</div>';
+        }
+        actHtml += '</div>';
+      }
     }
+
+    // Show "Devenir parent" only if user is flagged as parentCapable in Firebase
+    if (!canViewDashboard) {
+      try {
+        const capSnap = await db.ref('players/' + firebaseUid + '/parentCapable').once('value');
+        if (capSnap.val() === true) {
+          const hasPendingRequest = group.parentRequests && group.parentRequests[firebaseUid];
+          if (hasPendingRequest) {
+            actHtml += '<p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary)">⏳ Demande de rôle parent en attente...</p>';
+          } else {
+            actHtml += '<button class="btn-secondary" style="margin-top:0.5rem;font-size:0.85rem" onclick="requestParentAction(\'' + code + '\')">👪 Devenir parent</button>';
+          }
+        }
+      } catch(e) { /* offline — hide button */ }
+    }
+
+    actHtml += '<button class="btn-secondary" style="margin-top:0.5rem" onclick="leaveGroupAction(\'' + code + '\')">Quitter le groupe</button>';
 
     actionsEl.innerHTML = actHtml;
   } catch(e) {
@@ -2422,15 +3421,16 @@ async function showDashboard(code) {
   try {
     const group = await getGroupInfo(code);
     const dashData = await getGroupDashboard(code);
+    const dashIsAdmin = group.createdBy === firebaseUid;
     const catLabels = { calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes' };
     const allCats = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert'];
 
-    let html = '<h3 style="text-align:center">' + group.name + '</h3>';
+    let html = '<h3 style="text-align:center">' + escapeHtml(group.name) + '</h3>';
 
     for (const member of group.membersList) {
       const data = dashData[member.uid];
       if (!data) {
-        html += '<div class="dash-member"><div class="dash-member-name">👤 ' + member.name + '</div><p style="color:var(--text-secondary);font-size:0.8rem">Pas de données</p></div>';
+        html += '<div class="dash-member"><div class="dash-member-name">👤 ' + escapeHtml(member.name) + '</div><p style="color:var(--text-secondary);font-size:0.8rem">Pas de données</p></div>';
         continue;
       }
 
@@ -2438,15 +3438,27 @@ async function showDashboard(code) {
       const timeMin = Math.round((data.timeSpent || 0) / 60);
       const contracts = data.contractsCompleted || {};
 
+      const memberId = 'dash-member-' + member.uid.slice(0, 8);
+      const totalMQ = Object.values(catStats).reduce((s, c) => s + (c.total || 0), 0);
+      const totalMC = Object.values(catStats).reduce((s, c) => s + (c.correct || 0), 0);
+      const overallPct = totalMQ > 0 ? Math.round(totalMC / totalMQ * 100) : 0;
+      const totalContr = (contracts.gold || 0) + (contracts.silver || 0) + (contracts.bronze || 0);
+
       html += '<div class="dash-member">';
-      html += '<div class="dash-member-name">👤 ' + member.name + '</div>';
+      html += '<div class="dash-member-header" onclick="document.getElementById(\'' + memberId + '\').classList.toggle(\'open\')">';
+      html += '<span class="dash-member-name">👤 ' + escapeHtml(member.name) + '</span>';
+      html += '<span class="dash-member-summary">' + overallPct + '% · ' + (data.weeklyGames || 0) + ' parties · ' + timeMin + 'min</span>';
+      html += '<span class="dash-expand-icon">▸</span>';
+      html += '</div>';
+
+      html += '<div class="dash-member-details" id="' + memberId + '">';
 
       // Stats row
       html += '<div class="dash-stats-row">';
       html += '<div class="dash-stat"><div class="dash-stat-value">' + (data.weeklyGames || 0) + '</div><div class="dash-stat-label">Parties</div></div>';
       html += '<div class="dash-stat"><div class="dash-stat-value">' + timeMin + 'min</div><div class="dash-stat-label">Temps</div></div>';
-      html += '<div class="dash-stat"><div class="dash-stat-value">' + Math.round((data.recentRate || 0) * 100) + '%</div><div class="dash-stat-label">Réussite</div></div>';
-      html += '<div class="dash-stat"><div class="dash-stat-value">' + ((contracts.gold || 0) + (contracts.silver || 0) + (contracts.bronze || 0)) + '</div><div class="dash-stat-label">Contrats</div></div>';
+      html += '<div class="dash-stat"><div class="dash-stat-value">' + overallPct + '%</div><div class="dash-stat-label">Réussite</div></div>';
+      html += '<div class="dash-stat"><div class="dash-stat-value">' + totalContr + '</div><div class="dash-stat-label">Contrats</div></div>';
       html += '</div>';
 
       // Category bars
@@ -2467,12 +3479,13 @@ async function showDashboard(code) {
       });
       html += '</div>';
 
-      // Admin actions for this member
-      if (member.uid !== firebaseUid) {
-        html += '<div style="margin-top:0.5rem;text-align:right"><button class="btn-danger" style="font-size:0.75rem;padding:0.3rem 0.75rem" onclick="banMemberAction(\'' + code + '\',\'' + member.uid + '\',\'' + member.name + '\')">Bannir</button></div>';
+      // Admin actions for this member (parents can't ban)
+      if (dashIsAdmin && member.uid !== firebaseUid) {
+        html += '<div style="margin-top:0.5rem;text-align:right"><button class="btn-danger" style="font-size:0.75rem;padding:0.3rem 0.75rem" onclick="banMemberAction(\'' + code + '\',\'' + member.uid + '\',\'' + escapeHtml(member.name).replace(/'/g, '&#39;') + '\')">Bannir</button></div>';
       }
 
-      html += '</div>';
+      html += '</div>'; // close details
+      html += '</div>'; // close member
     }
 
     // Group rewards section
@@ -2513,6 +3526,14 @@ async function banMemberAction(code, uid, name) {
 // ══════════════════════════════════════════════════════════════════════
 
 document.getElementById('btn-riddle-back').addEventListener('click', () => { showScreen('screen-home'); });
+document.getElementById('btn-progression-back').addEventListener('click', () => showScreen('screen-profile-detail'));
+document.getElementById('btn-my-pet-back').addEventListener('click', () => { renderPetZone(); showScreen('screen-home'); });
+document.getElementById('btn-pet-choice-back').addEventListener('click', () => {
+  const petType = ProfileManager.get('petType', null);
+  if (petType) { renderMyPetScreen(); showScreen('screen-my-pet'); }
+  else { renderPetZone(); showScreen('screen-home'); }
+});
+// btn-pet click handled via inline onclick in HTML (stopPropagation needed)
 
 async function showCreateRiddleScreen() {
   // Populate group dropdown
@@ -2673,14 +3694,18 @@ async function renderAdminPlayers(el) {
 
   let html = '<p style="text-align:center;color:var(--text-secondary);font-size:0.85rem">' + players.length + ' joueur' + (players.length > 1 ? 's' : '') + '</p>';
 
+  const allCats = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert'];
+  const catLabelsAdmin = { calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes' };
+
   players.forEach(p => {
     const rankIcon = rankIcons[p.rank] || '🥉';
     const groupCodes = p.groups ? Object.keys(p.groups) : [];
     const recovery = recoveryCodes.find(r => r.uid === p.uid);
     const isMe = p.uid === firebaseUid;
+    const detailId = 'admin-player-' + p.uid.slice(0, 8);
 
     html += '<div class="dash-member">';
-    html += '<div class="dash-member-name">' + rankIcon + ' ' + (p.name || 'Joueur') + (isMe ? ' <span style="font-size:0.65rem;color:var(--accent-green)">(toi)</span>' : '') + '</div>';
+    html += '<div class="dash-member-name">' + rankIcon + ' ' + escapeHtml(p.name || 'Joueur') + (isMe ? ' <span style="font-size:0.65rem;color:var(--accent-green)">(toi)</span>' : '') + '</div>';
 
     // Stats row
     html += '<div style="font-size:0.8rem;color:var(--text-secondary)">';
@@ -2701,12 +3726,56 @@ async function renderAdminPlayers(el) {
       html += '</div>';
     }
 
+    // Expandable stats
+    const catStats = p.catStats || {};
+    const totalQ = Object.values(catStats).reduce((s, c) => s + (c.total || 0), 0);
+    const totalC = Object.values(catStats).reduce((s, c) => s + (c.correct || 0), 0);
+    const overallPct = totalQ > 0 ? Math.round(totalC / totalQ * 100) : 0;
+    const pTimeMin = Math.round((p.weeklyTimeSpent || 0) / 60);
+    const pContracts = p.contractsCompleted || {};
+    const pTotalContr = (pContracts.gold || 0) + (pContracts.silver || 0) + (pContracts.bronze || 0);
+
+    if (totalQ > 0) {
+      html += '<div class="dash-member-header" onclick="document.getElementById(\'' + detailId + '\').classList.toggle(\'open\')" style="margin-top:0.4rem">';
+      html += '<span style="font-size:0.8rem;color:var(--accent-blue)">📊 Stats détaillées</span>';
+      html += '<span class="dash-member-summary">' + overallPct + '% · ' + totalQ + ' questions</span>';
+      html += '<span class="dash-expand-icon">▸</span>';
+      html += '</div>';
+
+      html += '<div class="dash-member-details" id="' + detailId + '">';
+      html += '<div class="dash-stats-row">';
+      html += '<div class="dash-stat"><div class="dash-stat-value">' + totalQ + '</div><div class="dash-stat-label">Questions</div></div>';
+      html += '<div class="dash-stat"><div class="dash-stat-value">' + overallPct + '%</div><div class="dash-stat-label">Réussite</div></div>';
+      html += '<div class="dash-stat"><div class="dash-stat-value">' + pTimeMin + 'min</div><div class="dash-stat-label">Temps</div></div>';
+      html += '<div class="dash-stat"><div class="dash-stat-value">' + pTotalContr + '</div><div class="dash-stat-label">Contrats</div></div>';
+      html += '</div>';
+
+      html += '<div class="dash-cat-bars">';
+      allCats.forEach(cat => {
+        const stat = catStats[cat];
+        const pct = stat && stat.total > 0 ? Math.round(stat.correct / stat.total * 100) : 0;
+        const played = stat && stat.total > 0;
+        const isWeak = !played || pct < 50;
+        const barColor = pct >= 70 ? 'var(--accent-green)' : pct >= 50 ? 'var(--accent-orange)' : 'var(--accent-red)';
+        html += '<div class="dash-cat-row">';
+        html += '<span class="dash-cat-name">' + (catLabelsAdmin[cat] || cat) + '</span>';
+        html += '<div class="dash-cat-bar"><div class="dash-cat-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div>';
+        html += '<span class="dash-cat-pct ' + (isWeak ? 'dash-weak' : '') + '">' + (played ? pct + '%' : '—') + '</span>';
+        if (isWeak) html += '<span class="dash-cat-warning">⚠️</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</div>'; // close details
+    }
+
     // UID
     html += '<div style="font-size:0.55rem;color:var(--text-secondary);opacity:0.4;margin-top:0.2rem">' + p.uid + '</div>';
 
-    // Delete button (not for self)
+    // Parent toggle + delete button (not for self)
     if (!isMe) {
-      html += '<button class="btn-danger" style="font-size:0.7rem;padding:0.2rem 0.6rem;margin-top:0.4rem" onclick="adminDeletePlayerAction(\'' + p.uid + '\',\'' + (p.name || 'Joueur').replace(/'/g, '') + '\')">Supprimer ce joueur</button>';
+      const isPC = p.parentCapable === true;
+      html += '<button class="btn-secondary" style="font-size:0.7rem;padding:0.2rem 0.6rem;margin-top:0.4rem" onclick="toggleParentCapable(\'' + p.uid + '\',' + !isPC + ')">' + (isPC ? '👪 Retirer parent' : '👪 Marquer parent') + '</button> ';
+      html += '<button class="btn-danger" style="font-size:0.7rem;padding:0.2rem 0.6rem;margin-top:0.4rem" onclick="adminDeletePlayerAction(\'' + p.uid + '\',\'' + escapeHtml((p.name || 'Joueur').replace(/'/g, '')) + '\')">Supprimer ce joueur</button>';
     }
 
     html += '</div>';
@@ -2807,6 +3876,17 @@ async function adminDeletePlayerAction(uid, name) {
 }
 window.adminDeletePlayerAction = adminDeletePlayerAction;
 
+async function toggleParentCapable(uid, value) {
+  try {
+    const isAdmin = await checkIsGlobalAdmin();
+    if (!isAdmin) { alert('Accès refusé'); return; }
+    await db.ref('players/' + uid + '/parentCapable').set(value);
+    showToast(value ? 'Marqué comme parent' : 'Rôle parent retiré');
+    renderAdminDashboard();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+window.toggleParentCapable = toggleParentCapable;
+
 async function adminDeleteGroupAction(code, name) {
   if (!confirm('Supprimer le groupe "' + name + '" (' + code + ') ? Tous les membres seront retirés.')) return;
   try {
@@ -2833,8 +3913,390 @@ async function quickCreateGroup() {
 }
 window.quickCreateGroup = quickCreateGroup;
 
+// ══════════════════════════════════════════════════════════════════════
+// V6 — PROGRESSION SCREEN
+// ══════════════════════════════════════════════════════════════════════
+
+function renderProgressionScreen() {
+  showScreen('screen-progression');
+
+  const catKeys = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert'];
+  const catIcons = { calcul: '🧮', logique: '⚙️', geometrie: '📐', fractions: '🔢', mesures: '📏', ouvert: '💡' };
+
+  // Section 1: Mastery bars
+  let barsHtml = '';
+  catKeys.forEach(cat => {
+    const prog = getMasteryProgress(cat);
+    const catLabel = CATEGORIES[cat]?.label || cat;
+    const catColor = CATEGORIES[cat]?.color || '#888';
+    const pct = prog.next ? Math.round(Math.min(prog.progressTotal, prog.progressRate) * 100) : 100;
+    const stats = ProfileManager.get('catStats', {})[cat] || { correct: 0, total: 0 };
+    const rate = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
+    const nextLabel = prog.next ? ' → ' + prog.next.label : '';
+
+    barsHtml += '<div class="mastery-row">' +
+      '<span class="mastery-cat-icon">' + (catIcons[cat] || '📚') + '</span>' +
+      '<div class="mastery-info">' +
+        '<div class="mastery-top">' +
+          '<span class="mastery-cat-name">' + catLabel + '</span>' +
+          '<span class="mastery-level-badge">' + prog.current.icon + ' ' + prog.current.label + '</span>' +
+        '</div>' +
+        '<div class="mastery-bar"><div class="mastery-bar-fill" style="width:' + pct + '%;background:' + catColor + '"></div></div>' +
+        '<div class="mastery-stats">' + stats.total + ' questions · ' + rate + '%' + nextLabel + '</div>' +
+      '</div></div>';
+  });
+  document.getElementById('mastery-bars').innerHTML = barsHtml;
+
+  // Section 2: Weekly delta
+  const lastWeekCatStats = ProfileManager.get('lastWeekCatStats', null);
+  const currentCatStats = ProfileManager.get('catStats', {});
+  let deltaHtml = '<h3>📈 Cette semaine</h3>';
+
+  if (!lastWeekCatStats) {
+    deltaHtml += '<p style="color:var(--text-secondary);font-size:0.85rem">Première semaine — les deltas apparaîtront lundi !</p>';
+  } else {
+    let hasData = false;
+    catKeys.forEach(cat => {
+      const cur = currentCatStats[cat] || { correct: 0, total: 0 };
+      const prev = lastWeekCatStats[cat] || { correct: 0, total: 0 };
+      if (cur.total === prev.total) return;
+      hasData = true;
+      const curRate = cur.total > 0 ? Math.round(cur.correct / cur.total * 100) : 0;
+      const prevRate = prev.total > 0 ? Math.round(prev.correct / prev.total * 100) : 0;
+      const diff = curRate - prevRate;
+      const cls = diff > 0 ? 'delta-up' : diff < 0 ? 'delta-down' : 'delta-same';
+      const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '=';
+      const sign = diff > 0 ? '+' : '';
+      deltaHtml += '<div class="delta-row">' +
+        '<span class="delta-cat">' + (CATEGORIES[cat]?.label || cat) + '</span>' +
+        '<span class="delta-change ' + cls + '">' + prevRate + '% → ' + curRate + '% (' + sign + diff + '%) ' + arrow + '</span>' +
+        '</div>';
+    });
+    if (!hasData) {
+      deltaHtml += '<p style="color:var(--text-secondary);font-size:0.85rem">Joue cette semaine pour voir tes progrès !</p>';
+    }
+  }
+  document.getElementById('weekly-delta').innerHTML = deltaHtml;
+
+  // Section 3: Mastery badges
+  const badges = ProfileManager.get('badges', []);
+  const masteryBadges = badges.filter(b => b.startsWith('mastery_'));
+  let badgesHtml = '<h3>🎓 Badges de maîtrise</h3>';
+  if (masteryBadges.length === 0) {
+    badgesHtml += '<p style="color:var(--text-secondary);font-size:0.85rem">Monte en niveau pour débloquer des badges !</p>';
+  } else {
+    badgesHtml += '<div class="mastery-badge-grid">';
+    masteryBadges.forEach(bid => {
+      const parts = bid.replace('mastery_', '').split('_');
+      let label, icon;
+      if (parts[0] === 'all') {
+        const cross = { apprenti: { n: 'Polyvalent', i: '📘' }, confirme: { n: 'Touche-à-tout', i: '⚔️' }, expert: { n: 'Maître absolu', i: '💎' } };
+        const c = cross[parts[1]] || { n: bid, i: '🏅' };
+        label = c.n; icon = c.i;
+      } else {
+        const catLabel = CATEGORIES[parts[0]]?.label || parts[0];
+        const lvl = MASTERY_LEVELS.find(l => l.label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') === parts[1]);
+        label = catLabel + ' ' + (lvl ? lvl.label : parts[1]);
+        icon = lvl ? lvl.icon : '🏅';
+      }
+      badgesHtml += '<div class="mastery-badge-item">' + icon + ' ' + label + '</div>';
+    });
+    badgesHtml += '</div>';
+  }
+  document.getElementById('mastery-badges').innerHTML = badgesHtml;
+}
+
+window.renderProgressionScreen = renderProgressionScreen;
+
+// ══════════════════════════════════════════════════════════════════════
+// V8 — PET SYSTEM UI
+// ══════════════════════════════════════════════════════════════════════
+
+function renderPetZone() {
+  const petType = ProfileManager.get('petType', null);
+  const zone = document.getElementById('pet-zone');
+  const petBtn = document.getElementById('btn-pet');
+
+  if (!petType) {
+    if (petBtn) petBtn.style.display = 'none';
+    const hb = document.getElementById('pet-hunger-header');
+    if (hb) hb.style.display = 'none';
+    if (zone) zone.innerHTML = '<button class="btn-secondary" onclick="showPetChoice()" style="font-size:0.8rem;padding:0.4rem 1rem">🐾 Choisis ton compagnon</button>';
+    return;
+  }
+
+  updatePetHunger();
+  const pet = PET_TYPES[petType];
+  if (!pet) return;
+  const hunger = ProfileManager.get('petHunger', 100);
+  const xp = ProfileManager.get('petXP', 0);
+  const stage = getPetStage(xp);
+  const isHungry = hunger < 25;
+  const vacation = ProfileManager.get('vacationMode', false);
+
+  // Header pet icon (left of rank)
+  if (petBtn) {
+    petBtn.style.display = '';
+    petBtn.textContent = pet.emoji;
+    petBtn.className = 'pet-icon-header' + (isHungry ? ' hungry' : '');
+  }
+
+  // Hunger bar in header (under XP bar)
+  const hungerBar = document.getElementById('pet-hunger-header');
+  const hungerFill = document.getElementById('pet-hunger-header-fill');
+  if (hungerBar && hungerFill) {
+    hungerBar.style.display = '';
+    hungerFill.style.width = hunger + '%';
+    hungerFill.className = 'pet-hunger-mini-fill' + (hunger < 30 ? ' low' : '');
+  }
+
+  // Hide pet zone in middle
+  if (zone) zone.innerHTML = '';
+}
+window.renderPetZone = renderPetZone;
+
+function showMyPet() {
+  renderMyPetScreen();
+  showScreen('screen-my-pet');
+}
+window.showMyPet = showMyPet;
+
+function showPetChoice() {
+  const petType = ProfileManager.get('petType', null);
+  if (!petType) {
+    renderPetChoiceScreen();
+    showScreen('screen-pet-choice');
+  } else {
+    showMyPet();
+  }
+}
+window.showPetChoice = showPetChoice;
+
+function buyPetFood(foodId) {
+  if (feedPet(foodId)) {
+    renderMyPetScreen();
+    renderPetZone();
+    document.getElementById('home-coins').textContent = ProfileManager.get('coins', 0);
+  } else {
+    alert('Pas assez de pièces !');
+  }
+}
+window.buyPetFood = buyPetFood;
+
+function getPetBonusDesc(petType, stage) {
+  const pct = Math.round(stage.bonusPct * 100);
+  if (petType === 'dragon') return '1 skip / ' + stage.dragonThreshold + ' questions (max ' + stage.dragonMax + ')';
+  if (petType === 'robot')  return '+' + pct + '% XP';
+  if (petType === 'fox')    return '+' + pct + '% pièces';
+  return '';
+}
+
+function renderMyPetScreen() {
+  const petType = ProfileManager.get('petType', null);
+  const content = document.getElementById('my-pet-content');
+  if (!petType || !content) return;
+
+  const pet = PET_TYPES[petType];
+  const xp = ProfileManager.get('petXP', 0);
+  const hunger = ProfileManager.get('petHunger', 100);
+  const stage = getPetStage(xp);
+  const prog = getPetStageProgress(xp);
+  const pct = prog.next ? Math.round(prog.progress * 100) : 100;
+  const vacation = ProfileManager.get('vacationMode', false);
+  const isHungry = hunger < 25;
+  const hasBonus = hunger >= 50;
+  const coins = ProfileManager.get('coins', 0);
+
+  let html = '<div style="text-align:center">' +
+    '<div style="font-size:4rem;margin:0.5rem 0' + (isHungry ? ';filter:grayscale(0.7);opacity:0.7' : '') + '">' + pet.emoji + '</div>' +
+    '<div style="font-size:1.3rem;font-weight:700">' + pet.name + '</div>' +
+    '<div style="font-size:0.85rem;color:var(--accent-orange);margin:0.25rem 0">' + stage.label + '</div>' +
+    (hasBonus ? '<div style="font-size:0.75rem;color:var(--text-secondary)">✨ ' + getPetBonusDesc(petType, stage) + '</div>' : '') +
+    (isHungry ? '<div style="font-size:0.85rem;color:#f44336;margin-top:0.25rem">😢 A faim !</div>' : '') +
+    '</div>';
+
+  // XP bar
+  html += '<div style="margin:1rem 0">' +
+    '<div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:0.3rem">' +
+      '<span>XP</span><span>' + xp + (prog.next ? ' / ' + prog.next.minXP : ' (MAX)') + '</span></div>' +
+    '<div class="mastery-bar"><div class="mastery-bar-fill" style="width:' + pct + '%;background:var(--accent)"></div></div>' +
+    '</div>';
+
+  // Hunger bar
+  html += '<div style="margin:1rem 0">' +
+    '<div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:0.3rem">' +
+      '<span>Faim</span><span>' + hunger + '%</span></div>' +
+    '<div class="pet-hunger-bar" style="width:100%"><div class="pet-hunger-fill' + (hunger < 30 ? ' low' : '') + '" style="width:' + hunger + '%"></div></div>' +
+    '</div>';
+
+  // Food
+  html += '<h3 style="margin-top:1rem">🍖 Nourrir</h3>' +
+    '<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.5rem">Solde : ' + coins + ' 🪙</div>' +
+    '<div class="pet-food-grid">' +
+    PET_FOOD.map(f => '<button class="pet-food-btn" onclick="buyPetFood(\'' + f.id + '\')">' + f.icon + ' ' + f.name + '<br><span class="food-price">' + f.price + ' 🪙</span></button>').join('') +
+    '</div>';
+
+  // Vacation + change pet
+  html += '<div style="display:flex;gap:0.5rem;margin-top:1.5rem">' +
+    '<button class="btn-secondary" id="btn-vacation-toggle" style="flex:1;font-size:0.85rem">' +
+    (vacation ? '☀️ Fin vacances' : '🏖️ Vacances') + '</button>' +
+    '<button class="btn-secondary" id="btn-change-pet" style="flex:1;font-size:0.85rem">🔄 Changer</button>' +
+    '</div>';
+
+  content.innerHTML = html;
+
+  document.getElementById('btn-vacation-toggle')?.addEventListener('click', () => {
+    ProfileManager.set('vacationMode', !vacation);
+    renderMyPetScreen();
+  });
+  document.getElementById('btn-change-pet')?.addEventListener('click', () => {
+    renderPetChoiceScreen();
+    showScreen('screen-pet-choice');
+  });
+}
+window.renderMyPetScreen = renderMyPetScreen;
+
+function renderPetChoiceScreen() {
+  const currentPet = ProfileManager.get('petType', null);
+  const grid = document.getElementById('pet-choice-grid');
+  let html = '';
+  Object.entries(PET_TYPES).forEach(([id, pet]) => {
+    const isActive = id === currentPet;
+    html += '<div class="pet-choice-card ' + (isActive ? 'active' : '') + '" data-pet="' + id + '">' +
+      '<span class="pet-choice-emoji">' + pet.emoji + '</span>' +
+      '<div class="pet-choice-name">' + pet.name + '</div>' +
+      '<div class="pet-choice-bonus">✨ ' + pet.bonusDesc + '</div>' +
+      (isActive ? '<div style="color:var(--accent-orange);margin-top:0.5rem;font-weight:700">Actuel</div>' : '') +
+      '</div>';
+  });
+
+  grid.innerHTML = html;
+
+  grid.querySelectorAll('.pet-choice-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const petId = card.dataset.pet;
+      if (petId === currentPet) return;
+      if (currentPet && !confirm('Changer de compagnon remet son évolution à zéro. Continuer ?')) return;
+      changePet(petId);
+      if (currentPet) { renderMyPetScreen(); showScreen('screen-my-pet'); }
+      else { renderPetZone(); showScreen('screen-home'); }
+    });
+  });
+}
+window.renderPetChoiceScreen = renderPetChoiceScreen;
+
+// V8: Skip button (dragon pet ability)
+function renderSkipButton() {
+  let skipBtn = document.getElementById('btn-skip-question');
+  if (skipBtn) skipBtn.remove();
+  const skips = ProfileManager.get('skipStock', 0);
+  const petType = ProfileManager.get('petType', null);
+  if (petType !== 'dragon' || skips <= 0) return;
+
+  const answerSection = document.querySelector('#screen-game .answer-section');
+  if (!answerSection) return;
+  skipBtn = document.createElement('button');
+  skipBtn.id = 'btn-skip-question';
+  skipBtn.className = 'btn-secondary';
+  skipBtn.style.cssText = 'font-size:0.75rem;padding:0.3rem 0.8rem;margin-top:0.5rem;width:100%';
+  skipBtn.textContent = '🐉 Skip (' + skips + ')';
+  skipBtn.addEventListener('click', () => {
+    if (useSkip()) {
+      state.currentIndex++;
+      if (state.currentIndex >= state.questionCount) {
+        endGame();
+      } else {
+        showQuestion();
+      }
+    }
+  });
+  answerSection.parentNode.appendChild(skipBtn);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// V8 — DAILY QUESTION
+// ══════════════════════════════════════════════════════════════════════
+
+async function checkDailyQuestion() {
+  const btn = document.getElementById('btn-daily-question');
+  if (!btn || typeof isOnline !== 'function' || !isOnline()) { if (btn) btn.style.display = 'none'; return; }
+  try {
+    const data = await getDailyQuestion();
+    if (data.alreadyAnswered) {
+      btn.style.display = '';
+      const secs = data.myAnswer?.time ? (data.myAnswer.time / 1000).toFixed(1) : null;
+      btn.textContent = secs
+        ? '✅ Question du jour — ⏱ ' + secs + 's'
+        : '✅ Question du jour — répondu';
+      btn.onclick = null;
+    } else {
+      btn.style.display = '';
+      btn.textContent = '🌟 Question du jour';
+      btn.onclick = () => openDailyQuestion(data);
+    }
+  } catch(e) { if (btn) btn.style.display = 'none'; }
+}
+
+function openDailyQuestion(data) {
+  showScreen('screen-daily');
+  const q = data.question;
+  document.getElementById('daily-question-card').innerHTML =
+    '<span class="category-badge" style="background:' + (CATEGORIES[q.category]?.color || '#888') + '">' +
+    (CATEGORIES[q.category]?.label || q.category) + '</span>' +
+    '<p class="question-text">' + q.text + '</p>' +
+    (q.unit ? '<p class="question-unit">' + q.unit + '</p>' : '');
+
+  document.getElementById('daily-answer-section').style.display = '';
+  document.getElementById('daily-result').style.display = 'none';
+  const input = document.getElementById('daily-answer-input');
+  input.value = '';
+  setTimeout(() => input.focus(), 100);
+
+  const startTime = Date.now();
+
+  const validateBtn = document.getElementById('btn-daily-validate');
+  const newBtn = validateBtn.cloneNode(true);
+  validateBtn.parentNode.replaceChild(newBtn, validateBtn);
+
+  const submitHandler = async () => {
+    const val = input.value.trim();
+    if (!val) return;
+    const elapsed = Date.now() - startTime;
+    newBtn.disabled = true;
+    try {
+      const correct = await submitDailyAnswer(data.date, Number(val), elapsed);
+      document.getElementById('daily-answer-section').style.display = 'none';
+      const secs = (elapsed / 1000).toFixed(1);
+      let html = correct
+        ? '<div style="text-align:center"><div style="font-size:2rem;margin-bottom:0.5rem">✅</div>' +
+          '<div style="font-weight:700;font-size:1.2rem;color:#4caf50">Bonne réponse !</div>' +
+          '<div style="margin-top:0.5rem;font-size:0.95rem;color:var(--text-secondary)">⏱ ' + secs + 's</div>' +
+          '<div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary)">Classement disponible demain</div>'
+        : '<div style="text-align:center"><div style="font-size:2rem;margin-bottom:0.5rem">❌</div>' +
+          '<div style="font-weight:700;font-size:1.2rem;color:#f44336">Mauvaise réponse</div>' +
+          '<div style="margin-top:0.5rem;color:var(--text-secondary)">Réponse : ' + q.answer + '</div>';
+      if (q.explanation) html += '<div style="margin-top:1rem;font-size:0.85rem;color:var(--text-secondary)">' + q.explanation + '</div>';
+      html += '</div>';
+      document.getElementById('daily-result').innerHTML = html;
+      document.getElementById('daily-result').style.display = '';
+
+      if (correct) {
+        ProfileManager.set('coins', ProfileManager.get('coins', 0) + 15);
+        ProfileManager.set('xp', ProfileManager.get('xp', 0) + 10);
+      }
+      checkDailyQuestion();
+    } catch(e) { alert('Erreur : ' + e.message); newBtn.disabled = false; }
+  };
+
+  newBtn.addEventListener('click', submitHandler);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitHandler(); });
+}
+
+document.getElementById('btn-daily-back')?.addEventListener('click', () => showScreen('screen-home'));
+
 // Debug helper — accessible from browser console
 window._debug = { triggerBoss, state, showBossAppear, BOSS_POOL, renderLeaderboard, renderGroupsScreen, showCreateRiddleScreen, renderAdminDashboard };
+window.showScreen = showScreen;
 
 async function addRewardToGroup(groupCode) {
   const name = prompt('Nom de la récompense (ex: 30 min de jeux, bowling...) :');
@@ -2863,5 +4325,213 @@ async function removeRewardAction(groupCode, rewardId, name) {
   } catch(e) { alert('Erreur : ' + e.message); }
 }
 window.removeRewardAction = removeRewardAction;
+
+// ── Parent Role Actions ──
+
+async function requestParentAction(code) {
+  try {
+    await requestParentRole(code);
+    showToast('Demande envoyée !');
+    renderGroupDetail(code);
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+window.requestParentAction = requestParentAction;
+
+async function acceptParentAction(code, uid) {
+  try {
+    await acceptParentRequest(code, uid);
+    showToast('Rôle parent accepté');
+    renderGroupDetail(code);
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+window.acceptParentAction = acceptParentAction;
+
+async function rejectParentAction(code, uid) {
+  try {
+    await rejectParentRequest(code, uid);
+    renderGroupDetail(code);
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+window.rejectParentAction = rejectParentAction;
+
+async function removeParentAction(code, uid) {
+  if (!confirm('Retirer le rôle parent de ce joueur ?')) return;
+  try {
+    await removeParentRole(code, uid);
+    showToast('Rôle parent retiré');
+    renderGroupDetail(code);
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+window.removeParentAction = removeParentAction;
+
+// ── Duel Event Handlers ──
+
+document.getElementById('btn-duel').addEventListener('click', () => {
+  if (!isOnline()) { alert('Le mode duel nécessite une connexion internet'); return; }
+  const choice = confirm('Créer un duel ?\n\nOK = Créer\nAnnuler = Rejoindre');
+  if (choice) {
+    Duel._cleanup();
+    document.getElementById('duel-my-coins').textContent = ProfileManager.get('coins', 0);
+    showScreen('screen-duel-create');
+  } else {
+    Duel._cleanup();
+    document.getElementById('duel-join-info').style.display = 'none';
+    document.getElementById('duel-join-code').value = '';
+    showScreen('screen-duel-join');
+  }
+});
+
+document.getElementById('btn-duel-launch').addEventListener('click', () => {
+  const pills = document.querySelectorAll('[data-setting="duel-category"] .pill.active');
+  const category = pills.length > 0 ? pills[0].dataset.value : 'all';
+  const stake = parseInt(document.getElementById('duel-stake-input').value) || 10;
+  Duel.create(category, stake);
+});
+
+document.getElementById('btn-duel-cancel').addEventListener('click', () => Duel.cancel());
+document.getElementById('btn-duel-create-back').addEventListener('click', () => Duel.cancel());
+document.getElementById('btn-duel-join-back').addEventListener('click', () => { Duel._cleanup(); showScreen('screen-home'); });
+
+document.getElementById('btn-duel-find').addEventListener('click', async () => {
+  const code = document.getElementById('duel-join-code').value;
+  const duel = await Duel.find(code);
+  if (!duel) return;
+  const catNames = { calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes', all: '🎯 Toutes' };
+  document.getElementById('duel-join-category').textContent = catNames[duel.category] || duel.category;
+  document.getElementById('duel-join-stake').textContent = duel.stake.a + ' 🪙';
+  document.getElementById('duel-join-opponent').textContent = duel.players.a.name;
+  document.getElementById('duel-join-info').style.display = '';
+});
+
+document.getElementById('btn-duel-accept').addEventListener('click', () => {
+  const code = document.getElementById('duel-join-code').value.trim();
+  const pills = document.querySelectorAll('[data-setting="duel-difficulty"] .pill.active');
+  const difficulty = pills.length > 0 ? pills[0].dataset.value : 'medium';
+  const stake = parseInt(document.getElementById('duel-join-stake-input').value) || 10;
+  Duel.join(code, difficulty, stake);
+});
+
+document.getElementById('btn-duel-validate').addEventListener('click', () => {
+  const input = document.getElementById('duel-answer-input');
+  if (input.value === '') return;
+  Duel.submitAnswer(input.value);
+});
+
+document.getElementById('duel-answer-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-duel-validate').click(); }
+});
+
+document.getElementById('btn-duel-rematch').addEventListener('click', () => Duel.rematch());
+document.getElementById('btn-duel-home').addEventListener('click', () => { Duel._cleanup(); updateProfileHeader(); showScreen('screen-home'); });
+
+// Pill groups for duel screens
+document.querySelectorAll('#screen-duel-create .pill-group, #screen-duel-join .pill-group').forEach(group => {
+  group.addEventListener('click', (e) => {
+    const pill = e.target.closest('.pill');
+    if (!pill) return;
+    group.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+  });
+});
+
+// V5: Session limit buttons
+document.getElementById('btn-session-continue').addEventListener('click', () => {
+  document.getElementById('session-limit-overlay').style.display = 'none';
+});
+document.getElementById('btn-session-stop').addEventListener('click', () => {
+  document.getElementById('session-limit-overlay').style.display = 'none';
+  showScreen('screen-home');
+});
+
+// ── V5: Feedback & Bug Report ───────────────────────────────────────
+(function initFeedback() {
+  let feedbackType = 'bug';
+  const fab = document.getElementById('btn-feedback');
+  const overlay = document.getElementById('feedback-overlay');
+  if (!fab || !overlay) return;
+
+  fab.addEventListener('click', () => {
+    overlay.style.display = 'flex';
+    document.getElementById('feedback-text').value = '';
+    document.getElementById('feedback-status').textContent = '';
+    document.getElementById('feedback-include-screenshot').checked = feedbackType === 'bug';
+    document.getElementById('feedback-screenshot-section').style.display = feedbackType === 'bug' ? '' : 'none';
+  });
+
+  // Type toggle
+  overlay.querySelectorAll('.feedback-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      overlay.querySelectorAll('.feedback-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      feedbackType = btn.dataset.type;
+      document.getElementById('feedback-screenshot-section').style.display = feedbackType === 'bug' ? '' : 'none';
+    });
+  });
+
+  document.getElementById('btn-feedback-cancel').addEventListener('click', () => {
+    overlay.style.display = 'none';
+  });
+
+  document.getElementById('btn-feedback-send').addEventListener('click', async () => {
+    const text = document.getElementById('feedback-text').value.trim();
+    if (!text) {
+      document.getElementById('feedback-status').textContent = 'Écris quelque chose !';
+      return;
+    }
+
+    const statusEl = document.getElementById('feedback-status');
+    statusEl.textContent = 'Envoi en cours...';
+    document.getElementById('btn-feedback-send').disabled = true;
+
+    try {
+      const data = {
+        type: feedbackType,
+        text: text,
+        uid: firebaseUid || 'anonymous',
+        profileName: ProfileManager.getActive()?.name || 'unknown',
+        appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
+        screen: document.querySelector('.screen.active')?.id || 'unknown',
+        userAgent: navigator.userAgent.substring(0, 200),
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+      };
+
+      // Screenshot capture (for bugs)
+      if (feedbackType === 'bug' && document.getElementById('feedback-include-screenshot').checked) {
+        try {
+          // Hide overlay temporarily for clean screenshot
+          overlay.style.display = 'none';
+          await new Promise(r => setTimeout(r, 100));
+
+          const canvas = await html2canvas(document.body, {
+            scale: 0.5,
+            logging: false,
+            useCORS: true,
+            width: window.innerWidth,
+            height: window.innerHeight,
+          });
+          data.screenshot = canvas.toDataURL('image/jpeg', 0.5);
+          overlay.style.display = 'flex';
+        } catch (e) {
+          // html2canvas not available — use simple DOM snapshot instead
+          overlay.style.display = 'flex';
+          data.screenshot = null;
+          data.screenHTML = document.querySelector('.screen.active')?.innerHTML?.substring(0, 2000) || '';
+        }
+      }
+
+      await db.ref('feedback').push(data);
+      statusEl.textContent = 'Merci ! Ton message a été envoyé 🎉';
+      statusEl.style.color = 'var(--accent-green)';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        document.getElementById('btn-feedback-send').disabled = false;
+      }, 1500);
+    } catch (e) {
+      statusEl.textContent = 'Erreur — réessaie plus tard.';
+      statusEl.style.color = 'var(--error)';
+      document.getElementById('btn-feedback-send').disabled = false;
+    }
+  });
+})();
 
 } // end initApp()
