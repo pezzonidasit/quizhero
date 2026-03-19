@@ -3341,6 +3341,47 @@ body.low-perf-mode .chest-open-overlay .chest-item {
   background: rgba(168, 85, 247, 0.15);
 }
 
+/* ── Revision context expandable ──────────────────────────── */
+.revision-context {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.btn-context-toggle {
+  background: transparent;
+  border: 1.5px solid var(--accent-green, #10b981);
+  color: var(--accent-green, #10b981);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+  text-align: left;
+}
+.btn-context-toggle:active {
+  background: rgba(16, 185, 129, 0.15);
+}
+.btn-context-toggle.open {
+  border-radius: 8px 8px 0 0;
+  border-bottom: none;
+}
+.context-content {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1.5px solid var(--accent-green, #10b981);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  max-height: 250px;
+  overflow-y: auto;
+}
+.context-content strong {
+  color: var(--accent-green, #10b981);
+}
+
 #screen-fiche {
   padding: 0;
   overflow-y: auto;

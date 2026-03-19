@@ -1024,10 +1024,33 @@ function showQuestion() {
   document.getElementById('hint-text').textContent = '';
   document.getElementById('hint-text').classList.remove('visible');
 
-  // Bouton fiche d'aide
+  // Fiche d'aide : expandable inline pour révisions, bouton classique sinon
   const btnFiche = document.getElementById('btn-fiche');
-  if (btnFiche) {
-    btnFiche.style.display = q && q.ficheKey ? '' : 'none';
+  const revContext = document.getElementById('revision-context');
+  const contextContent = document.getElementById('context-content');
+  if (q && q.ficheKey && q.ficheKey.startsWith('_rev_') && window.FICHES && window.FICHES[q.ficheKey]) {
+    // Revision mode: show inline expandable
+    if (btnFiche) btnFiche.style.display = 'none';
+    const fiche = window.FICHES[q.ficheKey];
+    let html = '';
+    if (fiche.intro) html += '<p>' + escapeHtml(fiche.intro) + '</p>';
+    if (fiche.regle) html += '<p><strong>Texte :</strong></p><p>' + escapeHtml(fiche.regle) + '</p>';
+    if (fiche.exemples && fiche.exemples.length > 0) {
+      fiche.exemples.forEach(e => {
+        html += '<p><strong>' + escapeHtml(e.enonce) + '</strong></p><p>' + escapeHtml(e.calcul) + '</p>';
+      });
+    }
+    if (fiche.astuce) html += '<p>💡 ' + escapeHtml(fiche.astuce) + '</p>';
+    contextContent.innerHTML = html;
+    revContext.style.display = '';
+    // Reset collapsed state
+    contextContent.style.display = 'none';
+    document.getElementById('btn-context-toggle').textContent = '📖 Texte de référence ▸';
+    document.getElementById('btn-context-toggle').classList.remove('open');
+  } else {
+    // Normal mode: classic fiche button
+    revContext.style.display = 'none';
+    if (btnFiche) btnFiche.style.display = q && q.ficheKey ? '' : 'none';
   }
 
   state.answered = false;
@@ -1092,6 +1115,16 @@ function showQuestion() {
 
   renderSkipButton();
 }
+
+// ── Revision context toggle ────────────────────────────────────────
+document.getElementById('btn-context-toggle').addEventListener('click', () => {
+  const content = document.getElementById('context-content');
+  const btn = document.getElementById('btn-context-toggle');
+  const isOpen = content.style.display !== 'none';
+  content.style.display = isOpen ? 'none' : '';
+  btn.textContent = isOpen ? '📖 Texte de référence ▸' : '📖 Texte de référence ▾';
+  btn.classList.toggle('open', !isOpen);
+});
 
 // ── Hint System (with free hints support) ─────────────────────────
 document.getElementById('btn-hint').addEventListener('click', () => {
