@@ -442,11 +442,13 @@ async function backupProfile(profileId) {
 
 // ── Recovery Code ──
 
-/** Generate a recovery code: NAME-4digits */
+/** Generate a recovery code: NAME-6alphanum */
 function generateRecoveryCode(name) {
   const cleanName = name.trim().toUpperCase().replace(/[^A-Z]/g, '').substring(0, 6);
-  const digits = String(Math.floor(1000 + Math.random() * 9000));
-  return cleanName + '-' + digits;
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let suffix = '';
+  for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+  return cleanName + '-' + suffix;
 }
 
 /** Save recovery code mapping in Firebase */
