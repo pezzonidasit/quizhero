@@ -3939,7 +3939,7 @@ async function renderAdminFeedback(el) {
            '</div>' +
            '<div style="display:flex;gap:0.5rem;margin-top:0.5rem">' +
              '<input type="text" class="admin-fb-reply-input" placeholder="Répondre..." maxlength="200" style="flex:1">' +
-             '<button class="admin-fb-reply-send btn-small btn-primary">Envoyer</button>' +
+             '<button class="admin-fb-reply-send">Envoyer</button>' +
            '</div>' +
          '</div>';
 

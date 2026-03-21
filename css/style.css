@@ -3365,8 +3365,9 @@ body.low-perf-mode .chest-open-overlay .chest-item {
 }
 .admin-fb-reply-send {
   font-size: 0.9rem; padding: 0.5rem 1.2rem;
-  background: var(--accent) !important; color: var(--bg-dark) !important;
-  border: 2px solid var(--accent) !important; font-weight: 700;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 0.5rem;
+  font-weight: 700; cursor: pointer;
 }
 .btn-danger-small { background: var(--accent-red, #e74c3c); color: white; }
 .admin-fb-reply-sent {
