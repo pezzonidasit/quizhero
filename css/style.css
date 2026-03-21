@@ -3380,7 +3380,6 @@ body.low-perf-mode .chest-open-overlay .chest-item {
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
   pointer-events: none;
 }
-.feedback-fab { position: relative; }
 .inbox-original-msg {
   background: var(--bg-dark); padding: 0.75rem; border-radius: 0.5rem;
   font-size: 0.85rem; color: var(--text-secondary); font-style: italic;
