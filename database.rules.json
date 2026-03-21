@@ -135,7 +135,7 @@
     },
 
     "feedback": {
-      ".read": "root.child('players').child(auth.uid).child('isAdmin').val() === true",
+      ".read": "root.child('players').child(auth.uid).child('isAdmin').val() === true || (auth != null && query.orderByChild == 'uid' && query.equalTo == auth.uid)",
       ".indexOn": ["uid", "timestamp"],
       "$feedbackId": {
         ".read": "data.child('uid').val() === auth.uid",
