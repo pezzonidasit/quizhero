@@ -856,6 +856,10 @@ async function sendAdminReply(feedbackId, replyText) {
   });
 }
 
+async function saveAdminNotes(feedbackId, notes) {
+  await db.ref(`feedback/${feedbackId}/adminNotes`).set(notes || null);
+}
+
 // ── User Inbox ─────────────────────────────────────────────────────
 
 async function getMyFeedbacks() {

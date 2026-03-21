@@ -3385,6 +3385,19 @@ body.low-perf-mode .chest-open-overlay .chest-item {
   padding: 0.4rem 0.6rem; border-radius: 0.5rem; border: 1px solid var(--border);
   background: var(--bg-dark); color: var(--text-primary); font-size: 0.85rem;
 }
+.admin-fb-done { opacity: 0.6; border-left-color: var(--accent-green, #2ecc71); }
+.admin-fb-notes-zone { margin: 0.5rem 0; }
+.admin-fb-notes-input {
+  width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border);
+  background: var(--bg-dark); color: var(--text-primary); font-size: 0.85rem;
+  font-family: inherit; resize: vertical; margin-bottom: 0.3rem;
+}
+.admin-fb-notes-save { margin-top: 0.2rem; }
+.admin-fb-notes-display {
+  background: var(--bg-dark); padding: 0.5rem 0.75rem; border-radius: 0.5rem;
+  font-size: 0.85rem; color: var(--text-secondary); margin: 0.5rem 0;
+  white-space: pre-wrap;
+}
 
 /* --- User Inbox --- */
 .inbox-badge {

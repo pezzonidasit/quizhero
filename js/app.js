@@ -3898,7 +3898,7 @@ async function renderAdminFeedback(el) {
     return;
   }
 
-  const groups = { new: [], implement: [], discard: [] };
+  const groups = { new: [], implement: [], done: [], discard: [] };
   feedbacks.forEach(fb => {
     const s = fb.status || 'new';
     if (groups[s]) groups[s].push(fb);
@@ -3947,11 +3947,20 @@ async function renderAdminFeedback(el) {
     const statusBtns = {
       new: '<button class="admin-fb-action btn-small" data-action="implement">✅ Implémenter</button>' +
            '<button class="admin-fb-action btn-small btn-danger-small" data-action="discard">❌ Discard</button>',
-      implement: '<button class="admin-fb-action btn-small btn-danger-small" data-action="discard">❌ Discard</button>',
+      implement: '<button class="admin-fb-action btn-small" data-action="done">✔️ Done</button>' +
+           '<button class="admin-fb-action btn-small btn-danger-small" data-action="discard">❌ Discard</button>',
+      done: '<button class="admin-fb-action btn-small" data-action="implement">↩️ Réouvrir</button>',
       discard: '<button class="admin-fb-action btn-small" data-action="implement">✅ Implémenter</button>'
     };
 
-    return '<div class="admin-fb-card ' + (s === 'discard' ? 'admin-fb-discarded' : '') + '" data-fb-id="' + fb.id + '">' +
+    var notesHtml = (s === 'implement' || s === 'done')
+      ? '<div class="admin-fb-notes-zone">' +
+          '<textarea class="admin-fb-notes-input" placeholder="Détails d\'implémentation..." rows="2">' + escapeHtml(fb.adminNotes || '') + '</textarea>' +
+          '<button class="admin-fb-notes-save btn-small">💾 Sauver notes</button>' +
+        '</div>'
+      : (fb.adminNotes ? '<div class="admin-fb-notes-display">📋 ' + escapeHtml(fb.adminNotes) + '</div>' : '');
+
+    return '<div class="admin-fb-card ' + (s === 'discard' ? 'admin-fb-discarded' : '') + (s === 'done' ? ' admin-fb-done' : '') + '" data-fb-id="' + fb.id + '">' +
       '<div class="admin-fb-header">' +
         '<span>' + icon + ' <strong>' + name + '</strong></span>' +
         '<span class="admin-fb-time">' + timeAgo(fb.timestamp) + '</span>' +
@@ -3959,6 +3968,7 @@ async function renderAdminFeedback(el) {
       '<p class="admin-fb-text">' + text + '</p>' +
       screenshotHtml +
       '<div class="admin-fb-actions">' + statusBtns[s] + '</div>' +
+      notesHtml +
       replyHtml +
     '</div>';
   }
@@ -3979,6 +3989,7 @@ async function renderAdminFeedback(el) {
   el.innerHTML =
     renderSection('🆕 Nouveau', groups.new, false) +
     renderSection('✅ À implémenter', groups.implement, true) +
+    renderSection('✔️ Done', groups.done, true) +
     renderSection('🗑️ Discard', groups.discard, true);
 
   // Event delegation for actions (cleanup previous listener on re-render)
@@ -3994,6 +4005,18 @@ async function renderAdminFeedback(el) {
       const action = actionBtn.dataset.action;
       await setFeedbackStatus(fbId, action);
       await renderAdminFeedback(el);
+      return;
+    }
+
+    // Save notes
+    const notesBtn = e.target.closest('.admin-fb-notes-save');
+    if (notesBtn) {
+      const textarea = card.querySelector('.admin-fb-notes-input');
+      const notes = textarea?.value?.trim() || '';
+      notesBtn.textContent = '⏳';
+      await saveAdminNotes(fbId, notes);
+      notesBtn.textContent = '✅ Sauvé';
+      setTimeout(function() { notesBtn.textContent = '💾 Sauver notes'; }, 1500);
       return;
     }
 
