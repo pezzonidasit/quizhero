@@ -169,6 +169,29 @@ const MQSync = {
       } catch (e) { /* offline, skip */ }
     }
 
+    // Repair group membership consistency (players/{uid}/groups may be missing after migration)
+    if (firebaseUid) {
+      try {
+        const pGroupsSnap = await db.ref('players/' + firebaseUid + '/groups').once('value');
+        if (!pGroupsSnap.exists()) {
+          const allGroupsSnap = await db.ref('groups').once('value');
+          if (allGroupsSnap.exists()) {
+            const repairs = {};
+            allGroupsSnap.forEach(child => {
+              const g = child.val();
+              if (g.members && g.members[firebaseUid]) {
+                repairs['players/' + firebaseUid + '/groups/' + child.key] = true;
+              }
+            });
+            if (Object.keys(repairs).length > 0) {
+              await db.ref().update(repairs);
+              console.log('Repaired group membership:', Object.keys(repairs).length, 'groups');
+            }
+          }
+        }
+      } catch (e) { /* offline, skip */ }
+    }
+
     // Generate recovery code for existing profiles that don't have one
     const activeId = ProfileManager.getActiveId();
     if (activeId && !ProfileManager.get('recoveryCode', null)) {
