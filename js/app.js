@@ -3366,6 +3366,11 @@ async function renderGroupDetail(code) {
       actHtml += '<button class="btn-primary" onclick="showDashboard(\'' + code + '\')">📊 Dashboard</button>';
     }
 
+    // Homework upload button for parents
+    if (isParent) {
+      actHtml += '<button class="btn-primary" style="margin-top:0.5rem" onclick="document.getElementById(\'homework-overlay\').style.display=\'\'">📷 Envoyer un devoir</button>';
+    }
+
     // Admin-only actions
     if (isAdmin) {
       actHtml += '<button class="btn-danger" style="margin-top:0.5rem" onclick="regenerateCodeAction(\'' + code + '\')">🔄 Régénérer le code</button>';
