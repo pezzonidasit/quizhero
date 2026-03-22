@@ -3682,6 +3682,17 @@ if (joinCode) {
   }
 }
 
+function _refreshGroupBanner() {
+  const noGroupBanner = document.getElementById('no-group-banner');
+  if (!noGroupBanner) return;
+  getMyGroups().then(groups => {
+    if (groups.length > 0) {
+      noGroupBanner.style.display = 'none';
+      document.getElementById('btn-play').parentNode.style.display = '';
+    }
+  }).catch(() => {});
+}
+
 async function _consumePendingJoin() {
   const code = sessionStorage.getItem('pendingJoinCode');
   if (!code) return;
@@ -3690,11 +3701,17 @@ async function _consumePendingJoin() {
     if (!firebaseUid) await firebaseSignIn();
     if (firebaseUid) {
       const memberSnap = await db.ref('groups/' + normalized + '/members/' + firebaseUid).once('value');
-      if (memberSnap.exists()) { sessionStorage.removeItem('pendingJoinCode'); return; }
+      if (memberSnap.exists()) {
+        // Ensure players/{uid}/groups is consistent (may be missing after migration)
+        await db.ref('players/' + firebaseUid + '/groups/' + normalized).set(true);
+        sessionStorage.removeItem('pendingJoinCode');
+        _refreshGroupBanner();
+        return;
+      }
       const result = await joinGroup(normalized);
       sessionStorage.removeItem('pendingJoinCode');
       alert('Groupe "' + result.name + '" rejoint ! 🎉');
-      renderGroupsScreen();
+      _refreshGroupBanner();
     }
   } catch(e) {
     alert('Impossible de rejoindre : ' + e.message);
