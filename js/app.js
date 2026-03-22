@@ -1,6 +1,6 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '6.0';
+const APP_VERSION = '6.1';
 
 // ── HTML Sanitization ────────────────────────────────────────────
 const _escapeDiv = document.createElement('div');
