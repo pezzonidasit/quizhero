@@ -360,6 +360,7 @@ document.getElementById('btn-create-profile').addEventListener('click', () => {
       _consumePendingJoin();
     }).catch(() => {});
   } else {
+    MQSync._pushAll().catch(() => {});
     _consumePendingJoin();
   }
 
