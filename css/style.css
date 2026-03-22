@@ -233,6 +233,7 @@ h2 {
 .settings-toggle-icon { font-size: 1rem; }
 
 .settings-card {
+  position: relative;
   background: var(--bg-card);
   border-radius: var(--radius);
   padding: 24px;

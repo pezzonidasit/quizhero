@@ -486,7 +486,8 @@ async function restoreFromCode(code) {
   // Restore all fields
   const fields = ['xp', 'coins', 'gamesPlayed', 'goodGamesStreak', 'records', 'badges',
     'catStats', 'ownedThemes', 'activeTheme', 'ownedStickers', 'boosts', 'chestsOpened',
-    'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames', 'bossTitles', 'activeTitle'];
+    'freeHints', 'shields', 'defeatedBosses', 'contractsCompleted', 'weeklyXP', 'weeklyGames', 'bossTitles', 'activeTitle',
+    'recoveryCode', 'age', 'catLevel', 'catStreak'];
 
   fields.forEach(f => {
     if (data[f] !== null && data[f] !== undefined) {
@@ -494,14 +495,89 @@ async function restoreFromCode(code) {
     }
   });
 
-  // Update recovery code to point to NEW uid (this device)
+  // Migrate full Firebase identity from old UID to new UID
   if (firebaseUid && firebaseUid !== uid) {
-    await db.ref('recovery/' + code).update({ uid: firebaseUid });
-    // Copy backup to new uid
-    await db.ref('players/' + firebaseUid + '/backup').set(data);
+    try {
+      await migrateUid(uid, firebaseUid);
+      await db.ref('recovery/' + code).update({ uid: firebaseUid });
+    } catch (e) {
+      console.error('UID migration failed:', e);
+      profile._migrationFailed = true;
+    }
   }
 
   return profile;
+}
+
+/** Migrate all Firebase references from oldUid to newUid (used during recovery) */
+async function migrateUid(oldUid, newUid) {
+  if (oldUid === newUid) return;
+  const updates = {};
+
+  // 1. Merge players/{old} into players/{new} key-by-key (preserves any existing newUid data)
+  const playerSnap = await db.ref('players/' + oldUid).once('value');
+  if (playerSnap.exists()) {
+    for (const [key, val] of Object.entries(playerSnap.val())) {
+      updates['players/' + newUid + '/' + key] = val;
+    }
+  }
+
+  // 2. Migrate group memberships (groups data already in playerSnap)
+  const groupsData = playerSnap.exists() && playerSnap.val().groups;
+  if (groupsData) {
+    for (const code of Object.keys(groupsData)) {
+      const gSnap = await db.ref('groups/' + code).once('value');
+      if (!gSnap.exists()) continue;
+      const group = gSnap.val();
+
+      if (group.members && group.members[oldUid] !== undefined) {
+        updates['groups/' + code + '/members/' + oldUid] = null;
+        updates['groups/' + code + '/members/' + newUid] = true;
+      }
+      if (group.dashboard && group.dashboard[oldUid] !== undefined) {
+        updates['groups/' + code + '/dashboard/' + newUid] = group.dashboard[oldUid];
+        updates['groups/' + code + '/dashboard/' + oldUid] = null;
+      }
+      if (group.parents && group.parents[oldUid] !== undefined) {
+        updates['groups/' + code + '/parents/' + oldUid] = null;
+        updates['groups/' + code + '/parents/' + newUid] = true;
+      }
+      if (group.parentRequests && group.parentRequests[oldUid] !== undefined) {
+        updates['groups/' + code + '/parentRequests/' + newUid] = group.parentRequests[oldUid];
+        updates['groups/' + code + '/parentRequests/' + oldUid] = null;
+      }
+      if (group.createdBy === oldUid) {
+        updates['groups/' + code + '/createdBy'] = newUid;
+      }
+    }
+  }
+
+  // 3. Migrate leaderboard
+  const lbSnap = await db.ref('leaderboard/weekly/' + oldUid).once('value');
+  if (lbSnap.exists()) {
+    updates['leaderboard/weekly/' + newUid] = lbSnap.val();
+    updates['leaderboard/weekly/' + oldUid] = null;
+  }
+
+  // 4. Migrate riddles (query before the atomic write)
+  const riddleSnap = await db.ref('riddles').orderByChild('createdBy').equalTo(oldUid).once('value');
+  if (riddleSnap.exists()) {
+    riddleSnap.forEach(child => { updates['riddles/' + child.key + '/createdBy'] = newUid; });
+  }
+
+  // 5. Migrate homeworkUploads parentUid
+  const hwSnap = await db.ref('homeworkUploads').orderByChild('parentUid').equalTo(oldUid).once('value');
+  if (hwSnap.exists()) {
+    hwSnap.forEach(child => { updates['homeworkUploads/' + child.key + '/parentUid'] = newUid; });
+  }
+
+  // 6. Delete old player node
+  updates['players/' + oldUid] = null;
+
+  // 7. Single atomic multi-path update
+  await db.ref().update(updates);
+
+  console.log('UID migrated:', oldUid, '->', newUid);
 }
 
 /** Admin: delete a player and remove from all their groups */

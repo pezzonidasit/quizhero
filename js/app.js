@@ -317,11 +317,27 @@ document.getElementById('btn-recover-profile').addEventListener('click', async (
   try {
     if (!firebaseUid) await firebaseSignIn();
     const profile = await restoreFromCode(code);
-    alert('Profil de ' + profile.name + ' restauré !');
+    if (profile._migrationFailed) {
+      alert('Profil de ' + profile.name + ' restauré, mais les groupes n\'ont pas pu être transférés. Rejoins-les à nouveau.');
+    } else {
+      alert('Profil de ' + profile.name + ' restauré !');
+    }
     selectProfile(profile.id);
   } catch(e) {
     alert('Erreur : ' + e.message);
   }
+});
+
+document.getElementById('btn-force-update').addEventListener('click', async () => {
+  if (!confirm('Forcer la mise à jour ? L\'app va redémarrer.')) return;
+  try {
+    const [regs, keys] = await Promise.all([
+      navigator.serviceWorker.getRegistrations(),
+      caches.keys()
+    ]);
+    await Promise.all([...regs.map(r => r.unregister()), ...keys.map(k => caches.delete(k))]);
+  } catch (e) { /* no SW support */ }
+  location.reload();
 });
 
 function renderThemePicker() {
@@ -353,7 +369,10 @@ document.getElementById('btn-create-profile').addEventListener('click', () => {
   if (!firebaseUid) {
     firebaseSignIn().then(() => {
       MQSync._pushAll().catch(() => {});
+      _consumePendingJoin();
     }).catch(() => {});
+  } else {
+    _consumePendingJoin();
   }
 
   // V4: Generate and save recovery code
@@ -412,6 +431,7 @@ function selectProfile(id) {
     renderRegularityStreak();
     checkLoginReward();
     if (typeof checkInboxOnLaunch === 'function') checkInboxOnLaunch();
+    _consumePendingJoin();
   }
 }
 
@@ -3650,18 +3670,31 @@ const joinCode = urlParams.get('join');
 if (joinCode) {
   // Clean URL
   window.history.replaceState({}, '', window.location.pathname);
-  // Wait for Firebase auth then join
-  setTimeout(async () => {
+  // Store for after profile creation (if no profile yet)
+  sessionStorage.setItem('pendingJoinCode', joinCode);
+  // If already signed in with a profile, join immediately
+  if (firebaseUid && ProfileManager.getActiveId()) {
+    _consumePendingJoin();
+  }
+}
+
+async function _consumePendingJoin() {
+  const code = sessionStorage.getItem('pendingJoinCode');
+  if (!code) return;
+  const normalized = code.toUpperCase().trim();
+  try {
     if (!firebaseUid) await firebaseSignIn();
     if (firebaseUid) {
-      try {
-        const result = await joinGroup(joinCode);
-        alert('Groupe "' + result.name + '" rejoint ! 🎉');
-      } catch(e) {
-        alert('Impossible de rejoindre : ' + e.message);
-      }
+      const memberSnap = await db.ref('groups/' + normalized + '/members/' + firebaseUid).once('value');
+      if (memberSnap.exists()) { sessionStorage.removeItem('pendingJoinCode'); return; }
+      const result = await joinGroup(normalized);
+      sessionStorage.removeItem('pendingJoinCode');
+      alert('Groupe "' + result.name + '" rejoint ! 🎉');
+      renderGroupsScreen();
     }
-  }, 2000);
+  } catch(e) {
+    alert('Impossible de rejoindre : ' + e.message);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -3685,7 +3718,7 @@ document.getElementById('btn-admin-back').addEventListener('click', () => {
   showScreen('screen-home');
 });
 
-document.getElementById('btn-force-update').addEventListener('click', async () => {
+document.getElementById('btn-admin-force-update').addEventListener('click', async () => {
   if (!confirm('Forcer la mise à jour sur TOUS les appareils ? Ils rechargeront au prochain lancement.')) return;
   try {
     const snap = await db.ref('app_version').once('value');
