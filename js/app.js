@@ -1,6 +1,6 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '6.3.1';
+const APP_VERSION = '6.4.0';
 
 // ── HTML Sanitization ────────────────────────────────────────────
 const _escapeDiv = document.createElement('div');
@@ -522,6 +522,7 @@ function updateProfileHeader() {
   // V8: Pet + Daily Question
   renderPetZone();
   checkDailyQuestion();
+  renderDailyQuests();
 
   // V4: Admin button only visible for admins (set manually in Firebase)
   const adminBtn = document.getElementById('btn-admin');
@@ -766,6 +767,22 @@ function startGame() {
   state.questions.push(generateQuestion(state.category, getSubLevel(firstCat), null));
 
   showScreen('screen-game');
+
+  // Daily quest: try_new_cat
+  if (state.category !== 'all') {
+    const todayPlayed = ProfileManager.get('dailyCatsPlayed', { date: '', cats: [] });
+    const today = getTodayStr();
+    if (todayPlayed.date !== today) {
+      todayPlayed.date = today;
+      todayPlayed.cats = [state.category];
+      ProfileManager.set('dailyCatsPlayed', todayPlayed);
+      updateQuestProgress('try_new_cat', 1);
+    } else if (!todayPlayed.cats.includes(state.category)) {
+      todayPlayed.cats.push(state.category);
+      ProfileManager.set('dailyCatsPlayed', todayPlayed);
+      updateQuestProgress('try_new_cat', 1);
+    }
+  }
 
   if (state.timerEnabled) {
     document.getElementById('timer-stat').style.display = '';
@@ -1304,6 +1321,13 @@ function processAnswer(isCorrect, q) {
 
   if (state.currentIndex >= state.questionCount - 1) {
     document.getElementById('btn-next').textContent = 'Voir les résultats';
+  }
+
+  // Daily quest: answer_count
+  updateQuestProgress('answer_count', 1);
+  // Daily quest: use_hint (used hint + correct)
+  if (isCorrect && state.hintUsed) {
+    updateQuestProgress('use_hint', 1);
   }
 }
 
@@ -1889,6 +1913,20 @@ function endGame() {
 
   saveProfileData();
 
+  // ── Daily quests tracking ──
+  const playedCategory = state.category === 'all'
+    ? Object.keys(state.categoryStats)[0] || 'calcul'
+    : state.category;
+
+  updateQuestProgress('play_games', 1);
+  updateQuestProgress('play_category', 1, { category: playedCategory });
+  updateQuestProgress('correct_streak', state.bestStreakThisGame);
+
+  const isPerfect = state.bestStreakThisGame >= state.questionCount && state.score > 0;
+  if (isPerfect) {
+    updateQuestProgress('perfect_game', 1);
+  }
+
   // Rewards pipeline — NB: rewards object is mutated by boost and pet effects
   const { rewards, avgLevel, oldXP } = computeRewards();
   applyBoostRewards(rewards, avgLevel);
@@ -1962,6 +2000,7 @@ document.getElementById('btn-menu').addEventListener('click', () => {
   } else {
     updateProfileHeader();
     renderRecords();
+    renderDailyQuests();
     checkRevisionSets();
     if (shouldTriggerBoss()) {
       triggerBoss();
@@ -1971,6 +2010,66 @@ document.getElementById('btn-menu').addEventListener('click', () => {
     }
   }
 });
+
+// ── Daily Quests UI ─────────────────────────────────────────────────────────
+function renderDailyQuests() {
+  const panel = document.getElementById('daily-quests-panel');
+  if (!panel) return;
+
+  const data = getDailyQuests();
+  const streak = getDailyStreak();
+
+  let html = '<div class="dq-header">';
+  html += '<h3 class="dq-title">📋 Quêtes du jour</h3>';
+  if (streak.count > 0) {
+    html += '<span class="dq-streak">🔥 ' + streak.count + ' jour' + (streak.count > 1 ? 's' : '') + '</span>';
+  }
+  html += '</div>';
+
+  data.quests.forEach((quest, i) => {
+    const pct = Math.min(100, Math.round((quest.progress / quest.target) * 100));
+    html += '<div class="dq-quest' + (quest.done ? ' dq-done' : '') + '">';
+    html += '<span class="dq-icon">' + quest.icon + '</span>';
+    html += '<div class="dq-info">';
+    html += '<span class="dq-text">' + quest.text + '</span>';
+    html += '<div class="dq-bar-container"><div class="dq-bar" style="width:' + pct + '%"></div></div>';
+    html += '</div>';
+    html += '<span class="dq-status">' + (quest.done ? '✅' : quest.progress + '/' + quest.target) + '</span>';
+    html += '<span class="dq-reward">🪙 ' + quest.reward + '</span>';
+    html += '</div>';
+  });
+
+  // 3/3 bonus chest button
+  if (data.allDone && !data.chestClaimed) {
+    html += '<button class="btn-primary dq-chest-btn" id="btn-dq-chest">🎁 Ouvrir le coffre du jour !</button>';
+  } else if (data.chestClaimed) {
+    html += '<div class="dq-complete">✨ Quêtes terminées — reviens demain !</div>';
+  }
+
+  panel.innerHTML = html;
+
+  // Chest button handler
+  const chestBtn = document.getElementById('btn-dq-chest');
+  if (chestBtn) {
+    chestBtn.addEventListener('click', () => {
+      const result = claimDailyChest();
+      if (result) {
+        // Show sticker toasts
+        result.stickerRewards.forEach(stk => {
+          const toast = document.createElement('div');
+          toast.className = 'coin-toast mastery-toast';
+          toast.textContent = stk.icon + ' ' + stk.name + ' !';
+          document.body.appendChild(toast);
+          setTimeout(() => toast.remove(), 4000);
+        });
+        // Show chest
+        showChest({ id: 'daily_' + getTodayStr(), tier: result.tier });
+        // Re-render after chest
+        setTimeout(() => renderDailyQuests(), 500);
+      }
+    });
+  }
+}
 
 // ── Shop Screen ────────────────────────────────────────────────────
 document.getElementById('btn-shop').addEventListener('click', () => { renderShop(); showScreen('screen-shop'); });
@@ -2199,6 +2298,7 @@ document.getElementById('btn-chest-close').addEventListener('click', () => {
   } else {
     updateProfileHeader();
     renderRecords();
+    renderDailyQuests();
     showScreen('screen-home');
   }
 });

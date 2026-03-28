@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quizhero-v58';
+const CACHE_NAME = 'quizhero-v59';
 const ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const ASSETS = [
   './js/firebase.js',
   './js/sync.js',
   './js/fiches.js',
+  './js/dailyQuests.js',
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
 ];

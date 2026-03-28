@@ -3707,3 +3707,90 @@ body.low-perf-mode .chest-open-overlay .chest-item {
   font-size: 0.85rem;
   margin-left: 0.3rem;
 }
+
+/* ── Daily Quests ─────────────────────────────────────────────────── */
+.daily-quests-panel {
+  width: 100%;
+  margin: 0.75rem 0;
+}
+.dq-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.dq-title {
+  font-size: 1rem;
+  margin: 0;
+  color: var(--text-primary);
+}
+.dq-streak {
+  font-size: 0.85rem;
+  color: var(--accent-orange);
+  font-weight: 600;
+}
+.dq-quest {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-card);
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+  transition: opacity 0.3s;
+}
+.dq-quest.dq-done {
+  opacity: 0.6;
+}
+.dq-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.dq-info {
+  flex: 1;
+  min-width: 0;
+}
+.dq-text {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+.dq-bar-container {
+  height: 4px;
+  background: var(--bg-dark);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.dq-bar {
+  height: 100%;
+  background: var(--accent-green);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.dq-done .dq-bar {
+  background: var(--accent-blue);
+}
+.dq-status {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  min-width: 2rem;
+  text-align: right;
+}
+.dq-reward {
+  font-size: 0.7rem;
+  color: var(--accent-yellow, #ffd700);
+  flex-shrink: 0;
+}
+.dq-chest-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  animation: pulse 1.5s infinite;
+}
+.dq-complete {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 0.5rem 0;
+}
