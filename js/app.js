@@ -1,6 +1,6 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '6.1';
+const APP_VERSION = '6.1.1';
 
 // ── HTML Sanitization ────────────────────────────────────────────
 const _escapeDiv = document.createElement('div');
@@ -4461,6 +4461,8 @@ function renderSkipButton() {
       if (state.currentIndex >= state.questionCount) {
         endGame();
       } else {
+        const lastCat = state.questions[state.currentIndex - 1]?.category;
+        state.questions.push(generateQuestion(state.category, getSubLevel(lastCat || state.category), lastCat));
         showQuestion();
       }
     }

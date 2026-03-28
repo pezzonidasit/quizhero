@@ -6,3 +6,4 @@ playwright.config.js
 boss-*.html
 CLAUDE.md
 docs/
+firebase-sa.json
