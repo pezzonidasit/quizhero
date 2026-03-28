@@ -312,6 +312,29 @@ const THEMES = {
     }
   },
 
+  // === EPIC THEME (One Piece) ===
+  onepiece: {
+    id: 'onepiece',
+    name: 'Grand Line',
+    price: 900,
+    rarity: 'epic',
+    preview: '🏴‍☠️',
+    vars: {
+      '--bg-dark': '#0a1628',
+      '--bg-card': '#142238',
+      '--bg-card-hover': '#1c3050',
+      '--text-primary': '#f0e6d0',
+      '--text-secondary': '#7ab0d4',
+      '--accent-blue': '#2196f3',
+      '--accent-green': '#4caf50',
+      '--accent-orange': '#ff6d00',
+      '--accent-violet': '#9c27b0',
+      '--accent-red': '#d32f2f',
+      '--accent-yellow': '#ffd600'
+    },
+    pattern: 'onepiece'
+  },
+
   // === FREE THEME (chat) ===
   chat: {
     id: 'chat',
@@ -351,19 +374,21 @@ function applyTheme(themeId) {
     root.setProperty(prop, value);
   }
 
-  // Pattern overlay (e.g. paw prints for chat theme)
+  // Pattern overlays
   const isCat = theme.pattern === 'paws';
+  const isOP = theme.pattern === 'onepiece';
   document.body.classList.toggle('theme-pattern-paws', isCat);
+  document.body.classList.toggle('theme-pattern-onepiece', isOP);
 
-  // Cat theme decorations on static elements
+  // Theme decorations on static elements
   const shopBtn = document.getElementById('btn-shop');
-  if (shopBtn) shopBtn.textContent = isCat ? '😼' : '🛒';
+  if (shopBtn) shopBtn.textContent = isCat ? '😼' : isOP ? '🏴‍☠️' : '🛒';
 
   const homeTitle = document.querySelector('#screen-home > h1');
-  if (homeTitle) homeTitle.textContent = isCat ? '🐱 QuizHero' : 'QuizHero';
+  if (homeTitle) homeTitle.textContent = isCat ? '🐱 QuizHero' : isOP ? '🏴‍☠️ QuizHero' : 'QuizHero';
 
   const endTitle = document.querySelector('#screen-end > h2');
-  if (endTitle) endTitle.textContent = isCat ? '😸 Partie terminée !' : '🎉 Partie terminée !';
+  if (endTitle) endTitle.textContent = isCat ? '😸 Partie terminée !' : isOP ? '☠️ Partie terminée !' : '🎉 Partie terminée !';
 }
 
 /**
