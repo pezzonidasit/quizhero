@@ -3848,3 +3848,553 @@ body.low-perf-mode .chest-open-overlay .chest-item {
   color: var(--text-secondary);
   padding: 0.5rem 0;
 }
+
+/* ── Adventure Mode ─────────────────────────────────────────── */
+
+.btn-adventure {
+  background: linear-gradient(135deg, #ff6b35, #f7931a);
+  color: #fff;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 12px;
+  width: 100%;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-adventure:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5); }
+.btn-adventure:active { transform: translateY(0); }
+
+.adventure-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+.adventure-header h2 { margin: 0; flex: 1; text-align: center; }
+
+/* ── Map — Circular Layout ────────────────────────────────────── */
+.adventure-map {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 100%; /* square aspect ratio */
+  max-width: 500px;
+  margin: 10px auto;
+}
+
+/* Center Master Node */
+.map-master {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-bg, #16213e);
+  border: 3px solid rgba(255, 255, 255, 0.08);
+  z-index: 2;
+  cursor: not-allowed;
+  transition: all 0.3s;
+}
+.map-master.locked {
+  opacity: 0.4;
+  filter: grayscale(0.6);
+}
+.map-master.ready {
+  border-color: #e040fb;
+  box-shadow: 0 0 25px rgba(224, 64, 251, 0.4);
+  animation: pulse 1.5s infinite;
+  cursor: pointer;
+  opacity: 1;
+  filter: none;
+}
+.map-master-icon { font-size: 2.5rem; }
+.map-master-name { font-size: 0.75rem; font-weight: 700; color: var(--text-secondary, #aaa); margin-top: 2px; letter-spacing: 2px; }
+.map-master.ready .map-master-name { color: #e040fb; }
+
+/* Connection lines from center to nodes */
+.map-connection {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  transform-origin: 0 50%;
+  z-index: 0;
+}
+.map-connection.active {
+  background: rgba(78, 205, 196, 0.25);
+}
+.map-connection.completed {
+  background: rgba(255, 215, 0, 0.3);
+}
+
+/* Zone nodes in circle */
+.map-node {
+  position: absolute;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-bg, #16213e);
+  border: 2.5px solid var(--border-color, #1a1a2e);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
+  z-index: 1;
+  /* Center point for positioning */
+  transform: translate(-50%, -50%);
+}
+
+.map-node.locked {
+  opacity: 0.35;
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+}
+
+.map-node.unlocked {
+  border-color: #f7931a;
+  animation: pulse 2s infinite;
+}
+
+.map-node.in-progress {
+  border-color: #4ecdc4;
+  box-shadow: 0 0 12px rgba(78, 205, 196, 0.3);
+}
+
+.map-node.completed {
+  border-color: #ffd700;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
+}
+
+.map-node:not(.locked):hover {
+  transform: translate(-50%, -50%) scale(1.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.map-node-icon { font-size: 2rem; line-height: 1; }
+.map-node-name {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-primary, #e0e0e0);
+  margin-top: 3px;
+  line-height: 1.15;
+  max-width: 80px;
+}
+.map-node-stars {
+  font-size: 0.5rem;
+  color: #ffd700;
+  margin-top: 2px;
+  letter-spacing: -1px;
+}
+
+/* ── Dungeon Path ─────────────────────────────────────────────── */
+.dungeon-path {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 40px;
+  gap: 0;
+  overflow-y: auto;
+}
+
+.dungeon-zone-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.dungeon-zone-icon { font-size: 3rem; }
+.dungeon-zone-name { font-size: 0.85rem; color: var(--text-secondary, #aaa); font-weight: 600; }
+
+/* Connector line between nodes */
+.dungeon-connector {
+  width: 3px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.3s;
+}
+.dungeon-connector.active {
+  background: linear-gradient(180deg, #4ecdc4, #4ecdc4);
+  box-shadow: 0 0 6px rgba(78, 205, 196, 0.3);
+}
+.dungeon-connector.completed {
+  background: #ffd700;
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.3);
+}
+
+/* Star node */
+.dungeon-node {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
+  position: relative;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  background: var(--card-bg, #16213e);
+}
+.dungeon-node:hover:not(.locked) {
+  transform: scale(1.15);
+}
+
+.dungeon-node.completed {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
+}
+.dungeon-node.current {
+  border-color: #4ecdc4;
+  background: rgba(78, 205, 196, 0.1);
+  box-shadow: 0 0 16px rgba(78, 205, 196, 0.3);
+  animation: pulse 2s infinite;
+}
+.dungeon-node.locked {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.dungeon-node-label {
+  position: absolute;
+  right: -70px;
+  font-size: 0.7rem;
+  color: var(--text-secondary, #aaa);
+  white-space: nowrap;
+  width: 65px;
+}
+.dungeon-node:nth-child(odd) .dungeon-node-label {
+  right: auto;
+  left: -70px;
+  text-align: right;
+}
+
+/* Boss node */
+.dungeon-boss-node {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  cursor: pointer;
+  border: 3px solid rgba(255, 68, 68, 0.2);
+  background: var(--card-bg, #16213e);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.dungeon-boss-node.locked {
+  opacity: 0.35;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+.dungeon-boss-node.ready {
+  border-color: #ff4444;
+  background: rgba(255, 68, 68, 0.08);
+  box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+  animation: pulse 1.5s infinite;
+}
+.dungeon-boss-node.ready:hover {
+  transform: scale(1.1);
+}
+.dungeon-boss-node.defeated {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.dungeon-boss-label {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.dungeon-boss-label.locked { color: rgba(255, 255, 255, 0.3); }
+.dungeon-boss-label.ready { color: #ff6b6b; }
+.dungeon-boss-label.defeated { color: #ffd700; }
+
+.dungeon-boss-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Expedition limit */
+.dungeon-limit-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #aaa);
+}
+.dungeon-limit-icon { font-size: 1.2rem; }
+
+/* Exhausted node (no expeditions left) */
+.dungeon-node.exhausted {
+  opacity: 0.4;
+  cursor: not-allowed;
+  animation: none !important;
+}
+
+.btn-boss-fight {
+  background: linear-gradient(135deg, #ff4444, #cc0000) !important;
+  box-shadow: 0 4px 15px rgba(255, 68, 68, 0.4);
+}
+
+/* ── Adventure Boss Arena ─────────────────────────────────────── */
+.adventure-boss-arena {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px;
+  gap: 20px;
+  min-height: 100vh;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 30%, rgba(255, 50, 50, 0.08) 0%, transparent 70%);
+}
+
+.boss-zone-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 30px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 68, 68, 0.15);
+}
+
+.adventure-boss-emoji {
+  font-size: 5rem;
+  animation: float 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 12px rgba(255, 68, 68, 0.3));
+}
+.adventure-boss-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #ff6b6b;
+  text-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+  letter-spacing: 0.5px;
+}
+
+.adventure-boss-hp-bar {
+  width: 260px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 68, 68, 0.2);
+}
+.adventure-boss-hp-bar .hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #cc0000, #ff4444, #ff6b6b);
+  transition: width 0.4s ease;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
+}
+.adventure-boss-hp-bar .hp-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.boss-error-pips {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.boss-error-pips::before {
+  content: '❤️ ';
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  margin-right: 2px;
+}
+.boss-error-pip {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 68, 68, 0.5);
+  background: rgba(255, 68, 68, 0.1);
+  transition: all 0.3s;
+}
+.boss-error-pip.used {
+  background: #ff4444;
+  border-color: #ff4444;
+  box-shadow: 0 0 8px rgba(255, 68, 68, 0.5);
+}
+
+/* ── Critical Hit Bar ─────────────────────────────────────────── */
+.boss-critical-bar-container {
+  width: 90%;
+  max-width: 340px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.1);
+}
+
+.critical-bar {
+  width: 100%;
+  height: 14px;
+  background: linear-gradient(90deg,
+    #ffd700 0%, #ffaa00 20%,
+    #888 20%, #888 55%,
+    #444 55%, #333 100%);
+  border-radius: 7px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.critical-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  transition: width 0.1s linear;
+}
+
+.critical-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  margin-top: 6px;
+  padding: 0 2px;
+}
+.critical-label.gold {
+  color: #ffd700;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+}
+.critical-label.normal { color: #888; }
+
+.boss-question-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.boss-question-zone .answer-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  background: var(--bg-dark);
+  border: 2px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Quicksand', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.boss-question-zone .answer-input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 12px rgba(74, 158, 255, 0.2);
+}
+.boss-question-zone .answer-input::placeholder {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+.boss-question-zone .btn-primary {
+  width: 100%;
+}
+.boss-question-text {
+  font-size: 1.1rem;
+  text-align: center;
+  font-weight: 600;
+  min-height: 50px;
+  line-height: 1.5;
+  color: var(--text-primary, #e0e0e0);
+}
+
+/* ── Boss End Screen ──────────────────────────────────────────── */
+#screen-adventure-boss-end {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 24px;
+}
+#screen-adventure-boss-end h2 {
+  font-size: 2rem;
+  margin: 8px 0;
+}
+#screen-adventure-boss-end .adventure-boss-emoji {
+  font-size: 5rem;
+}
+.boss-end-rewards {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+  font-size: 1.1rem;
+}
+.boss-end-rewards p {
+  margin: 4px 0;
+}
+
+/* ── Adventure end screen info ────────────────────────────────── */
+.adventure-star-earned { color: #ffd700; font-weight: 700; font-size: 1.1rem; }
+.adventure-no-star { color: #aaa; font-style: italic; }
+.adventure-boss-unlocked { color: #ff4444; font-weight: 700; font-size: 1.1rem; }
+
+/* ── Screen shake on critical ─────────────────────────────────── */
+@keyframes screenShake {
+  0%, 100% { transform: translate(0); }
+  10% { transform: translate(-5px, -3px); }
+  20% { transform: translate(5px, 3px); }
+  30% { transform: translate(-3px, 5px); }
+  40% { transform: translate(3px, -5px); }
+  50% { transform: translate(-5px, 3px); }
+  60% { transform: translate(5px, -3px); }
+  70% { transform: translate(-3px, -5px); }
+  80% { transform: translate(3px, 5px); }
+  90% { transform: translate(-5px, -3px); }
+}
+.screen-shake { animation: screenShake 0.4s ease; }
+
+@keyframes criticalFlash {
+  0% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+  50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.6); }
+  100% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+}
+.critical-impact { animation: criticalFlash 0.5s ease; }

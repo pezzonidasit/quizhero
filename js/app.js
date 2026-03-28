@@ -1,6 +1,6 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '6.4.2';
+const APP_VERSION = '7.0.0';
 
 // ── Cat Theme Helper ────────────────────────────────────────────
 function isCatTheme() {
@@ -72,6 +72,11 @@ const state = {
   // V3 — Contrat
   activeContract: null,
   contractGameResult: null,
+  // V8a — Adventure Mode
+  adventureMode: false,
+  adventureExpResult: null,
+  adventureBossQuestions: [],
+  adventureBossQIndex: 0,
   // Fiches d'aide
   timerPaused: false,
   timerPausedAt: null,
@@ -198,6 +203,10 @@ const screenBackMap = {
   'screen-duel-join': 'screen-home',
   'screen-duel-fight': 'screen-home',
   'screen-duel-end': 'screen-home',
+  'screen-adventure-map': 'screen-home',
+  'screen-adventure-zone': 'screen-adventure-map',
+  'screen-adventure-boss': 'screen-adventure-zone',
+  'screen-adventure-boss-end': 'screen-adventure-zone',
 };
 
 window.addEventListener('popstate', (e) => {
@@ -741,6 +750,10 @@ function startGame() {
   state.timerPausedAt = null;
   state.ficheReturnScreen = 'screen-game';
   state.gameStartTime = Date.now();
+  // Reset adventure mode unless explicitly set before calling startGame
+  if (!state.adventureMode) {
+    state.adventureExpResult = null;
+  }
 
   // Consume active boost from inventory
   if (state.activeBoost) {
@@ -1827,6 +1840,18 @@ function renderEndScreen(isNewRecord, rewards, oldXP, finalXP, gamesPlayed, ches
     }
   }
 
+  // Adventure expedition result
+  const advInfoEl = document.getElementById('end-adventure-info');
+  if (advInfoEl) {
+    if (state.adventureMode && state.adventureExpResult) {
+      const r = state.adventureExpResult;
+      advInfoEl.innerHTML = (r.starAwarded ? '<p class="adventure-star-earned">⭐ +1 étoile !</p>' : '<p class="adventure-no-star">Pas d\'étoile cette fois...</p>')
+        + (r.bossUnlocked ? '<p class="adventure-boss-unlocked">⚔️ Boss débloqué !</p>' : '');
+    } else {
+      advInfoEl.innerHTML = '';
+    }
+  }
+
   // Majestueux notification
   const majEl = document.getElementById('pet-majestueux-display');
   if (state.pendingMajReward && majEl) {
@@ -1952,6 +1977,12 @@ function endGame() {
   applyPetEffects(rewards);
   const { gamesPlayed, finalXP, chestWaiting } = updateGameStreak();
 
+  // Adventure mode: complete expedition
+  if (state.adventureMode && _adventureZoneId) {
+    const expResult = completeExpedition(state.score, state.questionCount, _adventureZoneId);
+    state.adventureExpResult = expResult;
+  }
+
   // Render
   renderEndScreen(isNewRecord, rewards, oldXP, finalXP, gamesPlayed, chestWaiting);
   evaluateContract();
@@ -1961,9 +1992,16 @@ function endGame() {
 
   showScreen('screen-end');
 
-  // Track games since boss
-  state.gamesSinceBoss++;
-  saveBossState();
+  // Keep adventure zone for replay, reset mode flag after replay check
+  state._adventureReturnZone = state.adventureMode ? _adventureZoneId : null;
+
+  // Track games since boss (skip in adventure mode — adventure has its own bosses)
+  if (!state.adventureMode) {
+    state.gamesSinceBoss++;
+    saveBossState();
+  }
+
+  state.adventureMode = false;
 }
 
 // ── Replay / Menu ──────────────────────────────────────────────────
@@ -1971,6 +2009,17 @@ document.getElementById('btn-replay').addEventListener('click', () => {
   // Revision replay: restart same set
   if (state.revisionMode && state.revisionSetId) {
     startRevisionGame(state.revisionSetId);
+    return;
+  }
+  // Adventure replay: go back to zone detail
+  if (state._adventureReturnZone) {
+    const zoneId = state._adventureReturnZone;
+    state._adventureReturnZone = null;
+    if (state.pendingChests && state.pendingChests.length > 0) {
+      state.replayAfterChests = false;
+      showChest(state.pendingChests.shift());
+    }
+    openZoneDetail(zoneId);
     return;
   }
   if (state.pendingChests && state.pendingChests.length > 0) {
@@ -2089,6 +2138,370 @@ function renderDailyQuests() {
     });
   }
 }
+
+// ── Adventure Mode ─────────────────────────────────────────────
+let _adventureZoneId = null;
+
+document.getElementById('btn-adventure')?.addEventListener('click', () => {
+  // Check star decay on map open
+  const decayed = checkStarDecay();
+  showScreen('screen-adventure-map');
+  requestAnimationFrame(() => {
+    renderAdventureMap();
+    // Show decay notification if stars were lost
+    if (decayed.length > 0) {
+      const names = decayed.map(d => d.name).filter((v, i, a) => a.indexOf(v) === i);
+      const msg = `⚠️ Tu n'as pas joué depuis longtemps...\n${names.join(', ')} : -${decayed.length} étoile${decayed.length > 1 ? 's' : ''}`;
+      setTimeout(() => alert(msg), 300);
+    }
+  });
+});
+document.getElementById('btn-adventure-back')?.addEventListener('click', () => {
+  showScreen('screen-home');
+});
+document.getElementById('btn-zone-back')?.addEventListener('click', () => {
+  showScreen('screen-adventure-map');
+  requestAnimationFrame(() => renderAdventureMap());
+});
+
+function renderAdventureMap() {
+  const adv = initAdventure();
+  const mapEl = document.getElementById('adventure-map');
+  if (!mapEl) return;
+
+  const order = ['calcul', 'logique', 'geometrie', 'geographie', 'fractions', 'conjugaison', 'mesures', 'ouvert'];
+  // Use actual container size (padding-bottom: 100% makes it square)
+  const w = mapEl.offsetWidth;
+  const h = w; // square
+  const cx = w / 2, cy = h / 2;
+  const radius = cx * 0.68;
+
+  // Check if all bosses defeated → master unlocked
+  const allDefeated = order.every(z => adv.zones[z].bossDefeated);
+
+  let html = '';
+
+  // Connection lines + zone nodes
+  order.forEach((zoneId, i) => {
+    const zone = adv.zones[zoneId];
+    const def = ADVENTURE_ZONES[zoneId];
+    const angle = (i * 360 / order.length) - 90; // start from top
+    const rad = angle * Math.PI / 180;
+    const x = cx + radius * Math.cos(rad);
+    const y = cy + radius * Math.sin(rad);
+
+    let stateClass = 'locked';
+    if (zone.bossDefeated) stateClass = 'completed';
+    else if (zone.stars > 0) stateClass = 'in-progress';
+    else if (zone.unlocked) stateClass = 'unlocked';
+
+    const connClass = zone.bossDefeated ? 'completed' : zone.unlocked ? 'active' : '';
+    const starsStr = zone.stars > 0 ? '⭐'.repeat(Math.min(zone.stars, 5)) : '';
+
+    // Connection line from center
+    html += `<div class="map-connection ${connClass}" style="transform: rotate(${angle}deg)"></div>`;
+
+    // Zone node
+    html += `<div class="map-node ${stateClass}" data-zone="${zoneId}" style="left:${x}px;top:${y}px">
+      <div class="map-node-icon">${def.icon}</div>
+      <div class="map-node-name">${def.name}</div>
+      ${starsStr ? `<div class="map-node-stars">${starsStr}</div>` : ''}
+    </div>`;
+  });
+
+  // Master node in center
+  const masterClass = allDefeated ? 'ready' : 'locked';
+  html += `<div class="map-master ${masterClass}">
+    <div class="map-master-icon">👑</div>
+    <div class="map-master-name">MASTER</div>
+  </div>`;
+
+  mapEl.innerHTML = html;
+
+  // Click handlers
+  mapEl.querySelectorAll('.map-node:not(.locked)').forEach(node => {
+    node.addEventListener('click', () => {
+      openZoneDetail(node.dataset.zone);
+    });
+  });
+}
+
+function openZoneDetail(zoneId) {
+  const adv = getAdventure();
+  const zone = adv.zones[zoneId];
+  const def = ADVENTURE_ZONES[zoneId];
+  _adventureZoneId = zoneId;
+
+  document.getElementById('zone-title').textContent = def.name;
+
+  // Build dungeon path (bottom to top: start at bottom, boss at top)
+  const pathEl = document.getElementById('dungeon-path');
+  let html = '';
+
+  // Boss at top
+  const bossReady = zone.bossUnlocked && !zone.bossDefeated;
+  const bossDefeated = zone.bossDefeated;
+  const bossClass = bossDefeated ? 'defeated' : bossReady ? 'ready' : 'locked';
+  const bossConnClass = bossDefeated ? 'completed' : bossReady ? 'active' : '';
+  const bossIcon = bossDefeated ? '👑' : '💀';
+  const bossLabelClass = bossDefeated ? 'defeated' : bossReady ? 'ready' : 'locked';
+
+  html += `<div class="dungeon-boss-wrapper">
+    <div class="dungeon-boss-node ${bossClass}" data-boss="true">
+      ${bossIcon}
+    </div>
+    <div class="dungeon-boss-label ${bossLabelClass}">${def.bossName}</div>
+  </div>`;
+  html += `<div class="dungeon-connector ${bossConnClass}"></div>`;
+
+  // Star nodes top to bottom (5 down to 1)
+  for (let i = STARS_FOR_BOSS; i >= 1; i--) {
+    const isCompleted = zone.stars >= i;
+    const isCurrent = zone.stars === i - 1 && !zone.bossDefeated;
+    const nodeClass = isCompleted ? 'completed' : isCurrent ? 'current' : 'locked';
+    const connClass = isCompleted ? 'completed' : isCurrent ? 'active' : '';
+    const icon = isCompleted ? '⭐' : isCurrent ? '⚔️' : '🔒';
+    const label = isCompleted ? `Étoile ${i}` : isCurrent ? 'Expédition !' : `Étoile ${i}`;
+
+    // Node
+    html += `<div class="dungeon-node ${nodeClass}" data-star="${i}">
+      ${icon}
+      <span class="dungeon-node-label">${label}</span>
+    </div>`;
+
+    // Connector below (except after last)
+    if (i > 1) {
+      const prevCompleted = zone.stars >= i - 1;
+      const prevCurrent = zone.stars === i - 2 && !zone.bossDefeated;
+      const prevConnClass = prevCompleted ? 'completed' : prevCurrent ? 'active' : '';
+      html += `<div class="dungeon-connector ${prevConnClass}"></div>`;
+    }
+  }
+
+  // Zone header at bottom (start point)
+  html += `<div class="dungeon-connector ${zone.stars >= 1 ? 'completed' : 'active'}"></div>`;
+  html += `<div class="dungeon-zone-header">
+    <div class="dungeon-zone-icon">${def.icon}</div>
+    <div class="dungeon-zone-name">${def.name}</div>
+  </div>`;
+
+  // Post-boss: replay node at very top
+  if (bossDefeated) {
+    const replayHtml = `<div class="dungeon-node completed" data-star="replay" style="border-color:#4ecdc4">
+      🔄
+      <span class="dungeon-node-label">Rejouer</span>
+    </div>
+    <div class="dungeon-connector completed"></div>`;
+    html = replayHtml + html;
+  }
+
+  // Expedition limit counter
+  const remaining = getRemainingExpeditions();
+  html += `<div class="dungeon-limit-info">
+    <span class="dungeon-limit-icon">${remaining > 0 ? '🗺️' : '⏳'}</span>
+    <span>${remaining > 0 ? `${remaining} expédition${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''} aujourd'hui` : "Reviens demain pour continuer !"}</span>
+  </div>`;
+
+  pathEl.innerHTML = html;
+
+  // Click handlers — star nodes launch expedition (if limit not reached)
+  const canExpedition = remaining > 0;
+  pathEl.querySelectorAll('.dungeon-node.current, .dungeon-node.completed, .dungeon-node[data-star="replay"]').forEach(node => {
+    if (!canExpedition) {
+      node.classList.add('exhausted');
+      return;
+    }
+    node.addEventListener('click', () => {
+      state.category = _adventureZoneId;
+      state.questionCount = EXPEDITION_LENGTH;
+      state.revisionMode = false;
+      state.adventureMode = true;
+      startGame();
+    });
+  });
+
+  // Boss node
+  const bossNode = pathEl.querySelector('.dungeon-boss-node.ready');
+  if (bossNode) {
+    bossNode.addEventListener('click', () => {
+      launchAdventureBoss(_adventureZoneId);
+    });
+  }
+
+  showScreen('screen-adventure-zone');
+
+  // Auto-scroll to current node (we climb up, so scroll down to see start)
+  setTimeout(() => {
+    const current = pathEl.querySelector('.dungeon-node.current') || pathEl.querySelector('.dungeon-boss-node.ready');
+    if (current) current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    else pathEl.scrollTop = pathEl.scrollHeight;
+  }, 100);
+}
+
+// ── Adventure Boss Fight ──────────────────────────────────────
+let _criticalBarInterval = null;
+let _criticalBarStart = 0;
+const CRITICAL_BAR_DURATION = 10;
+
+function launchAdventureBoss(zoneId) {
+  const boss = startAdventureBoss(zoneId);
+  const def = ADVENTURE_ZONES[zoneId];
+
+  document.getElementById('adv-boss-emoji').textContent = def.icon;
+  document.getElementById('adv-boss-name').textContent = def.bossName;
+  updateAdvBossHpBar(boss.hp, boss.maxHp);
+  renderErrorPips(boss.errorsMax, 0);
+
+  const subLevel = getSubLevel(zoneId);
+  state.adventureBossQuestions = [];
+  for (let i = 0; i < boss.maxHp + boss.errorsMax + 5; i++) {
+    state.adventureBossQuestions.push(generateQuestion(zoneId, subLevel, null));
+  }
+  state.adventureBossQIndex = 0;
+
+  showScreen('screen-adventure-boss');
+  showNextAdvBossQuestion();
+}
+
+function showNextAdvBossQuestion() {
+  const q = state.adventureBossQuestions[state.adventureBossQIndex];
+  if (!q) return;
+  document.getElementById('adv-boss-question').textContent = q.text;
+  const input = document.getElementById('adv-boss-answer');
+  input.value = '';
+  input.focus();
+  _criticalBarStart = performance.now();
+  startCriticalBar();
+}
+
+function startCriticalBar() {
+  const fill = document.getElementById('critical-bar-fill');
+  if (_criticalBarInterval) cancelAnimationFrame(_criticalBarInterval);
+  function tick() {
+    const elapsed = (performance.now() - _criticalBarStart) / 1000;
+    const pct = Math.min(100, (elapsed / CRITICAL_BAR_DURATION) * 100);
+    fill.style.width = pct + '%';
+    if (pct < 100) _criticalBarInterval = requestAnimationFrame(tick);
+  }
+  _criticalBarInterval = requestAnimationFrame(tick);
+}
+
+function stopCriticalBar() {
+  if (_criticalBarInterval) cancelAnimationFrame(_criticalBarInterval);
+  _criticalBarInterval = null;
+}
+
+document.getElementById('adv-boss-submit')?.addEventListener('click', submitAdvBossAnswer);
+document.getElementById('adv-boss-answer')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitAdvBossAnswer();
+});
+
+function submitAdvBossAnswer() {
+  const q = state.adventureBossQuestions[state.adventureBossQIndex];
+  const input = document.getElementById('adv-boss-answer');
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  stopCriticalBar();
+  const elapsed = (performance.now() - _criticalBarStart) / 1000;
+  const threshold = getCriticalThreshold(_adventureZoneId);
+
+  const correct = checkAdvAnswer(raw, q);
+
+  if (correct) {
+    const isCritical = elapsed <= threshold;
+    bossDamage(isCritical);
+    const boss = getAdventureBoss();
+    updateAdvBossHpBar(boss.hp, boss.maxHp);
+
+    if (isCritical) {
+      document.querySelector('.adventure-boss-arena')?.classList.add('screen-shake');
+      document.querySelector('.adventure-boss-emoji')?.classList.add('critical-impact');
+      setTimeout(() => {
+        document.querySelector('.adventure-boss-arena')?.classList.remove('screen-shake');
+        document.querySelector('.adventure-boss-emoji')?.classList.remove('critical-impact');
+      }, 500);
+    }
+
+    if (boss.victory) {
+      setTimeout(() => showAdventureBossEnd(true), 600);
+      return;
+    }
+  } else {
+    bossError();
+    const boss = getAdventureBoss();
+    renderErrorPips(boss.errorsMax, boss.errors);
+
+    if (boss.defeated) {
+      setTimeout(() => showAdventureBossEnd(false), 600);
+      return;
+    }
+  }
+
+  state.adventureBossQIndex++;
+  setTimeout(showNextAdvBossQuestion, 400);
+}
+
+function checkAdvAnswer(raw, question) {
+  if (question.textAnswer) {
+    return raw.toLowerCase().trim() === question.textAnswer.toLowerCase().trim();
+  }
+  const num = parseFloat(raw.replace(',', '.'));
+  return !isNaN(num) && Math.abs(num - question.answer) < 0.01;
+}
+
+function updateAdvBossHpBar(hp, maxHp) {
+  const pct = (hp / maxHp) * 100;
+  document.getElementById('adv-boss-hp-fill').style.width = pct + '%';
+  document.getElementById('adv-boss-hp-text').textContent = `${hp}/${maxHp}`;
+}
+
+function renderErrorPips(max, used) {
+  document.getElementById('adv-boss-errors').innerHTML = Array.from({ length: max }, (_, i) =>
+    `<div class="boss-error-pip ${i < used ? 'used' : ''}"></div>`
+  ).join('');
+}
+
+function showAdventureBossEnd(victory) {
+  const def = ADVENTURE_ZONES[_adventureZoneId];
+  document.getElementById('adv-boss-end-emoji').textContent = def.icon;
+  document.getElementById('adv-boss-end-title').textContent = victory ? 'Victoire !' : 'Défaite...';
+  document.getElementById('adv-boss-end-subtitle').textContent = victory
+    ? `Tu as vaincu ${def.bossName} !`
+    : `${def.bossName} est trop fort... pour l'instant.`;
+
+  const rewardsEl = document.getElementById('adv-boss-end-rewards');
+  if (victory) {
+    const coins = 50;
+    const xp = 100;
+    ProfileManager.set('coins', (ProfileManager.get('coins', 0) || 0) + coins);
+    ProfileManager.set('xp', (ProfileManager.get('xp', 0) || 0) + xp);
+    const adv = getAdventure();
+    const zone = adv.zones[_adventureZoneId];
+    const titles = ProfileManager.get('titles', []);
+    if (zone.bossTitle && !titles.includes(zone.bossTitle)) {
+      titles.push(zone.bossTitle);
+      ProfileManager.set('titles', titles);
+    }
+    rewardsEl.innerHTML = `
+      <p>🪙 +${coins} pièces</p>
+      <p>✨ +${xp} XP</p>
+      <p>🏅 Titre : ${zone.bossTitle}</p>
+    `;
+    state.pendingChests.push({ tier: 'big', source: 'adventure-boss' });
+  } else {
+    rewardsEl.innerHTML = `<p>Réessaie — tu seras plus fort la prochaine fois !</p>`;
+  }
+  showScreen('screen-adventure-boss-end');
+}
+
+document.getElementById('btn-adventure-boss-continue')?.addEventListener('click', () => {
+  if (state.pendingChests.length > 0) {
+    showChest(state.pendingChests.shift());
+  } else {
+    openZoneDetail(_adventureZoneId);
+  }
+});
 
 // ── Shop Screen ────────────────────────────────────────────────────
 document.getElementById('btn-shop').addEventListener('click', () => { renderShop(); showScreen('screen-shop'); });
