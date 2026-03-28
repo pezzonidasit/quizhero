@@ -169,9 +169,35 @@ body::after {
 
 /* Cat paw pattern overlay — activated by theme-pattern-paws class */
 body.theme-pattern-paws::after {
-  opacity: 0.06;
+  opacity: 0.14;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%23f5ebe0' opacity='0.8'%3E%3Cellipse cx='30' cy='50' rx='8' ry='9'/%3E%3Cellipse cx='22' cy='35' rx='5' ry='6'/%3E%3Cellipse cx='32' cy='30' rx='5' ry='6'/%3E%3Cellipse cx='42' cy='33' rx='5' ry='6'/%3E%3Cellipse cx='18' cy='44' rx='4.5' ry='5.5'/%3E%3C/g%3E%3Cg fill='%23f5ebe0' opacity='0.8' transform='translate(70,60) rotate(25)'%3E%3Cellipse cx='0' cy='10' rx='7' ry='8'/%3E%3Cellipse cx='-7' cy='-4' rx='4.5' ry='5.5'/%3E%3Cellipse cx='1' cy='-8' rx='4.5' ry='5.5'/%3E%3Cellipse cx='10' cy='-5' rx='4.5' ry='5.5'/%3E%3Cellipse cx='-12' cy='4' rx='4' ry='5'/%3E%3C/g%3E%3C/svg%3E");
   background-size: 120px 120px;
+}
+
+/* Cat paw decorations on buttons */
+.theme-pattern-paws .btn-primary,
+.theme-pattern-paws .btn-secondary {
+  overflow: visible;
+}
+.theme-pattern-paws .btn-primary::before,
+.theme-pattern-paws .btn-primary::after,
+.theme-pattern-paws .btn-secondary::before,
+.theme-pattern-paws .btn-secondary::after {
+  content: '🐾';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  opacity: 0.7;
+  pointer-events: none;
+}
+.theme-pattern-paws .btn-primary::before,
+.theme-pattern-paws .btn-secondary::before {
+  left: 8px;
+}
+.theme-pattern-paws .btn-primary::after,
+.theme-pattern-paws .btn-secondary::after {
+  right: 8px;
 }
 
 h1, h2, h3 {
@@ -436,6 +462,7 @@ h2 {
   cursor: pointer;
   transition: all var(--transition);
   box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3);
+  position: relative;
 }
 
 .btn-secondary:hover {
