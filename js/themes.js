@@ -352,10 +352,18 @@ function applyTheme(themeId) {
   }
 
   // Pattern overlay (e.g. paw prints for chat theme)
-  document.body.classList.remove('theme-pattern-paws');
-  if (theme.pattern === 'paws') {
-    document.body.classList.add('theme-pattern-paws');
-  }
+  const isCat = theme.pattern === 'paws';
+  document.body.classList.toggle('theme-pattern-paws', isCat);
+
+  // Cat theme decorations on static elements
+  const shopBtn = document.getElementById('btn-shop');
+  if (shopBtn) shopBtn.textContent = isCat ? '😼' : '🛒';
+
+  const homeTitle = document.querySelector('#screen-home > h1');
+  if (homeTitle) homeTitle.textContent = isCat ? '🐱 QuizHero' : 'QuizHero';
+
+  const endTitle = document.querySelector('#screen-end > h2');
+  if (endTitle) endTitle.textContent = isCat ? '😸 Partie terminée !' : '🎉 Partie terminée !';
 }
 
 /**

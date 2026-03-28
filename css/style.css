@@ -200,6 +200,26 @@ body.theme-pattern-paws::after {
   right: 8px;
 }
 
+/* Cat paw separators between sections */
+.theme-pattern-paws .settings-card,
+.theme-pattern-paws .records-section,
+.theme-pattern-paws .rewards-section {
+  border-top: none;
+  position: relative;
+  margin-top: 1.5rem;
+}
+.theme-pattern-paws .settings-card::before,
+.theme-pattern-paws .records-section::before,
+.theme-pattern-paws .rewards-section::before {
+  content: '🐾  🐾  🐾';
+  display: block;
+  text-align: center;
+  font-size: 0.7rem;
+  letter-spacing: 4px;
+  opacity: 0.5;
+  margin-bottom: 0.5rem;
+}
+
 h1, h2, h3 {
   font-family: 'Fredoka', sans-serif;
 }

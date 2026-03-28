@@ -1,6 +1,11 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '6.4.1';
+const APP_VERSION = '6.4.2';
+
+// ── Cat Theme Helper ────────────────────────────────────────────
+function isCatTheme() {
+  return document.body.classList.contains('theme-pattern-paws');
+}
 
 // ── HTML Sanitization ────────────────────────────────────────────
 const _escapeDiv = document.createElement('div');
@@ -1297,14 +1302,15 @@ function processAnswer(isCorrect, q) {
   const feedbackExplanation = document.getElementById('feedback-explanation');
 
   if (isCorrect) {
-    feedbackResult.textContent = 'Correct !';
+    feedbackResult.textContent = isCatTheme() ? '😺 Correct !' : 'Correct !';
     feedbackResult.className = 'feedback-result correct';
     launchMiniConfetti();
   } else {
     const correctAnswer = q.textAnswer !== undefined ? q.textAnswer : q.answer;
     const userInput = document.getElementById('answer-input').value.trim();
     const acceptedList = q.acceptedAnswers && q.acceptedAnswers.length > 1 ? ' (ou ' + q.acceptedAnswers.map(a => escapeHtml(a)).join(', ') + ')' : '';
-    feedbackResult.innerHTML = 'Pas encore !<br>Ta réponse : <strong>' + escapeHtml(userInput) + '</strong><br>Réponse correcte : <strong>' + escapeHtml(String(correctAnswer)) + '</strong>' + acceptedList;
+    const catSad = isCatTheme() ? '😿 ' : '';
+    feedbackResult.innerHTML = catSad + 'Pas encore !<br>Ta réponse : <strong>' + escapeHtml(userInput) + '</strong><br>Réponse correcte : <strong>' + escapeHtml(String(correctAnswer)) + '</strong>' + acceptedList;
     feedbackResult.className = 'feedback-result incorrect';
     if (state.streakLostMessage) {
       feedbackResult.textContent += ' · ' + state.streakLostMessage;
@@ -1393,6 +1399,16 @@ document.addEventListener('keydown', (e) => {
 
 // ── Streak Display ─────────────────────────────────────────────────
 function updateStreak() {
+  if (isCatTheme()) {
+    let catEmoji = '';
+    if (state.streak >= 10) catEmoji = '😻';
+    else if (state.streak >= 7) catEmoji = '😸';
+    else if (state.streak >= 3) catEmoji = '😺';
+    else if (state.streak >= 1) catEmoji = '🐱';
+    document.getElementById('streak-display').innerHTML =
+      state.streak + ' <span id="streak-flame">' + catEmoji + '</span>';
+    return;
+  }
   document.getElementById('streak-display').innerHTML =
     state.streak + ' <span id="streak-flame"></span>';
 
@@ -1743,7 +1759,10 @@ function renderEndScreen(isNewRecord, rewards, oldXP, finalXP, gamesPlayed, ches
   // Record
   const newRecordEl = document.getElementById('new-record');
   newRecordEl.style.display = isNewRecord ? '' : 'none';
-  if (isNewRecord) launchBigConfetti();
+  if (isNewRecord) {
+    newRecordEl.textContent = isCatTheme() ? '😻 Nouveau record !' : '🏆 Nouveau record !';
+    launchBigConfetti();
+  }
 
   // Badges
   const badgesContainer = document.getElementById('badges-unlocked');
