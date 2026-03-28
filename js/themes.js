@@ -312,6 +312,29 @@ const THEMES = {
     }
   },
 
+  // === RARE THEME (Splatoon) ===
+  splatoon: {
+    id: 'splatoon',
+    name: 'Inkopolis',
+    price: 300,
+    rarity: 'rare',
+    preview: '🦑',
+    vars: {
+      '--bg-dark': '#1a1a2a',
+      '--bg-card': '#252535',
+      '--bg-card-hover': '#303045',
+      '--text-primary': '#f0f0f0',
+      '--text-secondary': '#a0a0c0',
+      '--accent-blue': '#04d9ff',
+      '--accent-green': '#a0ff00',
+      '--accent-orange': '#ff6700',
+      '--accent-violet': '#c83dff',
+      '--accent-red': '#ff2070',
+      '--accent-yellow': '#ffe400'
+    },
+    pattern: 'splatoon'
+  },
+
   // === EPIC THEME (One Piece) ===
   onepiece: {
     id: 'onepiece',
@@ -377,18 +400,20 @@ function applyTheme(themeId) {
   // Pattern overlays
   const isCat = theme.pattern === 'paws';
   const isOP = theme.pattern === 'onepiece';
+  const isSplat = theme.pattern === 'splatoon';
   document.body.classList.toggle('theme-pattern-paws', isCat);
   document.body.classList.toggle('theme-pattern-onepiece', isOP);
+  document.body.classList.toggle('theme-pattern-splatoon', isSplat);
 
   // Theme decorations on static elements
   const shopBtn = document.getElementById('btn-shop');
-  if (shopBtn) shopBtn.textContent = isCat ? '😼' : isOP ? '🏴‍☠️' : '🛒';
+  if (shopBtn) shopBtn.textContent = isCat ? '😼' : isOP ? '🏴‍☠️' : isSplat ? '🦑' : '🛒';
 
   const homeTitle = document.querySelector('#screen-home > h1');
-  if (homeTitle) homeTitle.textContent = isCat ? '🐱 QuizHero' : isOP ? '🏴‍☠️ QuizHero' : 'QuizHero';
+  if (homeTitle) homeTitle.textContent = isCat ? '🐱 QuizHero' : isOP ? '🏴‍☠️ QuizHero' : isSplat ? '🦑 QuizHero' : 'QuizHero';
 
   const endTitle = document.querySelector('#screen-end > h2');
-  if (endTitle) endTitle.textContent = isCat ? '😸 Partie terminée !' : isOP ? '☠️ Partie terminée !' : '🎉 Partie terminée !';
+  if (endTitle) endTitle.textContent = isCat ? '😸 Partie terminée !' : isOP ? '☠️ Partie terminée !' : isSplat ? '🎨 Partie terminée !' : '🎉 Partie terminée !';
 }
 
 /**
