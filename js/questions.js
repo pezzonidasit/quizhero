@@ -8,6 +8,7 @@ const CATEGORIES = {
   fractions: { label: 'Fractions',       color: '#a855f7' },
   mesures:   { label: 'Mesures',         color: '#ff6b6b' },
   ouvert:    { label: 'Problèmes ouverts', color: '#ffd93d' },
+  geographie:{ label: 'Géographie',       color: '#22c55e' },
   revision:  { label: 'Révision',         color: '#10b981' }
 };
 
@@ -3462,6 +3463,114 @@ const RIDDLE_BANK = [
   },
 ];
 
+// ── Geography Data ──────────────────────────────────────────────────
+
+const GEO_DATA = [
+  // Level 1 — très connus (CE2, 8 ans)
+  { country: 'France',       flag: '🇫🇷', capital: 'Paris',       continent: 'Europe',  level: 1 },
+  { country: 'Allemagne',    flag: '🇩🇪', capital: 'Berlin',      continent: 'Europe',  level: 1 },
+  { country: 'Espagne',      flag: '🇪🇸', capital: 'Madrid',      continent: 'Europe',  level: 1 },
+  { country: 'Italie',       flag: '🇮🇹', capital: 'Rome',        continent: 'Europe',  level: 1 },
+  { country: 'Royaume-Uni',  flag: '🇬🇧', capital: 'Londres',     continent: 'Europe',  level: 1 },
+  { country: 'États-Unis',   flag: '🇺🇸', capital: 'Washington',  continent: 'Amérique', level: 1 },
+  { country: 'Brésil',       flag: '🇧🇷', capital: 'Brasilia',    continent: 'Amérique', level: 1 },
+  { country: 'Chine',        flag: '🇨🇳', capital: 'Pékin',       continent: 'Asie',    level: 1 },
+  { country: 'Japon',        flag: '🇯🇵', capital: 'Tokyo',       continent: 'Asie',    level: 1 },
+  { country: 'Australie',    flag: '🇦🇺', capital: 'Canberra',    continent: 'Océanie', level: 1 },
+  { country: 'Canada',       flag: '🇨🇦', capital: 'Ottawa',      continent: 'Amérique', level: 1 },
+  { country: 'Russie',       flag: '🇷🇺', capital: 'Moscou',      continent: 'Europe',  level: 1 },
+  { country: 'Inde',         flag: '🇮🇳', capital: 'New Delhi',   continent: 'Asie',    level: 1 },
+  { country: 'Mexique',      flag: '🇲🇽', capital: 'Mexico',      continent: 'Amérique', level: 1 },
+  { country: 'Égypte',       flag: '🇪🇬', capital: 'Le Caire',    continent: 'Afrique', level: 1 },
+  // Level 2 — Europe + grands pays (CM2, 10 ans)
+  { country: 'Suisse',       flag: '🇨🇭', capital: 'Berne',       continent: 'Europe',  level: 2 },
+  { country: 'Belgique',     flag: '🇧🇪', capital: 'Bruxelles',   continent: 'Europe',  level: 2 },
+  { country: 'Portugal',     flag: '🇵🇹', capital: 'Lisbonne',    continent: 'Europe',  level: 2 },
+  { country: 'Pays-Bas',     flag: '🇳🇱', capital: 'Amsterdam',   continent: 'Europe',  level: 2 },
+  { country: 'Autriche',     flag: '🇦🇹', capital: 'Vienne',      continent: 'Europe',  level: 2 },
+  { country: 'Grèce',        flag: '🇬🇷', capital: 'Athènes',     continent: 'Europe',  level: 2 },
+  { country: 'Suède',        flag: '🇸🇪', capital: 'Stockholm',   continent: 'Europe',  level: 2 },
+  { country: 'Norvège',      flag: '🇳🇴', capital: 'Oslo',        continent: 'Europe',  level: 2 },
+  { country: 'Pologne',      flag: '🇵🇱', capital: 'Varsovie',    continent: 'Europe',  level: 2 },
+  { country: 'Turquie',      flag: '🇹🇷', capital: 'Ankara',      continent: 'Asie',    level: 2 },
+  { country: 'Argentine',    flag: '🇦🇷', capital: 'Buenos Aires', continent: 'Amérique', level: 2 },
+  { country: 'Maroc',        flag: '🇲🇦', capital: 'Rabat',       continent: 'Afrique', level: 2 },
+  { country: 'Afrique du Sud', flag: '🇿🇦', capital: 'Pretoria',  continent: 'Afrique', level: 2 },
+  { country: 'Corée du Sud', flag: '🇰🇷', capital: 'Séoul',       continent: 'Asie',    level: 2 },
+  { country: 'Thaïlande',    flag: '🇹🇭', capital: 'Bangkok',     continent: 'Asie',    level: 2 },
+  // Level 3 — pays moins connus (6ème, 12 ans)
+  { country: 'Irlande',      flag: '🇮🇪', capital: 'Dublin',      continent: 'Europe',  level: 3 },
+  { country: 'Finlande',     flag: '🇫🇮', capital: 'Helsinki',    continent: 'Europe',  level: 3 },
+  { country: 'Danemark',     flag: '🇩🇰', capital: 'Copenhague',  continent: 'Europe',  level: 3 },
+  { country: 'Croatie',      flag: '🇭🇷', capital: 'Zagreb',      continent: 'Europe',  level: 3 },
+  { country: 'Roumanie',     flag: '🇷🇴', capital: 'Bucarest',    continent: 'Europe',  level: 3 },
+  { country: 'Hongrie',      flag: '🇭🇺', capital: 'Budapest',    continent: 'Europe',  level: 3 },
+  { country: 'Tchéquie',     flag: '🇨🇿', capital: 'Prague',      continent: 'Europe',  level: 3 },
+  { country: 'Colombie',     flag: '🇨🇴', capital: 'Bogota',      continent: 'Amérique', level: 3 },
+  { country: 'Pérou',        flag: '🇵🇪', capital: 'Lima',        continent: 'Amérique', level: 3 },
+  { country: 'Chili',        flag: '🇨🇱', capital: 'Santiago',    continent: 'Amérique', level: 3 },
+  { country: 'Vietnam',      flag: '🇻🇳', capital: 'Hanoï',       continent: 'Asie',    level: 3 },
+  { country: 'Philippines',  flag: '🇵🇭', capital: 'Manille',     continent: 'Asie',    level: 3 },
+  { country: 'Indonésie',    flag: '🇮🇩', capital: 'Jakarta',     continent: 'Asie',    level: 3 },
+  { country: 'Nigeria',      flag: '🇳🇬', capital: 'Abuja',       continent: 'Afrique', level: 3 },
+  { country: 'Kenya',        flag: '🇰🇪', capital: 'Nairobi',     continent: 'Afrique', level: 3 },
+  { country: 'Nouvelle-Zélande', flag: '🇳🇿', capital: 'Wellington', continent: 'Océanie', level: 3 },
+];
+
+const GEO_CONTINENTS = ['Europe', 'Amérique', 'Asie', 'Afrique', 'Océanie'];
+
+function normalizeGeo(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function generateGeographie(subLevel) {
+  const pool = GEO_DATA.filter(g => g.level <= subLevel);
+  const entry = pick(pool);
+  const questionType = pick(['flag', 'continent', 'capital']);
+
+  if (questionType === 'flag') {
+    // Quel pays a ce drapeau ?
+    return {
+      category: 'geographie',
+      text: `Quel pays est représenté par ce drapeau ? ${entry.flag}`,
+      answer: null,
+      textAnswer: entry.country,
+      acceptedAnswers: [entry.country],
+      unit: '',
+      hint: `Ce pays se trouve en ${entry.continent}.`,
+      explanation: `${entry.flag} est le drapeau de ${entry.country} (capitale : ${entry.capital}).`,
+    };
+  }
+
+  if (questionType === 'continent') {
+    // Sur quel continent se trouve ce pays ? (QCM)
+    const choices = shuffleArray([...GEO_CONTINENTS]);
+    return {
+      category: 'geographie',
+      text: `Sur quel continent se trouve ${entry.country} ${entry.flag} ?`,
+      answer: null,
+      textAnswer: entry.continent,
+      qcmChoices: choices,
+      unit: '',
+      hint: `La capitale de ${entry.country} est ${entry.capital}.`,
+      explanation: `${entry.country} se trouve en ${entry.continent}.`,
+    };
+  }
+
+  // Capital — réponse texte, indice = 2 premières lettres
+  const hintLetters = entry.capital.slice(0, 2);
+  return {
+    category: 'geographie',
+    text: `Quelle est la capitale de ${entry.country} ${entry.flag} ?`,
+    answer: null,
+    textAnswer: entry.capital,
+    acceptedAnswers: [entry.capital],
+    unit: '',
+    hint: `La capitale commence par "${hintLetters}..."`,
+    explanation: `La capitale de ${entry.country} est ${entry.capital}.`,
+  };
+}
+
 // ── Main Entry Point ────────────────────────────────────────────────
 const GENERATORS = {
   calcul:    generateCalcul,
@@ -3469,7 +3578,8 @@ const GENERATORS = {
   geometrie: generateGeometrie,
   fractions: generateFractions,
   mesures:   generateMesures,
-  ouvert:    generateOuvert
+  ouvert:    generateOuvert,
+  geographie: generateGeographie
 };
 
 function generateQuestion(category, subLevel, lastCategory) {
