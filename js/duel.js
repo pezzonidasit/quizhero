@@ -163,10 +163,11 @@ const Duel = {
 
     const q = roundData.question;
     let correct;
-    if (q.textAnswer !== undefined || q.acceptedAnswers) {
+    const TEXT_CATS = ['conjugaison', 'geographie'];
+    if (q.textAnswer !== undefined || q.acceptedAnswers || TEXT_CATS.includes(q.category)) {
       const norm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
-      const accepted = q.acceptedAnswers || [q.textAnswer];
-      correct = accepted.some(a => norm(value) === norm(a));
+      const accepted = q.acceptedAnswers || (q.textAnswer ? [q.textAnswer] : []);
+      correct = accepted.length > 0 ? accepted.some(a => norm(value) === norm(a)) : norm(value) === norm(String(q.answer));
     } else {
       correct = Math.abs(Number(value) - q.answer) < 0.01;
     }
@@ -231,7 +232,8 @@ const Duel = {
       document.getElementById('duel-waiting-opponent').style.display = 'none';
       document.getElementById('duel-round-result').style.display = 'none';
       const input = document.getElementById('duel-answer-input');
-      const isTextQ = q.textAnswer !== undefined || q.acceptedAnswers;
+      const TEXT_CATEGORIES = ['conjugaison', 'geographie'];
+      const isTextQ = q.textAnswer !== undefined || q.acceptedAnswers || TEXT_CATEGORIES.includes(q.category);
       input.type = isTextQ ? 'text' : 'number';
       input.inputMode = isTextQ ? 'text' : 'decimal';
       input.value = '';

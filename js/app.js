@@ -1,6 +1,6 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '7.3.2';
+const APP_VERSION = '7.3.3';
 
 // ── Theme Helpers ───────────────────────────────────────────────
 function isCatTheme() {
@@ -5166,7 +5166,7 @@ function openDailyQuestion(data) {
   document.getElementById('daily-answer-section').style.display = '';
   document.getElementById('daily-result').style.display = 'none';
   const input = document.getElementById('daily-answer-input');
-  const isTextQuestion = q.textAnswer !== undefined || q.acceptedAnswers;
+  const isTextQuestion = q.textAnswer !== undefined || q.acceptedAnswers || ['conjugaison', 'geographie'].includes(q.category);
   input.type = isTextQuestion ? 'text' : 'number';
   input.inputMode = isTextQuestion ? 'text' : 'decimal';
   input.value = '';
