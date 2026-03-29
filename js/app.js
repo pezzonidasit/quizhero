@@ -1,6 +1,6 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '7.1.1';
+const APP_VERSION = '7.2.0';
 
 // ── Theme Helpers ───────────────────────────────────────────────
 function isCatTheme() {
@@ -14,6 +14,31 @@ function isSplatoonTheme() {
 }
 function isDBZTheme() {
   return document.body.classList.contains('theme-pattern-dbz');
+}
+
+// ── Theme Migration (old activeTheme → split palette/visual) ────
+function migrateThemeData() {
+  if (ProfileManager.get('_themeMigrated')) return;
+
+  const oldTheme = ProfileManager.get('activeTheme', 'nuit');
+  if (VISUAL_IDS.has(oldTheme)) {
+    ProfileManager.set('activeVisual', oldTheme);
+    ProfileManager.set('activePalette', 'none');
+  } else if (PALETTE_IDS.has(oldTheme)) {
+    ProfileManager.set('activePalette', oldTheme);
+    ProfileManager.set('activeVisual', 'none');
+  } else {
+    ProfileManager.set('activePalette', 'none');
+    ProfileManager.set('activeVisual', 'none');
+  }
+
+  const oldOwned = ProfileManager.get('ownedThemes', []);
+  const ownedPalettes = oldOwned.filter(id => PALETTE_IDS.has(id));
+  const ownedVisuals = oldOwned.filter(id => VISUAL_IDS.has(id));
+  ProfileManager.set('ownedPalettes', ownedPalettes);
+  ProfileManager.set('ownedVisuals', ownedVisuals);
+
+  ProfileManager.set('_themeMigrated', true);
 }
 
 // ── HTML Sanitization ────────────────────────────────────────────
@@ -330,7 +355,7 @@ document.getElementById('btn-new-profile').addEventListener('click', () => {
 });
 
 document.getElementById('btn-cancel-profile').addEventListener('click', () => {
-  applyTheme('nuit');
+  applyThemeCombo('none', 'none');
   showScreen('screen-profiles');
 });
 
@@ -353,11 +378,11 @@ document.getElementById('btn-recover-profile').addEventListener('click', async (
 
 function renderThemePicker() {
   const container = document.getElementById('theme-picker');
-  container.innerHTML = FREE_THEMES.map(id => {
-    const t = THEMES[id];
+  container.innerHTML = FREE_PALETTES.map(id => {
+    const p = PALETTES[id];
     return `<div class="theme-option ${id === selectedTheme ? 'selected' : ''}" data-theme="${id}">
-      <span class="theme-icon">${t.preview}</span>
-      <span class="theme-name">${t.name}</span>
+      <span class="theme-icon">${p.preview}</span>
+      <span class="theme-name">${p.name}</span>
     </div>`;
   }).join('');
   container.querySelectorAll('.theme-option').forEach(opt => {
@@ -365,7 +390,7 @@ function renderThemePicker() {
       container.querySelectorAll('.theme-option').forEach(o => o.classList.remove('selected'));
       opt.classList.add('selected');
       selectedTheme = opt.dataset.theme;
-      applyTheme(selectedTheme);
+      applyPalette(selectedTheme);
     });
   });
 }
@@ -400,7 +425,11 @@ document.getElementById('btn-create-profile').addEventListener('click', () => {
 function selectProfile(id) {
   ProfileManager.setActive(id);
   ProfileManager.migrate(id);
-  applyTheme(ProfileManager.get('activeTheme', 'nuit'));
+  migrateThemeData();
+  applyThemeCombo(
+    ProfileManager.get('activePalette', 'none'),
+    ProfileManager.get('activeVisual', 'none')
+  );
   loadProfileData();
   loadBossState();
   updateProfileHeader();
@@ -507,7 +536,7 @@ function checkLoginReward() {
 
   document.getElementById('btn-claim-login').onclick = () => {
     if (isChestDay) {
-      const loot = generateChestLoot('small', ProfileManager.get('ownedThemes', []));
+      const loot = generateChestLoot('small', ProfileManager.get('ownedPalettes', []), ProfileManager.get('ownedVisuals', []));
       loot.forEach(item => applyLootItem(item));
       recordChestOpened();
     } else {
@@ -2519,28 +2548,42 @@ document.getElementById('btn-shop-back').addEventListener('click', () => { updat
 
 async function renderShop() {
   const coins = ProfileManager.get('coins', 0);
-  const ownedThemes = ProfileManager.get('ownedThemes', []);
+  const ownedPalettes = ProfileManager.get('ownedPalettes', []);
+  const ownedVisuals = ProfileManager.get('ownedVisuals', []);
   const ownedStickers = ProfileManager.get('ownedStickers', []);
-  const activeTheme = ProfileManager.get('activeTheme', 'nuit');
   document.getElementById('shop-coins').textContent = coins;
   const container = document.getElementById('shop-grid');
 
-  // === SECTION 1: Thèmes (only unpurchased) ===
-  const paidThemes = getThemeList().filter(t => t.price > 0);
-  const unboughtThemes = paidThemes.filter(t => !ownedThemes.includes(t.id));
+  // === SECTION 1: Palettes (only unpurchased paid) ===
+  const paidPalettes = getPaletteList().filter(p => p.price > 0);
+  const unboughtPalettes = paidPalettes.filter(p => !ownedPalettes.includes(p.id));
   let html = '';
-  if (unboughtThemes.length > 0) {
-    html += '<h3 class="shop-section-title">🎨 Thèmes</h3>';
-    html += unboughtThemes.map(t => {
-      return `<div class="shop-item shop-theme" data-theme="${t.id}">
-        <span class="shop-icon">${t.preview}</span>
-        <span class="shop-name">${t.name}</span>
-        <span class="shop-price">🪙 ${t.price}</span>
+  if (unboughtPalettes.length > 0) {
+    html += '<h3 class="shop-section-title">🎨 Palettes</h3>';
+    html += unboughtPalettes.map(p => {
+      return `<div class="shop-item shop-palette" data-palette="${p.id}">
+        <span class="shop-icon">${p.preview}</span>
+        <span class="shop-name">${p.name}</span>
+        <span class="shop-price">🪙 ${p.price}</span>
       </div>`;
     }).join('');
   }
 
-  const allThemesOwned = unboughtThemes.length === 0;
+  // === SECTION 1b: Thèmes visuels (only unpurchased paid) ===
+  const paidVisuals = getVisualList().filter(v => v.price > 0);
+  const unboughtVisuals = paidVisuals.filter(v => !ownedVisuals.includes(v.id));
+  if (unboughtVisuals.length > 0) {
+    html += '<h3 class="shop-section-title">🖼️ Thèmes visuels</h3>';
+    html += unboughtVisuals.map(v => {
+      return `<div class="shop-item shop-visual" data-visual="${v.id}">
+        <span class="shop-icon">${v.preview}</span>
+        <span class="shop-name">${v.name}</span>
+        <span class="shop-price">🪙 ${v.price}</span>
+      </div>`;
+    }).join('');
+  }
+
+  const allThemesOwned = unboughtPalettes.length === 0 && unboughtVisuals.length === 0;
 
   // === SECTION 2: Stickers saisonniers (only unpurchased) ===
   const unboughtStickers = STICKERS.filter(s => !ownedStickers.includes(s.id));
@@ -2562,10 +2605,12 @@ async function renderShop() {
   // === SECTION 3: Boosts (verrouillés tant que tout n'est pas acheté) ===
   html += '<h3 class="shop-section-title">⚡ Boosts de partie</h3>';
   if (!boostsUnlocked) {
-    const themesLeft = paidThemes.filter(t => !ownedThemes.includes(t.id)).length;
+    const palettesLeft = unboughtPalettes.length;
+    const visualsLeft = unboughtVisuals.length;
     const stickersLeft = STICKERS.filter(s => !ownedStickers.includes(s.id)).length;
-    html += `<div class="shop-locked-msg">🔒 Achète tous les thèmes${STICKERS.length > 0 ? ' et stickers' : ''} pour débloquer les boosts !`;
-    if (themesLeft > 0) html += `<br><span class="shop-locked-detail">${themesLeft} thème${themesLeft > 1 ? 's' : ''} restant${themesLeft > 1 ? 's' : ''}</span>`;
+    html += `<div class="shop-locked-msg">🔒 Achète toutes les palettes, thèmes visuels${STICKERS.length > 0 ? ' et stickers' : ''} pour débloquer les boosts !`;
+    if (palettesLeft > 0) html += `<br><span class="shop-locked-detail">${palettesLeft} palette${palettesLeft > 1 ? 's' : ''} restante${palettesLeft > 1 ? 's' : ''}</span>`;
+    if (visualsLeft > 0) html += `<br><span class="shop-locked-detail">${visualsLeft} thème${visualsLeft > 1 ? 's' : ''} visuel${visualsLeft > 1 ? 's' : ''} restant${visualsLeft > 1 ? 's' : ''}</span>`;
     if (stickersLeft > 0) html += `<br><span class="shop-locked-detail">${stickersLeft} sticker${stickersLeft > 1 ? 's' : ''} restant${stickersLeft > 1 ? 's' : ''}</span>`;
     html += '</div>';
   } else {
@@ -2626,22 +2671,42 @@ async function renderShop() {
     });
   });
 
-  // Theme buy (shop only shows unbought)
-  container.querySelectorAll('.shop-theme').forEach(item => {
+  // Palette buy
+  container.querySelectorAll('.shop-palette').forEach(item => {
     item.addEventListener('click', () => {
-      const themeId = item.dataset.theme;
-      const theme = THEMES[themeId];
+      const paletteId = item.dataset.palette;
+      const palette = PALETTES[paletteId];
       const c = ProfileManager.get('coins', 0);
-      if (c >= theme.price) {
-        if (confirm(`Acheter ${theme.name} ${theme.preview} pour ${theme.price} 🪙 ?`)) {
-          ProfileManager.set('coins', c - theme.price);
-          const o = ProfileManager.get('ownedThemes', []);
-          o.push(themeId);
-          ProfileManager.set('ownedThemes', o);
+      if (c >= palette.price) {
+        if (confirm(`Acheter ${palette.name} ${palette.preview} pour ${palette.price} 🪙 ?`)) {
+          ProfileManager.set('coins', c - palette.price);
+          const o = ProfileManager.get('ownedPalettes', []);
+          o.push(paletteId);
+          ProfileManager.set('ownedPalettes', o);
           renderShop();
         }
       } else {
-        alert(`Pas assez de pièces ! (${c}/${theme.price})`);
+        alert(`Pas assez de pièces ! (${c}/${palette.price})`);
+      }
+    });
+  });
+
+  // Visual theme buy
+  container.querySelectorAll('.shop-visual').forEach(item => {
+    item.addEventListener('click', () => {
+      const visualId = item.dataset.visual;
+      const visual = VISUAL_THEMES[visualId];
+      const c = ProfileManager.get('coins', 0);
+      if (c >= visual.price) {
+        if (confirm(`Acheter ${visual.name} ${visual.preview} pour ${visual.price} 🪙 ?`)) {
+          ProfileManager.set('coins', c - visual.price);
+          const o = ProfileManager.get('ownedVisuals', []);
+          o.push(visualId);
+          ProfileManager.set('ownedVisuals', o);
+          renderShop();
+        }
+      } else {
+        alert(`Pas assez de pièces ! (${c}/${visual.price})`);
       }
     });
   });
@@ -2691,8 +2756,9 @@ async function renderShop() {
 
 // ── Chest Screen ───────────────────────────────────────────────────
 function showChest(chest) {
-  const owned = ProfileManager.get('ownedThemes', []);
-  const loot = generateChestLoot(chest.tier, owned);
+  const ownedPal = ProfileManager.get('ownedPalettes', []);
+  const ownedVis = ProfileManager.get('ownedVisuals', []);
+  const loot = generateChestLoot(chest.tier, ownedPal, ownedVis);
   showScreen('screen-chest');
   const box = document.getElementById('chest-box');
   const itemsContainer = document.getElementById('chest-items');
@@ -2815,28 +2881,61 @@ async function renderProfileDetail() {
   ageHtml += '</div></div>';
   document.getElementById('profile-card').innerHTML += ageHtml;
 
-  // === Theme selector ===
-  const ownedThemeIds = ProfileManager.get('ownedThemes', []);
-  const activeThemeId = ProfileManager.get('activeTheme', 'nuit');
-  // All owned themes: free + bought + boss
-  const allOwnedThemes = [...FREE_THEMES, ...ownedThemeIds]
-    .filter((id, i, arr) => arr.indexOf(id) === i) // dedupe
-    .map(id => THEMES[id])
+  // === Palette selector ===
+  const ownedPaletteIds = ProfileManager.get('ownedPalettes', []);
+  const activePaletteId = ProfileManager.get('activePalette', 'none');
+  const allOwnedPalettes = [...FREE_PALETTES, ...ownedPaletteIds]
+    .filter((id, i, arr) => arr.indexOf(id) === i)
+    .map(id => PALETTES[id])
     .filter(Boolean);
 
-  let themeHtml = '<h3>🎨 Mes Thèmes</h3><div class="theme-selector">';
-  allOwnedThemes.forEach(t => {
-    const isActive = t.id === activeThemeId;
-    const isBoss = t.price === -1;
-    themeHtml += `<div class="theme-select-item ${isActive ? 'theme-active' : ''}" data-theme="${t.id}">
-      <span class="theme-select-icon">${t.preview}</span>
-      <span class="theme-select-name">${t.name}</span>
+  let paletteHtml = '<h3>🎨 Palette de couleur</h3><div class="theme-selector">';
+  // "None" option
+  const palNoneActive = activePaletteId === 'none';
+  paletteHtml += `<div class="theme-select-item ${palNoneActive ? 'theme-active' : ''}" data-palette="none">
+    <span class="theme-select-icon">🚫</span>
+    <span class="theme-select-name">Aucune</span>
+    ${palNoneActive ? '<span class="theme-select-check">✓</span>' : ''}
+  </div>`;
+  allOwnedPalettes.forEach(p => {
+    const isActive = p.id === activePaletteId;
+    paletteHtml += `<div class="theme-select-item ${isActive ? 'theme-active' : ''}" data-palette="${p.id}">
+      <span class="theme-select-icon">${p.preview}</span>
+      <span class="theme-select-name">${p.name}</span>
+      ${isActive ? '<span class="theme-select-check">✓</span>' : ''}
+    </div>`;
+  });
+  paletteHtml += '</div>';
+  document.getElementById('profile-card').innerHTML += paletteHtml;
+
+  // === Visual theme selector ===
+  const ownedVisualIds = ProfileManager.get('ownedVisuals', []);
+  const activeVisualId = ProfileManager.get('activeVisual', 'none');
+  const allOwnedVisuals = [...FREE_VISUALS, ...ownedVisualIds]
+    .filter((id, i, arr) => arr.indexOf(id) === i)
+    .map(id => VISUAL_THEMES[id])
+    .filter(Boolean);
+
+  let visualHtml = '<h3>🖼️ Thème visuel</h3><div class="theme-selector">';
+  // "None" option
+  const visNoneActive = activeVisualId === 'none';
+  visualHtml += `<div class="theme-select-item ${visNoneActive ? 'theme-active' : ''}" data-visual="none">
+    <span class="theme-select-icon">🚫</span>
+    <span class="theme-select-name">Aucun</span>
+    ${visNoneActive ? '<span class="theme-select-check">✓</span>' : ''}
+  </div>`;
+  allOwnedVisuals.forEach(v => {
+    const isActive = v.id === activeVisualId;
+    const isBoss = v.price === -1;
+    visualHtml += `<div class="theme-select-item ${isActive ? 'theme-active' : ''}" data-visual="${v.id}">
+      <span class="theme-select-icon">${v.preview}</span>
+      <span class="theme-select-name">${v.name}</span>
       ${isBoss ? '<span class="theme-select-badge">⚔️</span>' : ''}
       ${isActive ? '<span class="theme-select-check">✓</span>' : ''}
     </div>`;
   });
-  themeHtml += '</div>';
-  document.getElementById('profile-card').innerHTML += themeHtml;
+  visualHtml += '</div>';
+  document.getElementById('profile-card').innerHTML += visualHtml;
 
   // V5: Title selector
   const ownedTitles = ProfileManager.get('bossTitles', []) || [];
@@ -2886,13 +2985,24 @@ async function renderProfileDetail() {
     location.reload();
   });
 
-  // Theme selector click handlers
-  document.querySelectorAll('.theme-select-item').forEach(item => {
+  // Palette selector click handlers
+  document.querySelectorAll('[data-palette]').forEach(item => {
     item.addEventListener('click', () => {
-      const themeId = item.dataset.theme;
-      ProfileManager.set('activeTheme', themeId);
-      ProfileManager.updateMeta(ProfileManager.getActiveId(), { theme: themeId });
-      applyTheme(themeId);
+      const paletteId = item.dataset.palette;
+      ProfileManager.set('activePalette', paletteId);
+      const currentVisual = ProfileManager.get('activeVisual', 'none');
+      applyThemeCombo(paletteId === 'none' ? null : paletteId, currentVisual === 'none' ? null : currentVisual);
+      renderProfileDetail();
+    });
+  });
+
+  // Visual theme selector click handlers
+  document.querySelectorAll('[data-visual]').forEach(item => {
+    item.addEventListener('click', () => {
+      const visualId = item.dataset.visual;
+      ProfileManager.set('activeVisual', visualId);
+      const currentPalette = ProfileManager.get('activePalette', 'none');
+      applyThemeCombo(currentPalette === 'none' ? null : currentPalette, visualId === 'none' ? null : visualId);
       renderProfileDetail();
     });
   });
@@ -3042,7 +3152,7 @@ document.getElementById('btn-delete-profile').addEventListener('click', () => {
   if (!confirm('Supprimer le profil de ' + profile.name + ' ?\nToute sa progression sera perdue.')) return;
   if (!confirm('VRAIMENT supprimer ' + profile.name + ' ? Cette action est irréversible !')) return;
   ProfileManager.delete(profile.id);
-  applyTheme('nuit');
+  applyThemeCombo('none', 'none');
   renderProfilesList();
   showScreen('screen-profiles');
 });

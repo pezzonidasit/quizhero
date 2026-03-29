@@ -1,7 +1,7 @@
 /**
  * QuizHero V2 — Progression Engine
  * XP, ranks, coins, chest milestones, loot tables
- * Depends on: questions.js (rand, pick), themes.js (THEMES), profiles.js (ProfileManager)
+ * Depends on: questions.js (rand, pick), themes.js (PALETTES, VISUAL_THEMES), profiles.js (ProfileManager)
  */
 
 // ─── Ranks ──────────────────────────────────────────────────────────
@@ -154,18 +154,30 @@ const LOOT_RARE = [
   { id: 'badge_lucky',     name: 'Badge Lucky',      type: 'badge',  icon: '🍀', rarity: 'rare', badgeId: 'lucky', description: "Badge exclusif de coffre" },
 ];
 
-/** Returns unowned paid themes as epic loot items */
-function getEpicLoot(ownedThemes) {
+/** Returns unowned paid palettes + visuals as epic loot items */
+function getEpicLoot(ownedPalettes, ownedVisuals) {
   const epic = [];
-  for (const [id, theme] of Object.entries(THEMES)) {
-    if (theme.price > 0 && !ownedThemes.includes(id)) {
+  for (const [id, palette] of Object.entries(PALETTES)) {
+    if (palette.price > 0 && !ownedPalettes.includes(id)) {
       epic.push({
-        id: `theme_${id}`,
-        name: theme.name,
-        type: 'theme',
-        icon: theme.preview,
+        id: `palette_${id}`,
+        name: palette.name,
+        type: 'palette',
+        icon: palette.preview,
         rarity: 'epic',
-        themeId: id,
+        paletteId: id,
+      });
+    }
+  }
+  for (const [id, visual] of Object.entries(VISUAL_THEMES)) {
+    if (visual.price > 0 && !ownedVisuals.includes(id)) {
+      epic.push({
+        id: `visual_${id}`,
+        name: visual.name,
+        type: 'visual',
+        icon: visual.preview,
+        rarity: 'epic',
+        visualId: id,
       });
     }
   }
@@ -188,9 +200,9 @@ function pickWeighted(pools) {
  * Big chest: coins(50-100) + 3-4 items (guaranteed rare+).
  * Small chest: coins(10-25) + 1 common item.
  */
-function generateChestLoot(tier, ownedThemes) {
+function generateChestLoot(tier, ownedPalettes, ownedVisuals) {
   const items = [];
-  const epicPool = getEpicLoot(ownedThemes || []);
+  const epicPool = getEpicLoot(ownedPalettes || [], ownedVisuals || []);
 
   if (tier === 'big') {
     // Coins
@@ -238,10 +250,17 @@ function applyLootItem(item) {
       pm.set('shields', shields + 1);
       break;
     }
-    case 'theme': {
-      const owned = pm.get('ownedThemes') || [];
-      if (item.themeId && !owned.includes(item.themeId)) {
-        pm.set('ownedThemes', [...owned, item.themeId]);
+    case 'palette': {
+      const owned = pm.get('ownedPalettes') || [];
+      if (item.paletteId && !owned.includes(item.paletteId)) {
+        pm.set('ownedPalettes', [...owned, item.paletteId]);
+      }
+      break;
+    }
+    case 'visual': {
+      const owned = pm.get('ownedVisuals') || [];
+      if (item.visualId && !owned.includes(item.visualId)) {
+        pm.set('ownedVisuals', [...owned, item.visualId]);
       }
       break;
     }

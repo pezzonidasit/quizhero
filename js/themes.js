@@ -1,10 +1,14 @@
 /**
- * QuizHero V2 — Theme Engine
- * 10 themes with CSS custom property injection
+ * QuizHero — Theme Engine (Split Architecture)
+ * Two independent axes: PALETTES (colors) + VISUAL_THEMES (patterns/decorations)
  */
 
-const THEMES = {
-  // === FREE THEMES ===
+// ============================================================
+// PALETTES — Color-only themes (CSS custom properties)
+// ============================================================
+
+const PALETTES = {
+  // === FREE PALETTES ===
   nuit: {
     id: 'nuit',
     name: 'Nuit étoilée',
@@ -66,7 +70,7 @@ const THEMES = {
     }
   },
 
-  // === PAID THEMES (epic rarity) ===
+  // === PAID PALETTES (epic) ===
   galaxie: {
     id: 'galaxie',
     name: 'Galaxie',
@@ -208,7 +212,7 @@ const THEMES = {
     }
   },
 
-  // === PRESTIGE THEMES (very expensive) ===
+  // === PRESTIGE PALETTES (legendary) ===
   aurore: {
     id: 'aurore',
     name: 'Aurore boréale',
@@ -268,16 +272,115 @@ const THEMES = {
       '--accent-red': '#e05040',
       '--accent-yellow': '#ffd700'
     }
+  }
+};
+
+// ============================================================
+// VISUAL_THEMES — Patterns, decorations, visual identity
+// ============================================================
+
+const VISUAL_THEMES = {
+  // === FREE VISUAL ===
+  chat: {
+    id: 'chat',
+    name: 'Royaume du Chat',
+    price: 0,
+    rarity: 'common',
+    preview: '🐱',
+    pattern: 'paws',
+    defaultVars: {
+      '--bg-dark': '#2a1f1a',
+      '--bg-card': '#3d2e24',
+      '--bg-card-hover': '#4a382c',
+      '--text-primary': '#f5ebe0',
+      '--text-secondary': '#c4a882',
+      '--accent-blue': '#7eb8c9',
+      '--accent-green': '#6fbf73',
+      '--accent-orange': '#e8944c',
+      '--accent-violet': '#c48db8',
+      '--accent-red': '#e06858',
+      '--accent-yellow': '#f0c060'
+    }
   },
 
-  // === BOSS-EXCLUSIVE THEMES (not purchasable) ===
+  // === EPIC VISUAL ===
+  onepiece: {
+    id: 'onepiece',
+    name: 'Grand Line',
+    price: 900,
+    rarity: 'epic',
+    preview: '🏴‍☠️',
+    pattern: 'onepiece',
+    defaultVars: {
+      '--bg-dark': '#0a1628',
+      '--bg-card': '#142238',
+      '--bg-card-hover': '#1c3050',
+      '--text-primary': '#f0e6d0',
+      '--text-secondary': '#7ab0d4',
+      '--accent-blue': '#2196f3',
+      '--accent-green': '#4caf50',
+      '--accent-orange': '#ff6d00',
+      '--accent-violet': '#9c27b0',
+      '--accent-red': '#d32f2f',
+      '--accent-yellow': '#ffd600'
+    }
+  },
+
+  // === RARE VISUAL ===
+  splatoon: {
+    id: 'splatoon',
+    name: 'Inkopolis',
+    price: 300,
+    rarity: 'rare',
+    preview: '🦑',
+    pattern: 'splatoon',
+    defaultVars: {
+      '--bg-dark': '#1a1a2a',
+      '--bg-card': '#252535',
+      '--bg-card-hover': '#303045',
+      '--text-primary': '#f0f0f0',
+      '--text-secondary': '#a0a0c0',
+      '--accent-blue': '#04d9ff',
+      '--accent-green': '#a0ff00',
+      '--accent-orange': '#ff6700',
+      '--accent-violet': '#c83dff',
+      '--accent-red': '#ff2070',
+      '--accent-yellow': '#ffe400'
+    }
+  },
+
+  // === LEGENDARY VISUALS ===
+  dbz: {
+    id: 'dbz',
+    name: 'Saiyan',
+    price: 3000,
+    rarity: 'legendary',
+    preview: '🟠',
+    pattern: 'dbz',
+    defaultVars: {
+      '--bg-dark': '#0a0a14',
+      '--bg-card': '#1a1a2e',
+      '--bg-card-hover': '#252540',
+      '--text-primary': '#fff0d0',
+      '--text-secondary': '#c0a060',
+      '--accent-blue': '#00b0ff',
+      '--accent-green': '#76ff03',
+      '--accent-orange': '#ff6d00',
+      '--accent-violet': '#aa00ff',
+      '--accent-red': '#ff1744',
+      '--accent-yellow': '#ffd600'
+    }
+  },
+
+  // === BOSS-EXCLUSIVE VISUALS (not purchasable) ===
   boss_dragon: {
     id: 'boss_dragon',
     name: 'Antre du Dragon',
     price: -1,
     rarity: 'legendary',
     preview: '🐉',
-    vars: {
+    pattern: 'boss_dragon',
+    defaultVars: {
       '--bg-dark': '#1a0505',
       '--bg-card': '#2e0a0a',
       '--bg-card-hover': '#3d1212',
@@ -297,7 +400,8 @@ const THEMES = {
     price: -1,
     rarity: 'legendary',
     preview: '🌀',
-    vars: {
+    pattern: 'boss_kraken',
+    defaultVars: {
       '--bg-dark': '#050a1a',
       '--bg-card': '#0a1530',
       '--bg-card-hover': '#102048',
@@ -310,125 +414,79 @@ const THEMES = {
       '--accent-red': '#3060c0',
       '--accent-yellow': '#40b0ff'
     }
-  },
-
-  // === RARE THEME (Splatoon) ===
-  splatoon: {
-    id: 'splatoon',
-    name: 'Inkopolis',
-    price: 300,
-    rarity: 'rare',
-    preview: '🦑',
-    vars: {
-      '--bg-dark': '#1a1a2a',
-      '--bg-card': '#252535',
-      '--bg-card-hover': '#303045',
-      '--text-primary': '#f0f0f0',
-      '--text-secondary': '#a0a0c0',
-      '--accent-blue': '#04d9ff',
-      '--accent-green': '#a0ff00',
-      '--accent-orange': '#ff6700',
-      '--accent-violet': '#c83dff',
-      '--accent-red': '#ff2070',
-      '--accent-yellow': '#ffe400'
-    },
-    pattern: 'splatoon'
-  },
-
-  // === LEGENDARY THEME (Dragon Ball Z) ===
-  dbz: {
-    id: 'dbz',
-    name: 'Saiyan',
-    price: 3000,
-    rarity: 'legendary',
-    preview: '🟠',
-    vars: {
-      '--bg-dark': '#0a0a14',
-      '--bg-card': '#1a1a2e',
-      '--bg-card-hover': '#252540',
-      '--text-primary': '#fff0d0',
-      '--text-secondary': '#c0a060',
-      '--accent-blue': '#00b0ff',
-      '--accent-green': '#76ff03',
-      '--accent-orange': '#ff6d00',
-      '--accent-violet': '#aa00ff',
-      '--accent-red': '#ff1744',
-      '--accent-yellow': '#ffd600'
-    },
-    pattern: 'dbz'
-  },
-
-  // === EPIC THEME (One Piece) ===
-  onepiece: {
-    id: 'onepiece',
-    name: 'Grand Line',
-    price: 900,
-    rarity: 'epic',
-    preview: '🏴‍☠️',
-    vars: {
-      '--bg-dark': '#0a1628',
-      '--bg-card': '#142238',
-      '--bg-card-hover': '#1c3050',
-      '--text-primary': '#f0e6d0',
-      '--text-secondary': '#7ab0d4',
-      '--accent-blue': '#2196f3',
-      '--accent-green': '#4caf50',
-      '--accent-orange': '#ff6d00',
-      '--accent-violet': '#9c27b0',
-      '--accent-red': '#d32f2f',
-      '--accent-yellow': '#ffd600'
-    },
-    pattern: 'onepiece'
-  },
-
-  // === FREE THEME (chat) ===
-  chat: {
-    id: 'chat',
-    name: 'Royaume du Chat',
-    price: 0,
-    rarity: 'common',
-    preview: '🐱',
-    vars: {
-      '--bg-dark': '#2a1f1a',
-      '--bg-card': '#3d2e24',
-      '--bg-card-hover': '#4a382c',
-      '--text-primary': '#f5ebe0',
-      '--text-secondary': '#c4a882',
-      '--accent-blue': '#7eb8c9',
-      '--accent-green': '#6fbf73',
-      '--accent-orange': '#e8944c',
-      '--accent-violet': '#c48db8',
-      '--accent-red': '#e06858',
-      '--accent-yellow': '#f0c060'
-    },
-    pattern: 'paws'
   }
 };
 
+// ============================================================
+// Constants
+// ============================================================
+
+const FREE_PALETTES = ['nuit', 'ocean', 'foret'];
+const FREE_VISUALS = ['chat'];
+const PALETTE_IDS = new Set(Object.keys(PALETTES));
+const VISUAL_IDS = new Set(Object.keys(VISUAL_THEMES));
+
+// Backward-compatible alias
 const FREE_THEMES = ['nuit', 'ocean', 'foret', 'chat'];
 
-/**
- * Apply a theme by setting CSS custom properties on :root
- * @param {string} themeId — key from THEMES object
- */
-function applyTheme(themeId) {
-  const theme = THEMES[themeId];
-  if (!theme) return;
+// Backward-compatible merged object
+const THEMES = {};
+for (const [id, p] of Object.entries(PALETTES)) {
+  THEMES[id] = { id: p.id, name: p.name, price: p.price, rarity: p.rarity, preview: p.preview, vars: p.vars };
+}
+for (const [id, v] of Object.entries(VISUAL_THEMES)) {
+  THEMES[id] = { id: v.id, name: v.name, price: v.price, rarity: v.rarity, preview: v.preview, vars: v.defaultVars, pattern: v.pattern };
+}
 
-  const root = document.documentElement.style;
-  for (const [prop, value] of Object.entries(theme.vars)) {
-    root.setProperty(prop, value);
+// ============================================================
+// Functions
+// ============================================================
+
+/**
+ * Apply palette colors (CSS custom properties) on :root
+ * @param {string|null} paletteId — key from PALETTES, or 'none'/null
+ * @param {Object} [fallbackVars] — CSS vars to use when paletteId is 'none'/null
+ */
+function applyPalette(paletteId, fallbackVars) {
+  let vars;
+  if (paletteId && paletteId !== 'none' && PALETTES[paletteId]) {
+    vars = PALETTES[paletteId].vars;
+  } else if (fallbackVars) {
+    vars = fallbackVars;
+  } else {
+    vars = PALETTES.nuit.vars;
   }
 
-  // Pattern overlays
-  const patterns = ['paws', 'onepiece', 'splatoon', 'dbz'];
-  const pat = theme.pattern || '';
-  for (const p of patterns) document.body.classList.toggle('theme-pattern-' + p, pat === p);
+  const root = document.documentElement.style;
+  for (const [prop, value] of Object.entries(vars)) {
+    root.setProperty(prop, value);
+  }
+}
+
+/**
+ * Apply visual theme — toggle pattern classes on body + set decorations
+ * @param {string|null} visualId — key from VISUAL_THEMES, or null/'none'
+ */
+function applyVisual(visualId) {
+  const visual = (visualId && visualId !== 'none') ? VISUAL_THEMES[visualId] : null;
+  const pat = visual ? visual.pattern : '';
+
+  // Toggle all pattern classes
+  const allPatterns = ['paws', 'onepiece', 'splatoon', 'dbz', 'boss_dragon', 'boss_kraken'];
+  for (const p of allPatterns) {
+    document.body.classList.toggle('theme-pattern-' + p, pat === p);
+  }
 
   // Theme decorations on static elements
   const kameIcon = '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:2px solid currentColor;border-radius:50%;font-size:16px;font-weight:900;vertical-align:middle;margin-right:4px">亀</span>';
-  const decos = { paws: ['😼','🐱','😸'], onepiece: ['🏴‍☠️','🏴‍☠️','☠️'], splatoon: ['🦑','🦑','🎨'], dbz: ['★', kameIcon, '⚡'] };
+  const decos = {
+    paws: ['😼', '🐱', '😸'],
+    onepiece: ['🏴‍☠️', '🏴‍☠️', '☠️'],
+    splatoon: ['🦑', '🦑', '🎨'],
+    dbz: ['★', kameIcon, '⚡']
+  };
   const d = decos[pat];
+
   const shopBtn = document.getElementById('btn-shop');
   if (shopBtn) shopBtn.textContent = d ? d[0] : '🛒';
 
@@ -440,8 +498,51 @@ function applyTheme(themeId) {
 }
 
 /**
- * Get all themes as an array
- * @returns {Array} — array of theme objects
+ * Apply a full theme combo (palette + visual)
+ * @param {string|null} paletteId — palette key or 'none'/null
+ * @param {string|null} visualId — visual theme key or 'none'/null
+ */
+function applyThemeCombo(paletteId, visualId) {
+  const visual = (visualId && visualId !== 'none') ? VISUAL_THEMES[visualId] : null;
+  applyPalette(paletteId, visual ? visual.defaultVars : null);
+  applyVisual(visualId);
+}
+
+/**
+ * Backward-compatible wrapper — apply a theme by its old single ID
+ * Checks if themeId is a visual or palette and routes accordingly
+ * @param {string} themeId — key from either PALETTES or VISUAL_THEMES
+ */
+function applyTheme(themeId) {
+  if (VISUAL_IDS.has(themeId)) {
+    // Visual theme: apply its defaultVars as palette + its pattern
+    applyThemeCombo(null, themeId);
+  } else if (PALETTE_IDS.has(themeId)) {
+    // Palette only: apply colors, clear any visual
+    applyThemeCombo(themeId, null);
+  }
+  // Unknown themeId: do nothing
+}
+
+/**
+ * Get all palettes as an array
+ * @returns {Array}
+ */
+function getPaletteList() {
+  return Object.values(PALETTES);
+}
+
+/**
+ * Get all visual themes as an array
+ * @returns {Array}
+ */
+function getVisualList() {
+  return Object.values(VISUAL_THEMES);
+}
+
+/**
+ * Get all themes as an array (backward compat — palettes + visuals combined)
+ * @returns {Array}
  */
 function getThemeList() {
   return Object.values(THEMES);

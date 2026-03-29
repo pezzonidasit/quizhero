@@ -34,6 +34,11 @@ const ProfileManager = {
     this._setData(id, 'catStats', {});
     this._setData(id, 'ownedThemes', [...FREE_THEMES]);
     this._setData(id, 'activeTheme', themeId);
+    this._setData(id, 'ownedPalettes', [...FREE_PALETTES]);
+    this._setData(id, 'ownedVisuals', [...FREE_VISUALS]);
+    this._setData(id, 'activePalette', themeId);
+    this._setData(id, 'activeVisual', 'none');
+    this._setData(id, '_themeMigrated', true);
     this._setData(id, 'inventory', []);
     this._setData(id, 'chestsOpened', []);
     this._setData(id, 'xpBoostActive', false);
