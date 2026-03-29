@@ -157,10 +157,18 @@ const Duel = {
     const roundData = duel.rounds[round];
     const elapsed = Date.now() - this.timerStart;
 
-    const correct = Math.abs(Number(value) - roundData.question.answer) < 0.01;
+    const q = roundData.question;
+    let correct;
+    if (q.textAnswer !== undefined || q.acceptedAnswers) {
+      const norm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+      const accepted = q.acceptedAnswers || [q.textAnswer];
+      correct = accepted.some(a => norm(value) === norm(a));
+    } else {
+      correct = Math.abs(Number(value) - q.answer) < 0.01;
+    }
 
     await db.ref('duels/' + this.code + '/rounds/' + round + '/answers/' + this.role).set({
-      value: Number(value),
+      value: (q.textAnswer !== undefined || q.acceptedAnswers) ? value : Number(value),
       time: elapsed,
       correct: correct,
     });
@@ -219,6 +227,9 @@ const Duel = {
       document.getElementById('duel-waiting-opponent').style.display = 'none';
       document.getElementById('duel-round-result').style.display = 'none';
       const input = document.getElementById('duel-answer-input');
+      const isTextQ = q.textAnswer !== undefined || q.acceptedAnswers;
+      input.type = isTextQ ? 'text' : 'number';
+      input.inputMode = isTextQ ? 'text' : 'decimal';
       input.value = '';
       setTimeout(() => input.focus(), 100);
 
