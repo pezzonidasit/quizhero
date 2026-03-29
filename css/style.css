@@ -165,12 +165,12 @@ body::after {
   pointer-events: none;
 }
 
-/* Cat pattern overlay — PNG tile only; SVG generated dynamically by themes.js */
+/* Cat pattern overlay — SVG generated dynamically via --theme-svg-bg */
 body.theme-pattern-paws::after {
   opacity: 0.18;
-  background-image: url("../icons/cat-tile.png");
-  background-size: 380px 360px;
-  background-repeat: repeat;
+  background-image: var(--theme-svg-bg, none), url("../icons/cat-tile.png");
+  background-size: var(--theme-svg-size, 380px 360px), 380px 360px;
+  background-repeat: repeat, repeat;
 }
 
 /* Cat paw decorations on buttons */
@@ -219,12 +219,12 @@ body.theme-pattern-paws::after {
   margin-bottom: 0.5rem;
 }
 
-/* Dragon Ball Z pattern overlay — PNG tile only; SVG generated dynamically by themes.js */
+/* Dragon Ball Z pattern overlay — SVG generated dynamically via --theme-svg-bg */
 body.theme-pattern-dbz::after {
   opacity: 0.18;
-  background-image: url("../icons/dbz-tile.png");
-  background-size: 420px 380px;
-  background-repeat: repeat;
+  background-image: var(--theme-svg-bg, none), url("../icons/dbz-tile.png");
+  background-size: var(--theme-svg-size, 420px 380px), 420px 380px;
+  background-repeat: repeat, repeat;
 }
 
 /* DBZ decorations on buttons — Dragon Ball SVG */
@@ -296,12 +296,12 @@ body.theme-pattern-dbz::after {
   margin-bottom: 0.5rem;
 }
 
-/* Splatoon pattern overlay — PNG tile only; SVG generated dynamically by themes.js */
+/* Splatoon pattern overlay — SVG generated dynamically via --theme-svg-bg */
 body.theme-pattern-splatoon::after {
   opacity: 0.18;
-  background-image: url("../icons/splatoon-tile.png");
-  background-size: 420px 380px;
-  background-repeat: repeat;
+  background-image: var(--theme-svg-bg, none), url("../icons/splatoon-tile.png");
+  background-size: var(--theme-svg-size, 420px 380px), 420px 380px;
+  background-repeat: repeat, repeat;
 }
 
 /* Splatoon decorations on buttons */
@@ -350,12 +350,12 @@ body.theme-pattern-splatoon::after {
   margin-bottom: 0.5rem;
 }
 
-/* One Piece pattern overlay — PNG tile only; SVG generated dynamically by themes.js */
+/* One Piece pattern overlay — SVG generated dynamically via --theme-svg-bg */
 body.theme-pattern-onepiece::after {
   opacity: 0.18;
-  background-image: url("../icons/mugiwara.png");
-  background-size: 140px;
-  background-repeat: repeat;
+  background-image: var(--theme-svg-bg, none), url("../icons/mugiwara.png");
+  background-size: var(--theme-svg-size, 340px 340px), 140px;
+  background-repeat: repeat, repeat;
 }
 
 /* One Piece decorations on buttons */

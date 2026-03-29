@@ -512,30 +512,15 @@ function applyVisual(visualId, activeVars) {
     document.body.classList.toggle('theme-pattern-' + p, pat === p);
   }
 
-  // Generate dynamic SVG overlay with palette colors
-  let styleEl = document.getElementById('theme-svg-override');
-  if (!styleEl) {
-    styleEl = document.createElement('style');
-    styleEl.id = 'theme-svg-override';
-    document.head.appendChild(styleEl);
-  }
+  // Set dynamic SVG as CSS custom property on body
   if (pat && SVG_TEMPLATES[pat] && activeVars) {
     const dataUri = generateSvgDataUri(pat, activeVars);
     const svgSize = SVG_SIZES[pat];
-    const pngBgs = {
-      paws: { url: 'url("icons/cat-tile.png")', size: '380px 360px' },
-      onepiece: { url: 'url("icons/mugiwara.png")', size: '140px' },
-      splatoon: { url: 'url("icons/splatoon-tile.png")', size: '420px 380px' },
-      dbz: { url: 'url("icons/dbz-tile.png")', size: '420px 380px' }
-    };
-    const png = pngBgs[pat];
-    if (png) {
-      styleEl.textContent = `body.theme-pattern-${pat}::after { background-image: ${dataUri}, ${png.url} !important; background-size: ${svgSize}, ${png.size} !important; }`;
-    } else {
-      styleEl.textContent = '';
-    }
+    document.body.style.setProperty('--theme-svg-bg', dataUri);
+    document.body.style.setProperty('--theme-svg-size', svgSize);
   } else {
-    styleEl.textContent = '';
+    document.body.style.removeProperty('--theme-svg-bg');
+    document.body.style.removeProperty('--theme-svg-size');
   }
 
   // Theme decorations on static elements
