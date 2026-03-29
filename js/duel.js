@@ -325,7 +325,13 @@ const Duel = {
       }
     } else {
       winnerEl.textContent = '❌ Point pour l\'adversaire';
-      detailEl.textContent = 'Réponse correcte : ' + (roundData.question.textAnswer || roundData.question.answer);
+      const myAnswer = answers[this.role];
+      if (myAnswer?.correct) {
+        const otherRole = this.role === 'a' ? 'b' : 'a';
+        detailEl.textContent = 'L\'adversaire a été plus rapide (' + (answers[otherRole].time / 1000).toFixed(1) + 's vs ' + (myAnswer.time / 1000).toFixed(1) + 's)';
+      } else {
+        detailEl.textContent = 'Réponse correcte : ' + (roundData.question.textAnswer || roundData.question.answer);
+      }
     }
 
     // Auto-advance after 2.5s (only player A triggers)
