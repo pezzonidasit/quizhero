@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="380" viewBox="0 0 420 380">
+  <!-- DBZ Ki aura + energy effects -->
+
+  <!-- Ki sparks around Goku area -->
+  <g stroke="#ffd600" stroke-width="1.8" stroke-linecap="round" opacity="0.4">
+    <line x1="20" y1="15" x2="12" y2="2"/>
+    <line x1="55" y1="8" x2="58" y2="-5"/>
+    <line x1="85" y1="15" x2="95" y2="3"/>
+    <line x1="10" y1="80" x2="0" y2="72"/>
+    <line x1="100" y1="70" x2="110" y2="62"/>
+  </g>
+
+  <!-- Ki sparks around Dragon Ball -->
+  <g stroke="#ff8f00" stroke-width="1.5" stroke-linecap="round" opacity="0.3">
+    <line x1="310" y1="42" x2="315" y2="30"/>
+    <line x1="340" y1="48" x2="352" y2="38"/>
+    <line x1="285" y1="55" x2="275" y2="45"/>
+    <line x1="370" y1="80" x2="382" y2="72"/>
+  </g>
+
+  <!-- Energy swirl around Shenron -->
+  <g fill="none" stroke="#76ff03" stroke-width="1.2" opacity="0.25">
+    <path d="M140,240 Q130,220 145,210"/>
+    <path d="M260,240 Q270,225 255,215"/>
+    <path d="M160,365 Q145,370 140,355"/>
+    <path d="M250,360 Q265,365 260,350"/>
+  </g>
+
+  <!-- Power-up stars -->
+  <g fill="#ffd600" opacity="0.3">
+    <polygon points="380,170 383,178 391,178 385,183 387,191 380,186 373,191 375,183 369,178 377,178" transform="scale(0.6) translate(250,100)"/>
+    <polygon points="380,170 383,178 391,178 385,183 387,191 380,186 373,191 375,183 369,178 377,178" transform="scale(0.4) translate(100,650)"/>
+  </g>
+
+  <!-- Scatter dots (ki particles) -->
+  <g fill="#ffd600">
+    <circle cx="180" cy="30" r="1.5" opacity="0.2"/>
+    <circle cx="400" cy="200" r="2" opacity="0.15"/>
+    <circle cx="120" cy="190" r="1.5" opacity="0.18"/>
+    <circle cx="350" cy="320" r="1.8" opacity="0.15"/>
+    <circle cx="20" cy="350" r="1.5" opacity="0.12"/>
+  </g>
+</svg>

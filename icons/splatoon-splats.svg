@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="380" viewBox="0 0 420 380">
+  <!-- Splatoon ink splats — organic blob shapes -->
+
+  <!-- Pink splat (top-right) -->
+  <g fill="#ff2070" opacity="0.6">
+    <path d="M320,60 Q340,40 355,55 Q365,70 350,80 Q340,90 325,85 Q310,75 320,60Z"/>
+    <circle cx="360" cy="45" r="6"/>
+    <circle cx="310" cy="52" r="4"/>
+    <circle cx="345" cy="90" r="3"/>
+  </g>
+
+  <!-- Green splat (center-left) -->
+  <g fill="#a0ff00" opacity="0.5">
+    <path d="M60,190 Q80,170 100,180 Q115,195 100,210 Q85,220 65,210 Q50,200 60,190Z"/>
+    <circle cx="45" cy="180" r="5"/>
+    <circle cx="110" cy="215" r="4"/>
+    <circle cx="55" cy="220" r="3"/>
+  </g>
+
+  <!-- Orange splat (bottom-right) -->
+  <g fill="#ff6700" opacity="0.5">
+    <path d="M340,300 Q360,285 375,295 Q385,310 370,320 Q355,325 340,315 Q330,305 340,300Z"/>
+    <circle cx="380" cy="285" r="5"/>
+    <circle cx="330" cy="310" r="3"/>
+    <circle cx="375" cy="328" r="4"/>
+  </g>
+
+  <!-- Purple splat (top-left small) -->
+  <g fill="#c83dff" opacity="0.45">
+    <path d="M180,30 Q195,20 205,30 Q210,45 198,50 Q185,48 180,30Z"/>
+    <circle cx="210" cy="22" r="3"/>
+    <circle cx="175" cy="40" r="2.5"/>
+  </g>
+
+  <!-- Cyan drips (scattered) -->
+  <g fill="#04d9ff" opacity="0.35">
+    <circle cx="250" cy="170" r="3"/>
+    <circle cx="253" cy="180" r="2"/>
+    <circle cx="251" cy="188" r="1.5"/>
+    <circle cx="150" cy="320" r="3"/>
+    <circle cx="148" cy="330" r="2"/>
+  </g>
+</svg>

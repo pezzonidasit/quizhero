@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="360" viewBox="0 0 380 360">
+  <!-- Cat paw prints — realistic style -->
+
+  <!-- Paw 1 (top-right, rotated) -->
+  <g transform="translate(300,40) rotate(20)" fill="#f5ebe0" opacity="0.5">
+    <ellipse cx="0" cy="8" rx="10" ry="12"/>
+    <ellipse cx="-10" cy="-6" rx="5" ry="6"/>
+    <ellipse cx="-2" cy="-10" rx="5" ry="6"/>
+    <ellipse cx="7" cy="-8" rx="5" ry="6"/>
+    <ellipse cx="13" cy="-2" rx="4.5" ry="5.5"/>
+  </g>
+
+  <!-- Paw 2 (center-left, different angle) -->
+  <g transform="translate(55,200) rotate(-15)" fill="#f5ebe0" opacity="0.4">
+    <ellipse cx="0" cy="6" rx="8" ry="10"/>
+    <ellipse cx="-8" cy="-5" rx="4" ry="5"/>
+    <ellipse cx="-1" cy="-8" rx="4" ry="5"/>
+    <ellipse cx="6" cy="-6" rx="4" ry="5"/>
+    <ellipse cx="10" cy="-1" rx="3.5" ry="4.5"/>
+  </g>
+
+  <!-- Paw 3 (bottom-right, small) -->
+  <g transform="translate(320,290) rotate(35)" fill="#f5ebe0" opacity="0.35">
+    <ellipse cx="0" cy="5" rx="6" ry="8"/>
+    <ellipse cx="-6" cy="-4" rx="3" ry="4"/>
+    <ellipse cx="-1" cy="-6" rx="3" ry="4"/>
+    <ellipse cx="5" cy="-5" rx="3" ry="4"/>
+    <ellipse cx="8" cy="-1" rx="2.5" ry="3.5"/>
+  </g>
+
+  <!-- Yarn ball (top-center) -->
+  <g transform="translate(190,55)" opacity="0.3">
+    <circle cx="0" cy="0" r="10" fill="none" stroke="#e8944c" stroke-width="1.5"/>
+    <path d="M-8,4 Q-2,-8 8,-2" fill="none" stroke="#e8944c" stroke-width="1"/>
+    <path d="M-5,-6 Q4,0 2,8" fill="none" stroke="#e8944c" stroke-width="1"/>
+    <line x1="8" y1="6" x2="22" y2="18" stroke="#e8944c" stroke-width="1" stroke-dasharray="3,4"/>
+  </g>
+
+  <!-- Fish (bottom-left) -->
+  <g transform="translate(40,320) rotate(-10)" fill="#7eb8c9" opacity="0.3">
+    <ellipse cx="0" cy="0" rx="12" ry="6"/>
+    <polygon points="12,-1 20,-6 20,6"/>
+    <circle cx="-5" cy="-1" r="1.5" fill="#2a1f1a"/>
+  </g>
+
+  <!-- Scatter whisker marks -->
+  <g stroke="#f5ebe0" stroke-width="0.8" stroke-linecap="round" opacity="0.2">
+    <line x1="160" y1="170" x2="180" y2="168"/>
+    <line x1="160" y1="175" x2="180" y2="177"/>
+    <line x1="260" y1="330" x2="275" y2="328"/>
+    <line x1="260" y1="335" x2="275" y2="337"/>
+  </g>
+</svg>

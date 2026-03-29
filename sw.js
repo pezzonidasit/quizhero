@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quizhero-v704';
+const CACHE_NAME = 'quizhero-v705';
 const ASSETS = [
   './',
   './index.html',
@@ -17,6 +17,14 @@ const ASSETS = [
   './js/adventure.js',
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
+  './icons/mugiwara.png',
+  './icons/onepiece-nautical.svg',
+  './icons/splatoon-tile.png',
+  './icons/splatoon-splats.svg',
+  './icons/dbz-tile.png',
+  './icons/dbz-aura.svg',
+  './icons/cat-tile.png',
+  './icons/cat-paws.svg',
 ];
 
 self.addEventListener('install', e => {
