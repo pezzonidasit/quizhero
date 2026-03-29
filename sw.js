@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quizhero-v713';
+const CACHE_NAME = 'quizhero-v714';
 const ASSETS = [
   './',
   './index.html',
@@ -18,6 +18,7 @@ const ASSETS = [
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
   './icons/mugiwara.png',
+  './icons/onepiece-tile.png',
   './icons/onepiece-nautical.svg',
   './icons/splatoon-tile.png',
   './icons/splatoon-splats.svg',

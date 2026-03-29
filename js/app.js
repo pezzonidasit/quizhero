@@ -1,6 +1,6 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '7.2.7';
+const APP_VERSION = '7.3.0';
 
 // ── Theme Helpers ───────────────────────────────────────────────
 function isCatTheme() {

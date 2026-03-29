@@ -167,7 +167,7 @@ body::after {
 
 /* Cat pattern overlay */
 body.theme-pattern-paws::after {
-  opacity: 0.18;
+  opacity: 0.85;
   background-image: url("../icons/cat-paws.svg"), url("../icons/cat-tile.png");
   background-size: 380px 360px, 380px 360px;
   background-repeat: repeat, repeat;
@@ -221,7 +221,7 @@ body.theme-pattern-paws::after {
 
 /* Dragon Ball Z pattern overlay */
 body.theme-pattern-dbz::after {
-  opacity: 0.18;
+  opacity: 0.85;
   background-image: url("../icons/dbz-aura.svg"), url("../icons/dbz-tile.png");
   background-size: 420px 380px, 420px 380px;
   background-repeat: repeat, repeat;
@@ -298,7 +298,7 @@ body.theme-pattern-dbz::after {
 
 /* Splatoon pattern overlay */
 body.theme-pattern-splatoon::after {
-  opacity: 0.18;
+  opacity: 0.85;
   background-image: url("../icons/splatoon-splats.svg"), url("../icons/splatoon-tile.png");
   background-size: 420px 380px, 420px 380px;
   background-repeat: repeat, repeat;
@@ -352,9 +352,9 @@ body.theme-pattern-splatoon::after {
 
 /* One Piece pattern overlay */
 body.theme-pattern-onepiece::after {
-  opacity: 0.18;
-  background-image: url("../icons/onepiece-nautical.svg"), url("../icons/mugiwara.png");
-  background-size: 340px 340px, 140px;
+  opacity: 0.85;
+  background-image: url("../icons/onepiece-nautical.svg"), url("../icons/onepiece-tile.png");
+  background-size: 340px 340px, 420px 380px;
   background-repeat: repeat, repeat;
 }
 
@@ -1920,13 +1920,7 @@ h2 {
 
 /* --- Responsive --- */
 @media (max-width: 480px) {
-  /* Boost theme pattern visibility on mobile */
-  body.theme-pattern-paws::after,
-  body.theme-pattern-dbz::after,
-  body.theme-pattern-splatoon::after,
-  body.theme-pattern-onepiece::after {
-    opacity: 0.24;
-  }
+  /* Theme pattern on mobile — already at full opacity */
 
   body {
     padding: 16px 10px;

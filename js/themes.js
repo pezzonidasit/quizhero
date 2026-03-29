@@ -461,6 +461,11 @@ function applyPalette(paletteId, fallbackVars) {
   for (const [prop, value] of Object.entries(vars)) {
     root.setProperty(prop, value);
   }
+
+  // Detect light palettes for pattern blend mode switch
+  const LIGHT_PALETTES = ['arctique', 'bonbon'];
+  const isLight = paletteId && LIGHT_PALETTES.includes(paletteId);
+  document.body.classList.toggle('palette-light', isLight);
 }
 
 /**
