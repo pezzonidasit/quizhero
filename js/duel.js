@@ -313,7 +313,7 @@ const Duel = {
 
     if (winner === 'none') {
       winnerEl.textContent = '💀 Personne ne marque !';
-      detailEl.textContent = 'Réponse correcte : ' + roundData.question.answer;
+      detailEl.textContent = 'Réponse correcte : ' + (roundData.question.textAnswer || roundData.question.answer);
     } else if (winner === this.role) {
       winnerEl.textContent = '✅ Tu marques le point !';
       if (answers.a?.correct && answers.b?.correct) {
@@ -323,7 +323,7 @@ const Duel = {
       }
     } else {
       winnerEl.textContent = '❌ Point pour l\'adversaire';
-      detailEl.textContent = 'Réponse correcte : ' + roundData.question.answer;
+      detailEl.textContent = 'Réponse correcte : ' + (roundData.question.textAnswer || roundData.question.answer);
     }
 
     // Auto-advance after 2.5s (only player A triggers)
