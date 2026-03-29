@@ -378,26 +378,33 @@ const Duel = {
     document.getElementById('duel-end-icon').textContent = isDraw ? '🤝' : iWon ? '🏆' : '😢';
     document.getElementById('duel-end-title').textContent = isDraw ? 'Égalité !' : iWon ? 'Victoire !' : 'Défaite...';
     document.getElementById('duel-end-score').textContent = duel.players.a.score + ' - ' + (duel.players.b?.score || 0);
+    document.getElementById('btn-duel-rematch')?.removeAttribute('disabled');
 
+    // Only apply coin changes once per finished duel
     const coinsEl = document.getElementById('duel-end-coins');
+    if (!this._endApplied) {
+      this._endApplied = true;
+      if (iWon) {
+        ProfileManager.set('coins', ProfileManager.get('coins', 0) + effective);
+      } else if (!isDraw) {
+        ProfileManager.set('coins', Math.max(0, ProfileManager.get('coins', 0) - effective));
+      }
+      if (typeof updateProfileHeader === 'function') updateProfileHeader();
+    }
+
     if (isDraw) {
       coinsEl.innerHTML = '<div class="reward-row"><span>Mise rendue</span><span class="reward-value">0 🪙</span></div>';
     } else if (iWon) {
       coinsEl.innerHTML = '<div class="reward-row"><span>Pièces gagnées</span><span class="reward-value" style="color:var(--accent-green)">+' + effective + ' 🪙</span></div>';
-      ProfileManager.set('coins', ProfileManager.get('coins', 0) + effective);
     } else {
       coinsEl.innerHTML = '<div class="reward-row"><span>Pièces perdues</span><span class="reward-value" style="color:var(--accent-red, #ff6b6b)">-' + effective + ' 🪙</span></div>';
-      ProfileManager.set('coins', Math.max(0, ProfileManager.get('coins', 0) - effective));
     }
 
-    if (typeof updateProfileHeader === 'function') updateProfileHeader();
-
-    // Cleanup Firebase duel after 10s
-    setTimeout(() => {
+    // Schedule cleanup — cancelled if rematch starts
+    this._cleanupTimer = setTimeout(() => {
       db.ref('duels/' + this.code).remove().catch(() => {});
-    }, 10000);
-
-    if (this.listener) { this.listener.off(); this.listener = null; }
+      if (this.listener) { this.listener.off(); this.listener = null; }
+    }, 60000);
   },
 
   // ── Cancel ──
@@ -417,6 +424,10 @@ const Duel = {
     const code = this.code;
     const role = this.role;
     if (!duel || !code) { this._cleanup(); showScreen('screen-home'); return; }
+
+    // Cancel scheduled cleanup, reset end state
+    if (this._cleanupTimer) { clearTimeout(this._cleanupTimer); this._cleanupTimer = null; }
+    this._endApplied = false;
 
     // Mark this player as ready for rematch
     await db.ref('duels/' + code + '/rematch/' + role).set(true);
@@ -475,6 +486,7 @@ const Duel = {
   _cleanup() {
     this._stopTimer();
     this._currentDisplayedRound = null;
+    if (this._cleanupTimer) { clearTimeout(this._cleanupTimer); this._cleanupTimer = null; }
     if (this.listener) { this.listener.off(); this.listener = null; }
     this.code = null;
     this.role = null;
