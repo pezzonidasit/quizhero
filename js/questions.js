@@ -1210,6 +1210,156 @@ const RIDDLE_BANK = [
     level: 2
   },
 
+  // LOGIQUE — Level 1 (nouveaux)
+  {
+    category: 'logique',
+    text: 'Je suis un nombre entre 10 et 20. Je suis pair. La somme de mes chiffres est 5. Qui suis-je ?',
+    unit: '', answer: 14,
+    hint: 'Je suis pair et mes deux chiffres s\'additionnent pour faire 5.',
+    explanation: 'Pairs entre 10 et 20 : 10, 12, 14, 16, 18. Seul 14 a une somme de chiffres = 5 (1+4). ✓',
+    level: 1
+  },
+  {
+    category: 'logique',
+    text: 'Lucie a 5 bonbons de plus que Tom. Ensemble ils en ont 13. Combien Tom en a-t-il ?',
+    unit: '', answer: 4,
+    hint: 'Si Tom a x bonbons, Lucie en a x + 5. La somme fait 13.',
+    explanation: 'x + (x + 5) = 13 → 2x = 8 → x = 4. Tom a 4 bonbons, Lucie en a 9. ✓',
+    level: 1
+  },
+  {
+    category: 'logique',
+    text: 'Dans une course à 5 : Zoé finit avant Paul. Paul finit avant Emma. Max finit avant Zoé. Nina finit après Emma. Qui finit 3e ?',
+    unit: '', answer: null, textAnswer: 'paul',
+    hint: 'Essaie de classer tout le monde dans l\'ordre.',
+    explanation: 'Ordre : Max > Zoé > Paul > Emma > Nina. Paul est 3e. ✓',
+    level: 1
+  },
+  {
+    category: 'logique',
+    text: 'Le magicien Aldric pense à un nombre. Il le double et retire 4. Il obtient 10. Quel est son nombre ?',
+    unit: '', answer: 7,
+    hint: 'Remonte à l\'envers : ajoute 4, puis divise par 2.',
+    explanation: '10 + 4 = 14. 14 ÷ 2 = 7. Vérif : 7 × 2 − 4 = 10. ✓',
+    level: 1
+  },
+  {
+    category: 'logique',
+    text: 'Dans un château, 4 portes : rouge, verte, bleue, jaune. Le trésor n\'est ni derrière la rouge ni la bleue. La porte verte est gardée par un dragon. Quelle porte ouvrir ?',
+    unit: '', answer: null, textAnswer: 'jaune',
+    hint: 'Élimine les portes impossibles une par une.',
+    explanation: 'Rouge et bleue → exclus par l\'énoncé. Verte → gardée par un dragon. Il reste la jaune. ✓',
+    level: 1
+  },
+  {
+    category: 'logique',
+    text: 'Je pense à un nombre. Il est plus grand que 15 et plus petit que 20. Il est impair. Ce n\'est pas 17. Qui suis-je ?',
+    unit: '', answer: 19,
+    hint: 'Liste les nombres entre 15 et 20. Garde les impairs.',
+    explanation: '16, 17, 18, 19. Impairs : 17, 19. Pas 17 → 19. ✓',
+    level: 1
+  },
+
+  // LOGIQUE — Level 2 (nouveaux)
+  {
+    category: 'logique',
+    text: 'Dans la bibliothèque du sorcier, les livres sont rangés : rouge, bleu, vert, rouge, bleu, vert… Le 20e livre est de quelle couleur ?',
+    unit: '', answer: null, textAnswer: 'bleu',
+    hint: 'Le motif se répète tous les 3. Quel est le reste de 20 ÷ 3 ?',
+    explanation: '20 = 3 × 6 + 2. Position 2 dans rouge-bleu-vert = bleu. Le 20e livre est bleu. ✓',
+    level: 2
+  },
+  {
+    category: 'logique',
+    text: 'Trois pirates : Rackham, Silver et Morgan. L\'un a un perroquet, l\'autre un singe, le troisième un crabe. Silver n\'a pas d\'oiseau. Rackham n\'a pas de crabe. Morgan a le singe. Qui a le perroquet ?',
+    unit: '', answer: null, textAnswer: 'rackham',
+    hint: 'Morgan a le singe. Silver n\'a pas d\'oiseau, donc il a...',
+    explanation: 'Morgan → singe. Silver → pas perroquet → crabe. Rackham → perroquet. ✓',
+    level: 2
+  },
+  {
+    category: 'logique',
+    text: 'Une grenouille est au fond d\'un puits de 12 m. Chaque jour elle monte 4 m, chaque nuit elle redescend 1 m. En combien de jours sort-elle ?',
+    unit: 'jours', answer: 4,
+    hint: 'Elle gagne 3 m par jour net. Mais le dernier jour, elle ne redescend pas !',
+    explanation: 'Fin J1 : 3 m. J2 : 6 m. J3 : 9 m. Jour 4 : 9 + 4 = 13 m ≥ 12 m → sortie ! ✓',
+    level: 2
+  },
+  {
+    category: 'logique',
+    text: 'Le roi partage 28 pièces d\'or. Son fils reçoit le double de sa fille. Son écuyer reçoit autant que la fille. Combien la fille reçoit-elle ?',
+    unit: '', answer: 7,
+    hint: 'Fille = x, fils = 2x, écuyer = x. Additionne tout.',
+    explanation: 'x + 2x + x = 28 → 4x = 28 → x = 7. La fille reçoit 7 pièces. ✓',
+    level: 2
+  },
+  {
+    category: 'logique',
+    text: 'Dans une classe, le nombre de filles est 4 de plus que le nombre de garçons. Il y a 30 élèves en tout. Combien y a-t-il de garçons ?',
+    unit: '', answer: 13,
+    hint: 'Garçons = x, filles = x + 4. Les deux font 30.',
+    explanation: 'x + (x + 4) = 30 → 2x = 26 → x = 13. ✓',
+    level: 2
+  },
+  {
+    category: 'logique',
+    text: 'Je suis un nombre pair à deux chiffres, divisible par 3. La somme de mes chiffres est 12. Mon chiffre des dizaines est plus grand que celui des unités. Qui suis-je ?',
+    unit: '', answer: 84,
+    hint: 'Cherche les paires de chiffres dont la somme est 12, dizaine > unité.',
+    explanation: 'Paires : (9,3)→93 impair ✗, (8,4)→84 pair ✓, 84÷3=28 ✓, 8>4 ✓. C\'est 84. ✓',
+    level: 2
+  },
+
+  // LOGIQUE — Level 3 (nouveaux)
+  {
+    category: 'logique',
+    text: 'Alice, Ben et Clara font chacun un sport différent : natation, tennis ou football. Alice ne nage pas. Ben ne fait ni tennis ni football. Clara ne fait pas de football. Qui fait du tennis ?',
+    unit: '', answer: null, textAnswer: 'clara',
+    hint: 'Ben ne peut faire ni tennis ni football — qu\'est-ce qu\'il lui reste ?',
+    explanation: 'Ben → natation (seul choix). Clara → pas football, pas natation (pris) → tennis. Alice → football. ✓',
+    level: 3
+  },
+  {
+    category: 'logique',
+    text: 'La sorcière prépare une potion avec 3 des 4 ingrédients : plume, pierre, feuille, écorce. La plume et la pierre ne vont jamais ensemble. L\'écorce a besoin de la feuille. La pierre est toujours présente. Quel ingrédient est absent ?',
+    unit: '', answer: null, textAnswer: 'plume',
+    hint: 'La pierre est toujours là. Que dit la règle sur la pierre et la plume ?',
+    explanation: 'Pierre → toujours là. Pierre + plume = interdit → pas de plume. Feuille + écorce = compatibles. ✓',
+    level: 3
+  },
+  {
+    category: 'logique',
+    text: 'Hugo a 3 fois plus de cartes que Léa. Si Hugo donne 12 cartes à Léa, ils en auront autant. Combien Léa a-t-elle de cartes au départ ?',
+    unit: '', answer: 12,
+    hint: 'Léa = x, Hugo = 3x. Après l\'échange : 3x − 12 = x + 12.',
+    explanation: '2x = 24 → x = 12. Léa : 12, Hugo : 36. Après : 24 = 24. ✓',
+    level: 3
+  },
+  {
+    category: 'logique',
+    text: 'Dans un tournoi, chaque équipe affronte une seule fois chaque autre équipe. Il y a 6 équipes. Combien de matchs au total ?',
+    unit: 'matchs', answer: 15,
+    hint: 'La 1re équipe joue 5 matchs, la 2e en joue 4 nouveaux…',
+    explanation: '5 + 4 + 3 + 2 + 1 = 15. Formule : 6 × 5 ÷ 2 = 15. ✓',
+    level: 3
+  },
+  {
+    category: 'logique',
+    text: 'Alex, Ben et Clara : exactement un des trois ment. Alex dit « Ben ment ». Ben dit « Clara dit la vérité ». Clara dit « Alex ment ». Qui ment ?',
+    unit: '', answer: null, textAnswer: 'alex',
+    hint: 'Suppose que chacun mente à tour de rôle. Dans quel cas y a-t-il exactement un menteur ?',
+    explanation: 'Si Alex ment → « Ben ment » faux → Ben vrai → « Clara vraie » vrai → Clara dit « Alex ment » vrai ✓. Un seul menteur : Alex. ✓',
+    level: 3
+  },
+  {
+    category: 'logique',
+    text: '5 maisons en rang. La tortue est dans la 1re. Le chat est dans la 3e. Le hamster est entre la tortue et le chat. Le chien est voisin direct du chat. Le lapin n\'est pas voisin de la tortue. Quel animal est dans la 5e maison ?',
+    unit: '', answer: null, textAnswer: 'lapin',
+    hint: 'Place d\'abord le hamster (entre pos 1 et 3). Le chien ne peut être qu\'à une seule place…',
+    explanation: '1=tortue, 2=hamster, 3=chat, 4=chien (voisin du chat, pos 2 prise), 5=lapin (non voisin de tortue ✓). ✓',
+    level: 3
+  },
+
   // ═══════════════════════════════════════════════════════════════════
   // GÉOMÉTRIE (~8 riddles)
   // ═══════════════════════════════════════════════════════════════════
