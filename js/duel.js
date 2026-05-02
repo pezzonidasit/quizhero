@@ -498,6 +498,7 @@ const Duel = {
   _cleanup() {
     this._stopTimer();
     this._currentDisplayedRound = null;
+    this._endApplied = false;
     if (this._cleanupTimer) { clearTimeout(this._cleanupTimer); this._cleanupTimer = null; }
     if (this.listener) { this.listener.off(); this.listener = null; }
     this.code = null;

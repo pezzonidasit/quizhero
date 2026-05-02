@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>6 Boss — Comparaison Pixel Art</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a2e; color: #e8e8f0; font-family: 'Segoe UI', sans-serif; padding: 1.5rem; }
+  h1 { text-align: center; margin-bottom: 1.5rem; font-size: 1.3rem; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; max-width: 1000px; margin: 0 auto; }
+  @media (max-width: 768px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  .card {
+    background: #25253e; border-radius: 16px; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .card h2 { font-size: 1rem; padding: 0.75rem; text-align: center; }
+  .boss-zone {
+    padding: 1.5rem 1rem;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 220px;
+    border-radius: 0 0 16px 16px;
+    position: relative;
+  }
+  .boss-zone::after {
+    content: '';
+    position: absolute;
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .boss-zone svg {
+    width: 180px; height: 180px;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
+    position: relative; z-index: 1;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .boss-pixel .eye-glow { animation: eyePulse 2s ease-in-out infinite; }
+  @keyframes eyePulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+  .boss-pixel .fire-breath { animation: fireBreath 1.2s ease-in-out infinite alternate; transform-origin: top center; }
+  @keyframes fireBreath { 0% { transform: scaleY(0.7) scaleX(0.9); opacity: 0.7; } 100% { transform: scaleY(1.1) scaleX(1.1); opacity: 1; } }
+  .boss-pixel .fire-breath-2 { animation: fireBreath2 0.9s ease-in-out infinite alternate; transform-origin: top center; }
+  @keyframes fireBreath2 { 0% { transform: scaleY(0.8) scaleX(1.1) rotate(-2deg); opacity: 0.6; } 100% { transform: scaleY(1.15) scaleX(0.85) rotate(2deg); opacity: 0.9; } }
+  .boss-pixel .wing-l { animation: wingFlapL 2s ease-in-out infinite; transform-origin: right center; }
+  .boss-pixel .wing-r { animation: wingFlapR 2s ease-in-out infinite; transform-origin: left center; }
+  @keyframes wingFlapL { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-8deg); } }
+  @keyframes wingFlapR { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(8deg); } }
+  .boss-pixel .bubble { animation: bubbleFloat 2s ease-in-out infinite; }
+  @keyframes bubbleFloat { 0%, 100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(-3px); opacity: 1; } }
+  .boss-pixel .tentacle { animation: tentacleWave 2.5s ease-in-out infinite; transform-origin: top center; }
+  .boss-pixel .tentacle-2 { animation: tentacleWave2 3s ease-in-out infinite; transform-origin: top center; }
+  @keyframes tentacleWave { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(5deg); } }
+  @keyframes tentacleWave2 { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-5deg); } }
+  .boss-pixel .sparkle { animation: sparkle 1.5s ease-in-out infinite; }
+  @keyframes sparkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+</style>
+<script src="js/bosses-svg.js"></script>
+</head>
+<body>
+<h1>Les 6 Boss — Pixel Art (chacun sur son fond)</h1>
+<div class="grid" id="grid"></div>
+<script>
+const bosses = [
+  { id: 'dragon', name: '🐉 Dragon des Fractions', color: '#3d1212' },
+  { id: 'golem', name: '🤖 Golem du Calcul', color: '#1a2a1a' },
+  { id: 'sorcier', name: '🧙 Sorcier de Logique', color: '#1a1a3d' },
+  { id: 'sphinx', name: '📐 Sphinx de Géométrie', color: '#2a2a1a' },
+  { id: 'alchimiste', name: '⚗️ Alchimiste des Mesures', color: '#1a2a2a' },
+  { id: 'kraken', name: '🌀 Kraken des Problèmes', color: '#0a1530' },
+];
+const grid = document.getElementById('grid');
+bosses.forEach(b => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <h2>${b.name}</h2>
+    <div class="boss-zone" style="background:${b.color}">
+      ${BOSS_SVG[b.id]}
+    </div>
+  `;
+  grid.appendChild(card);
+});
+</script>
+</body>
+</html>

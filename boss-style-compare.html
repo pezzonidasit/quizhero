@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Boss Style Comparison</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a2e; color: #e8e8f0; font-family: 'Segoe UI', sans-serif; padding: 2rem; }
+  h1 { text-align: center; margin-bottom: 2rem; font-size: 1.5rem; }
+  .grid { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+  .card {
+    background: #25253e;
+    border-radius: 16px;
+    padding: 1.5rem;
+    width: 280px;
+    text-align: center;
+  }
+  .card h2 { margin-bottom: 0.5rem; font-size: 1.1rem; color: #ff8c42; }
+  .card p { font-size: 0.8rem; color: #a0a0b8; margin-bottom: 1rem; }
+  .boss-container {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #3d1212;
+    border-radius: 12px;
+  }
+  svg { overflow: visible; }
+
+  /* Idle float animation for all */
+  .boss-svg { animation: float 3s ease-in-out infinite; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  /* A: Silhouette glow */
+  .silhouette-glow { filter: drop-shadow(0 0 15px rgba(255,100,30,0.5)); }
+
+  /* B: Cartoon eye blink */
+  .cartoon-eye { animation: blink 4s ease-in-out infinite; }
+  @keyframes blink {
+    0%, 45%, 55%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.1); }
+  }
+  /* Cartoon flame flicker */
+  .flame { animation: flicker 0.8s ease-in-out infinite alternate; transform-origin: bottom center; }
+  .flame2 { animation: flicker2 0.6s ease-in-out infinite alternate; transform-origin: bottom center; }
+  @keyframes flicker {
+    0% { transform: scaleY(1) scaleX(1) rotate(-3deg); opacity: 1; }
+    100% { transform: scaleY(1.2) scaleX(0.9) rotate(3deg); opacity: 0.8; }
+  }
+  @keyframes flicker2 {
+    0% { transform: scaleY(0.9) scaleX(1.1) rotate(2deg); opacity: 0.9; }
+    100% { transform: scaleY(1.15) scaleX(0.85) rotate(-2deg); opacity: 1; }
+  }
+  /* Cartoon tail wag */
+  .tail { animation: wag 2s ease-in-out infinite; transform-origin: left center; }
+  @keyframes wag {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(8deg); }
+    75% { transform: rotate(-5deg); }
+  }
+  /* Cartoon wing flap */
+  .wing-left { animation: flapL 2.5s ease-in-out infinite; transform-origin: right bottom; }
+  .wing-right { animation: flapR 2.5s ease-in-out infinite; transform-origin: left bottom; }
+  @keyframes flapL {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-15deg); }
+  }
+  @keyframes flapR {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(15deg); }
+  }
+
+  /* C: Pixel art - no special animation needed beyond float */
+</style>
+</head>
+<body>
+<h1>Dragon des Fractions — 3 styles</h1>
+<div class="grid">
+
+  <!-- A: SILHOUETTE -->
+  <div class="card">
+    <h2>A) Silhouette</h2>
+    <p>Formes simples, dégradé, glow. Style Shadow Fight.</p>
+    <div class="boss-container">
+      <svg class="boss-svg silhouette-glow" width="160" height="160" viewBox="0 0 160 160">
+        <!-- Body -->
+        <ellipse cx="80" cy="95" rx="40" ry="35" fill="url(#silGrad)"/>
+        <!-- Head -->
+        <ellipse cx="80" cy="55" rx="28" ry="22" fill="url(#silGrad)"/>
+        <!-- Horns -->
+        <path d="M60,42 L48,15 L62,35" fill="#ff6030"/>
+        <path d="M100,42 L112,15 L98,35" fill="#ff6030"/>
+        <!-- Wings -->
+        <path d="M40,80 L5,45 L15,55 L8,40 L25,60 L35,75" fill="url(#silGrad)" opacity="0.7"/>
+        <path d="M120,80 L155,45 L145,55 L152,40 L135,60 L125,75" fill="url(#silGrad)" opacity="0.7"/>
+        <!-- Tail -->
+        <path d="M80,130 Q95,145 115,140 Q125,138 130,130" stroke="url(#silGrad)" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <!-- Eyes (glowing) -->
+        <circle cx="70" cy="50" r="4" fill="#ff4020" filter="url(#eyeGlow)"/>
+        <circle cx="90" cy="50" r="4" fill="#ff4020" filter="url(#eyeGlow)"/>
+        <!-- Nostril smoke -->
+        <circle cx="75" cy="65" r="2" fill="#ff8040" opacity="0.5"/>
+        <circle cx="85" cy="65" r="2" fill="#ff8040" opacity="0.5"/>
+        <defs>
+          <linearGradient id="silGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#2a0808"/>
+            <stop offset="100%" stop-color="#0a0202"/>
+          </linearGradient>
+          <filter id="eyeGlow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+      </svg>
+    </div>
+  </div>
+
+  <!-- B: CARTOON -->
+  <div class="card">
+    <h2>B) Cartoon</h2>
+    <p>Couleurs vives, expressions, contours. Style dessin animé.</p>
+    <div class="boss-container">
+      <svg class="boss-svg" width="160" height="170" viewBox="0 0 160 170">
+        <!-- Tail -->
+        <path class="tail" d="M75,135 Q90,155 115,150 Q130,147 138,138 L142,142 L140,135 L135,140" fill="#e04030" stroke="#8b1a1a" stroke-width="1.5"/>
+        <!-- Body -->
+        <ellipse cx="80" cy="100" rx="38" ry="32" fill="#e04030" stroke="#8b1a1a" stroke-width="2"/>
+        <!-- Belly -->
+        <ellipse cx="80" cy="105" rx="25" ry="22" fill="#f0a050"/>
+        <!-- Belly lines -->
+        <path d="M65,95 Q80,92 95,95" stroke="#e08830" stroke-width="1" fill="none"/>
+        <path d="M63,102 Q80,99 97,102" stroke="#e08830" stroke-width="1" fill="none"/>
+        <path d="M65,109 Q80,106 95,109" stroke="#e08830" stroke-width="1" fill="none"/>
+        <!-- Wings -->
+        <g class="wing-left">
+          <path d="M42,85 L10,50 L20,65 L12,42 L28,62 L22,48 L35,70 L38,80" fill="#c83028" stroke="#8b1a1a" stroke-width="1.5"/>
+        </g>
+        <g class="wing-right">
+          <path d="M118,85 L150,50 L140,65 L148,42 L132,62 L138,48 L125,70 L122,80" fill="#c83028" stroke="#8b1a1a" stroke-width="1.5"/>
+        </g>
+        <!-- Legs -->
+        <ellipse cx="60" cy="130" rx="10" ry="6" fill="#c83028" stroke="#8b1a1a" stroke-width="1.5"/>
+        <ellipse cx="100" cy="130" rx="10" ry="6" fill="#c83028" stroke="#8b1a1a" stroke-width="1.5"/>
+        <!-- Head -->
+        <ellipse cx="80" cy="58" rx="30" ry="24" fill="#e04030" stroke="#8b1a1a" stroke-width="2"/>
+        <!-- Horns -->
+        <path d="M58,42 L45,12 L60,32" fill="#f0a050" stroke="#8b1a1a" stroke-width="1.5"/>
+        <path d="M102,42 L115,12 L100,32" fill="#f0a050" stroke="#8b1a1a" stroke-width="1.5"/>
+        <!-- Eyes (white) -->
+        <ellipse cx="68" cy="54" rx="9" ry="10" fill="white" stroke="#8b1a1a" stroke-width="1.5"/>
+        <ellipse cx="92" cy="54" rx="9" ry="10" fill="white" stroke="#8b1a1a" stroke-width="1.5"/>
+        <!-- Pupils (with blink) -->
+        <g class="cartoon-eye" style="transform-origin: 68px 54px">
+          <circle cx="70" cy="56" r="5" fill="#1a1a2e"/>
+          <circle cx="72" cy="54" r="2" fill="white"/>
+        </g>
+        <g class="cartoon-eye" style="transform-origin: 92px 54px">
+          <circle cx="94" cy="56" r="5" fill="#1a1a2e"/>
+          <circle cx="96" cy="54" r="2" fill="white"/>
+        </g>
+        <!-- Nostrils -->
+        <ellipse cx="74" cy="68" rx="3" ry="2" fill="#8b1a1a"/>
+        <ellipse cx="86" cy="68" rx="3" ry="2" fill="#8b1a1a"/>
+        <!-- Mouth (grin) -->
+        <path d="M65,73 Q80,82 95,73" stroke="#8b1a1a" stroke-width="2" fill="none"/>
+        <!-- Teeth -->
+        <path d="M70,73 L72,78 L74,73" fill="white"/>
+        <path d="M82,75 L84,80 L86,75" fill="white"/>
+        <!-- Flame from nostrils -->
+        <g class="flame" style="transform-origin: 74px 65px">
+          <path d="M72,65 Q70,55 74,50 Q76,55 74,65" fill="#ff8020" opacity="0.7"/>
+        </g>
+        <g class="flame2" style="transform-origin: 86px 65px">
+          <path d="M84,65 Q82,57 86,52 Q88,57 86,65" fill="#ff6010" opacity="0.6"/>
+        </g>
+        <!-- Spikes on back -->
+        <path d="M65,38 L68,28 L72,38" fill="#f0a050" stroke="#8b1a1a" stroke-width="1"/>
+        <path d="M76,36 L80,25 L84,36" fill="#f0a050" stroke="#8b1a1a" stroke-width="1"/>
+        <path d="M88,38 L92,28 L95,38" fill="#f0a050" stroke="#8b1a1a" stroke-width="1"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- C: PIXEL ART -->
+  <div class="card">
+    <h2>C) Pixel Art</h2>
+    <p>Style rétro 16-bit, charm nostalgique.</p>
+    <div class="boss-container">
+      <svg class="boss-svg" width="160" height="160" viewBox="0 0 16 16" shape-rendering="crispEdges">
+        <!-- Each rect = 1 pixel -->
+        <!-- Horns -->
+        <rect x="3" y="0" width="1" height="1" fill="#f0a050"/>
+        <rect x="4" y="1" width="1" height="1" fill="#f0a050"/>
+        <rect x="11" y="1" width="1" height="1" fill="#f0a050"/>
+        <rect x="12" y="0" width="1" height="1" fill="#f0a050"/>
+        <!-- Head -->
+        <rect x="4" y="2" width="8" height="1" fill="#e04030"/>
+        <rect x="3" y="3" width="10" height="1" fill="#e04030"/>
+        <!-- Eyes row -->
+        <rect x="3" y="4" width="1" height="1" fill="#e04030"/>
+        <rect x="4" y="4" width="2" height="1" fill="white"/>
+        <rect x="5" y="4" width="1" height="1" fill="#1a1a2e"/>
+        <rect x="6" y="4" width="1" height="1" fill="#e04030"/>
+        <rect x="7" y="4" width="2" height="1" fill="#e04030"/>
+        <rect x="9" y="4" width="2" height="1" fill="white"/>
+        <rect x="10" y="4" width="1" height="1" fill="#1a1a2e"/>
+        <rect x="11" y="4" width="1" height="1" fill="#e04030"/>
+        <rect x="12" y="4" width="1" height="1" fill="#e04030"/>
+        <!-- Mouth -->
+        <rect x="3" y="5" width="10" height="1" fill="#e04030"/>
+        <rect x="5" y="5" width="1" height="1" fill="#8b1a1a"/>
+        <rect x="7" y="5" width="2" height="1" fill="#8b1a1a"/>
+        <rect x="10" y="5" width="1" height="1" fill="#8b1a1a"/>
+        <!-- Neck -->
+        <rect x="5" y="6" width="6" height="1" fill="#e04030"/>
+        <!-- Wings + Body -->
+        <rect x="1" y="7" width="1" height="1" fill="#c83028"/>
+        <rect x="2" y="7" width="1" height="1" fill="#c83028"/>
+        <rect x="3" y="7" width="1" height="1" fill="#c83028"/>
+        <rect x="4" y="7" width="8" height="1" fill="#e04030"/>
+        <rect x="12" y="7" width="1" height="1" fill="#c83028"/>
+        <rect x="13" y="7" width="1" height="1" fill="#c83028"/>
+        <rect x="14" y="7" width="1" height="1" fill="#c83028"/>
+        <!-- Body + belly -->
+        <rect x="0" y="8" width="1" height="1" fill="#c83028"/>
+        <rect x="1" y="8" width="1" height="1" fill="#c83028"/>
+        <rect x="4" y="8" width="1" height="1" fill="#e04030"/>
+        <rect x="5" y="8" width="6" height="1" fill="#f0a050"/>
+        <rect x="11" y="8" width="1" height="1" fill="#e04030"/>
+        <rect x="14" y="8" width="1" height="1" fill="#c83028"/>
+        <rect x="15" y="8" width="1" height="1" fill="#c83028"/>
+        <rect x="4" y="9" width="1" height="1" fill="#e04030"/>
+        <rect x="5" y="9" width="6" height="1" fill="#f0a050"/>
+        <rect x="11" y="9" width="1" height="1" fill="#e04030"/>
+        <rect x="4" y="10" width="1" height="1" fill="#e04030"/>
+        <rect x="5" y="10" width="6" height="1" fill="#f0a050"/>
+        <rect x="11" y="10" width="1" height="1" fill="#e04030"/>
+        <!-- Legs -->
+        <rect x="4" y="11" width="2" height="1" fill="#c83028"/>
+        <rect x="10" y="11" width="2" height="1" fill="#c83028"/>
+        <rect x="4" y="12" width="2" height="1" fill="#c83028"/>
+        <rect x="10" y="12" width="2" height="1" fill="#c83028"/>
+        <!-- Tail -->
+        <rect x="12" y="10" width="1" height="1" fill="#e04030"/>
+        <rect x="13" y="10" width="1" height="1" fill="#e04030"/>
+        <rect x="14" y="9" width="1" height="1" fill="#e04030"/>
+        <rect x="15" y="9" width="1" height="1" fill="#f0a050"/>
+        <!-- Fire -->
+        <rect x="6" y="5" width="1" height="1" fill="#ff8020"/>
+        <rect x="6" y="4" width="1" height="0.5" fill="#ff6010" opacity="0.6"/>
+        <rect x="9" y="5" width="1" height="1" fill="#ff8020"/>
+      </svg>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
