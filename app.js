@@ -1,11 +1,50 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '6.0';
+const APP_VERSION = '7.4.9';
+
+// ── Theme Helpers ───────────────────────────────────────────────
+function isCatTheme() {
+  return document.body.classList.contains('theme-pattern-paws');
+}
+function isOnePieceTheme() {
+  return document.body.classList.contains('theme-pattern-onepiece');
+}
+function isSplatoonTheme() {
+  return document.body.classList.contains('theme-pattern-splatoon');
+}
+function isDBZTheme() {
+  return document.body.classList.contains('theme-pattern-dbz');
+}
+
+// ── Theme Migration (old activeTheme → split palette/visual) ────
+function migrateThemeData() {
+  if (ProfileManager.get('_themeMigrated')) return;
+
+  const oldTheme = ProfileManager.get('activeTheme', 'nuit');
+  if (VISUAL_IDS.has(oldTheme)) {
+    ProfileManager.set('activeVisual', oldTheme);
+    ProfileManager.set('activePalette', 'none');
+  } else if (PALETTE_IDS.has(oldTheme)) {
+    ProfileManager.set('activePalette', oldTheme);
+    ProfileManager.set('activeVisual', 'none');
+  } else {
+    ProfileManager.set('activePalette', 'none');
+    ProfileManager.set('activeVisual', 'none');
+  }
+
+  const oldOwned = ProfileManager.get('ownedThemes', []);
+  const ownedPalettes = oldOwned.filter(id => PALETTE_IDS.has(id));
+  const ownedVisuals = oldOwned.filter(id => VISUAL_IDS.has(id));
+  ProfileManager.set('ownedPalettes', ownedPalettes);
+  ProfileManager.set('ownedVisuals', ownedVisuals);
+
+  ProfileManager.set('_themeMigrated', true);
+}
 
 // ── HTML Sanitization ────────────────────────────────────────────
 const _escapeDiv = document.createElement('div');
 function escapeHtml(str) {
-  _escapeDiv.textContent = str;
+  _escapeDiv.textContent = str || '';
   return _escapeDiv.innerHTML;
 }
 
@@ -67,6 +106,11 @@ const state = {
   // V3 — Contrat
   activeContract: null,
   contractGameResult: null,
+  // V8a — Adventure Mode
+  adventureMode: false,
+  adventureExpResult: null,
+  adventureBossQuestions: [],
+  adventureBossQIndex: 0,
   // Fiches d'aide
   timerPaused: false,
   timerPausedAt: null,
@@ -110,6 +154,24 @@ function saveGameState() {
     timerEnabled: state.timerEnabled,
     questions: state.questions,
     currentIndex: state.currentIndex + 1,
+    score: state.score,
+    streak: state.streak,
+    bestStreakThisGame: state.bestStreakThisGame,
+    consecutiveCorrect: state.consecutiveCorrect,
+    consecutiveWrong: state.consecutiveWrong,
+    noHintCount: state.noHintCount,
+    gameStartTime: state.gameStartTime,
+    elapsedBeforeSave: Date.now() - state.gameStartTime,
+  });
+}
+
+function saveGameStateInProgress() {
+  ProfileManager.set('gameState', {
+    category: state.category,
+    questionCount: state.questionCount,
+    timerEnabled: state.timerEnabled,
+    questions: state.questions,
+    currentIndex: state.currentIndex,
     score: state.score,
     streak: state.streak,
     bestStreakThisGame: state.bestStreakThisGame,
@@ -193,9 +255,20 @@ const screenBackMap = {
   'screen-duel-join': 'screen-home',
   'screen-duel-fight': 'screen-home',
   'screen-duel-end': 'screen-home',
+  'screen-adventure-map': 'screen-home',
+  'screen-adventure-zone': 'screen-adventure-map',
+  'screen-adventure-boss': 'screen-adventure-zone',
+  'screen-adventure-boss-end': 'screen-adventure-zone',
 };
 
 window.addEventListener('popstate', (e) => {
+  // Block back-navigation from home when a profile is active — home IS the root screen
+  const current = document.querySelector('.screen.active');
+  if (current && current.id === 'screen-home' && ProfileManager.getActiveId()) {
+    history.pushState({ screen: 'screen-home' }, '');
+    return;
+  }
+
   if (e.state && e.state.screen) {
     showScreen(e.state.screen, { fromPop: true });
   } else if (screenHistory.length > 0) {
@@ -203,7 +276,6 @@ window.addEventListener('popstate', (e) => {
     showScreen(prev, { fromPop: true });
   } else {
     // Fallback: use the back map based on current screen
-    const current = document.querySelector('.screen.active');
     if (current && screenBackMap[current.id]) {
       showScreen(screenBackMap[current.id], { fromPop: true });
     }
@@ -238,7 +310,7 @@ document.getElementById('timer-toggle').addEventListener('change', (e) => {
 });
 
 function updateSettingsSummary() {
-  const catLabels = { all: '🎯 Toutes', calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes' };
+  const catLabels = { all: '🎯 Toutes', calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes', geographie: '🌍 Géographie', conjugaison: '✏️ Conjugaison' };
   const el = document.getElementById('settings-summary-text');
   if (el) el.textContent = (catLabels[state.category] || 'Toutes') + ' · #' + state.questionCount;
   renderCatLevelIndicators();
@@ -286,6 +358,11 @@ let selectedTheme = 'nuit';
 let selectedAge = 10;
 
 document.getElementById('btn-new-profile').addEventListener('click', () => {
+  // Guard: confirm if profiles already exist to prevent accidental creation
+  const existing = ProfileManager.getAll();
+  if (existing.length > 0) {
+    if (!confirm('Tu as déjà ' + existing.length + ' profil(s). Créer un nouveau joueur ?')) return;
+  }
   renderThemePicker();
   document.getElementById('profile-name-input').value = '';
   selectedAge = 10;
@@ -296,7 +373,7 @@ document.getElementById('btn-new-profile').addEventListener('click', () => {
 });
 
 document.getElementById('btn-cancel-profile').addEventListener('click', () => {
-  applyTheme('nuit');
+  applyThemeCombo('none', 'none');
   showScreen('screen-profiles');
 });
 
@@ -306,7 +383,11 @@ document.getElementById('btn-recover-profile').addEventListener('click', async (
   try {
     if (!firebaseUid) await firebaseSignIn();
     const profile = await restoreFromCode(code);
-    alert('Profil de ' + profile.name + ' restauré !');
+    if (profile._migrationFailed) {
+      alert('Profil de ' + profile.name + ' restauré, mais les groupes n\'ont pas pu être transférés. Rejoins-les à nouveau.');
+    } else {
+      alert('Profil de ' + profile.name + ' restauré !');
+    }
     selectProfile(profile.id);
   } catch(e) {
     alert('Erreur : ' + e.message);
@@ -315,11 +396,11 @@ document.getElementById('btn-recover-profile').addEventListener('click', async (
 
 function renderThemePicker() {
   const container = document.getElementById('theme-picker');
-  container.innerHTML = FREE_THEMES.map(id => {
-    const t = THEMES[id];
+  container.innerHTML = FREE_PALETTES.map(id => {
+    const p = PALETTES[id];
     return `<div class="theme-option ${id === selectedTheme ? 'selected' : ''}" data-theme="${id}">
-      <span class="theme-icon">${t.preview}</span>
-      <span class="theme-name">${t.name}</span>
+      <span class="theme-icon">${p.preview}</span>
+      <span class="theme-name">${p.name}</span>
     </div>`;
   }).join('');
   container.querySelectorAll('.theme-option').forEach(opt => {
@@ -327,7 +408,7 @@ function renderThemePicker() {
       container.querySelectorAll('.theme-option').forEach(o => o.classList.remove('selected'));
       opt.classList.add('selected');
       selectedTheme = opt.dataset.theme;
-      applyTheme(selectedTheme);
+      applyPalette(selectedTheme);
     });
   });
 }
@@ -342,7 +423,12 @@ document.getElementById('btn-create-profile').addEventListener('click', () => {
   if (!firebaseUid) {
     firebaseSignIn().then(() => {
       MQSync._pushAll().catch(() => {});
+      _consumePendingJoin();
+      Duel.purgeStale();
     }).catch(() => {});
+  } else {
+    MQSync._pushAll().catch(() => {});
+    _consumePendingJoin();
   }
 
   // V4: Generate and save recovery code
@@ -357,7 +443,11 @@ document.getElementById('btn-create-profile').addEventListener('click', () => {
 function selectProfile(id) {
   ProfileManager.setActive(id);
   ProfileManager.migrate(id);
-  applyTheme(ProfileManager.get('activeTheme', 'nuit'));
+  migrateThemeData();
+  applyThemeCombo(
+    ProfileManager.get('activePalette', 'none'),
+    ProfileManager.get('activeVisual', 'none')
+  );
   loadProfileData();
   loadBossState();
   updateProfileHeader();
@@ -378,13 +468,16 @@ function selectProfile(id) {
     state.noHintCount = savedGame.noHintCount;
     state.gameStartTime = Date.now() - (savedGame.elapsedBeforeSave || 0);
     state.answered = false;
-    // Don't increment - saveGameState already saved the next index
+    // Resume: if currentIndex already has a question, show it (mid-question refresh).
+    // Otherwise generate the next one (post-answer save).
     if (state.currentIndex >= state.questionCount) {
       showScreen('screen-home');
       clearGameState();
     } else {
-      const lastCat = state.questions[state.currentIndex - 1]?.category;
-      state.questions.push(generateQuestion(state.category, getSubLevel(lastCat || state.category), lastCat));
+      if (!state.questions[state.currentIndex]) {
+        const lastCat = state.questions[state.currentIndex - 1]?.category;
+        state.questions.push(generateQuestion(state.category, getSubLevel(lastCat || state.category), lastCat));
+      }
       showScreen('screen-game');
       if (state.timerEnabled) {
         document.getElementById('timer-stat').style.display = '';
@@ -400,6 +493,8 @@ function selectProfile(id) {
     MQSync.checkWeeklyReset();
     renderRegularityStreak();
     checkLoginReward();
+    if (typeof checkInboxOnLaunch === 'function') checkInboxOnLaunch();
+    _consumePendingJoin();
   }
 }
 
@@ -462,7 +557,7 @@ function checkLoginReward() {
 
   document.getElementById('btn-claim-login').onclick = () => {
     if (isChestDay) {
-      const loot = generateChestLoot('small', ProfileManager.get('ownedThemes', []));
+      const loot = generateChestLoot('small', ProfileManager.get('ownedPalettes', []), ProfileManager.get('ownedVisuals', []));
       loot.forEach(item => applyLootItem(item));
       recordChestOpened();
     } else {
@@ -495,9 +590,12 @@ function updateProfileHeader() {
   renderBoostSelector();
   // V8: Settings summary
   updateSettingsSummary();
+  const versionEl = document.getElementById('app-version-display');
+  if (versionEl) versionEl.textContent = 'v' + APP_VERSION;
   // V8: Pet + Daily Question
   renderPetZone();
   checkDailyQuestion();
+  renderDailyQuests();
 
   // V4: Admin button only visible for admins (set manually in Firebase)
   const adminBtn = document.getElementById('btn-admin');
@@ -711,6 +809,10 @@ function startGame() {
   state.timerPausedAt = null;
   state.ficheReturnScreen = 'screen-game';
   state.gameStartTime = Date.now();
+  // Reset adventure mode unless explicitly set before calling startGame
+  if (!state.adventureMode) {
+    state.adventureExpResult = null;
+  }
 
   // Consume active boost from inventory
   if (state.activeBoost) {
@@ -742,6 +844,22 @@ function startGame() {
   state.questions.push(generateQuestion(state.category, getSubLevel(firstCat), null));
 
   showScreen('screen-game');
+
+  // Daily quest: try_new_cat
+  if (state.category !== 'all') {
+    const todayPlayed = ProfileManager.get('dailyCatsPlayed', { date: '', cats: [] });
+    const today = getTodayStr();
+    if (todayPlayed.date !== today) {
+      todayPlayed.date = today;
+      todayPlayed.cats = [state.category];
+      ProfileManager.set('dailyCatsPlayed', todayPlayed);
+      updateQuestProgress('try_new_cat', 1);
+    } else if (!todayPlayed.cats.includes(state.category)) {
+      todayPlayed.cats.push(state.category);
+      ProfileManager.set('dailyCatsPlayed', todayPlayed);
+      updateQuestProgress('try_new_cat', 1);
+    }
+  }
 
   if (state.timerEnabled) {
     document.getElementById('timer-stat').style.display = '';
@@ -1024,11 +1142,11 @@ function showQuestion() {
   document.getElementById('hint-text').textContent = '';
   document.getElementById('hint-text').classList.remove('visible');
 
-  // Bouton fiche d'aide
+  // Fiche d'aide : show button if ficheKey exists, hide context panel
   const btnFiche = document.getElementById('btn-fiche');
-  if (btnFiche) {
-    btnFiche.style.display = q && q.ficheKey ? '' : 'none';
-  }
+  const revContext = document.getElementById('revision-context');
+  revContext.style.display = 'none';
+  if (btnFiche) btnFiche.style.display = q && q.ficheKey ? '' : 'none';
 
   state.answered = false;
   document.getElementById('answer-section').style.display = '';
@@ -1091,6 +1209,9 @@ function showQuestion() {
   setTimeout(() => input.focus(), 100);
 
   renderSkipButton();
+
+  // Persist current question so page refresh doesn't skip it
+  saveGameStateInProgress();
 }
 
 // ── Hint System (with free hints support) ─────────────────────────
@@ -1115,7 +1236,31 @@ document.getElementById('btn-fiche').addEventListener('click', () => {
   const q = state.questions[state.currentIndex];
   const ficheKey = q && q.ficheKey;
   if (!ficheKey) return;
-  // Pause le timer si actif (stopwatch : mémorise l'instant de pause)
+
+  // Revision context: toggle inline expandable instead of navigating
+  if (ficheKey.startsWith('_rev_') && window.FICHES && window.FICHES[ficheKey]) {
+    const revContext = document.getElementById('revision-context');
+    const contextContent = document.getElementById('context-content');
+    if (revContext.style.display === 'none') {
+      const fiche = window.FICHES[ficheKey];
+      let html = '';
+      if (fiche.intro) html += '<p>' + escapeHtml(fiche.intro) + '</p>';
+      if (fiche.regle) html += '<p><strong>Texte :</strong></p><p>' + escapeHtml(fiche.regle) + '</p>';
+      if (fiche.exemples && fiche.exemples.length > 0) {
+        fiche.exemples.forEach(e => {
+          html += '<p><strong>' + escapeHtml(e.enonce) + '</strong></p><p>' + escapeHtml(e.calcul) + '</p>';
+        });
+      }
+      if (fiche.astuce) html += '<p>💡 ' + escapeHtml(fiche.astuce) + '</p>';
+      contextContent.innerHTML = html;
+      revContext.style.display = '';
+    } else {
+      revContext.style.display = 'none';
+    }
+    return;
+  }
+
+  // Classic fiche: navigate to fiche screen
   if (state.timerInterval) {
     clearInterval(state.timerInterval);
     state.timerInterval = null;
@@ -1232,12 +1377,16 @@ function processAnswer(isCorrect, q) {
   const feedbackExplanation = document.getElementById('feedback-explanation');
 
   if (isCorrect) {
-    feedbackResult.textContent = 'Correct !';
+    feedbackResult.textContent = isCatTheme() ? '😺 Correct !' : isOnePieceTheme() ? '☠️ Yohoho !' : isSplatoonTheme() ? '🦑 Splaaaash !' : isDBZTheme() ? '⚡ KAMEHAMEHA !' : 'Correct !';
     feedbackResult.className = 'feedback-result correct';
     launchMiniConfetti();
   } else {
     const correctAnswer = q.textAnswer !== undefined ? q.textAnswer : q.answer;
-    feedbackResult.textContent = 'Pas encore ! La réponse était ' + correctAnswer;
+    const userInput = document.getElementById('answer-input').value.trim();
+    const acceptedList = q.acceptedAnswers && q.acceptedAnswers.length > 1 ? ' (ou ' + q.acceptedAnswers.map(a => escapeHtml(a)).join(', ') + ')' : '';
+    const themePrefix = isCatTheme() ? '😿 ' : isOnePieceTheme() ? '⚓ ' : isSplatoonTheme() ? '💦 ' : isDBZTheme() ? '🔥 ' : '';
+    const themeMsg = isOnePieceTheme() ? 'Pas encore, nakama !' : isSplatoonTheme() ? "Oups, raté l'encre !" : isDBZTheme() ? 'Ce n\'est pas fini, Saiyan !' : 'Pas encore !';
+    feedbackResult.innerHTML = themePrefix + themeMsg + '<br>Ta réponse : <strong>' + escapeHtml(userInput) + '</strong><br>Réponse correcte : <strong>' + escapeHtml(String(correctAnswer)) + '</strong>' + acceptedList;
     feedbackResult.className = 'feedback-result incorrect';
     if (state.streakLostMessage) {
       feedbackResult.textContent += ' · ' + state.streakLostMessage;
@@ -1255,6 +1404,13 @@ function processAnswer(isCorrect, q) {
   if (state.currentIndex >= state.questionCount - 1) {
     document.getElementById('btn-next').textContent = 'Voir les résultats';
   }
+
+  // Daily quest: answer_count
+  updateQuestProgress('answer_count', 1);
+  // Daily quest: use_hint (used hint + correct)
+  if (isCorrect && state.hintUsed) {
+    updateQuestProgress('use_hint', 1);
+  }
 }
 
 function validateAnswer() {
@@ -1271,10 +1427,12 @@ function validateAnswer() {
   let isCorrect = false;
 
   if (q.acceptedAnswers) {
-    // Revision text mode: check against accepted answers (case insensitive)
-    isCorrect = q.acceptedAnswers.some(a => userAnswer.toLowerCase() === a.toLowerCase());
+    // Text mode: check against accepted answers (case + accent + whitespace insensitive)
+    const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+    isCorrect = q.acceptedAnswers.some(a => norm(userAnswer) === norm(a));
   } else if (q.textAnswer !== undefined) {
-    isCorrect = userAnswer.toLowerCase() === q.textAnswer.toLowerCase();
+    const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+    isCorrect = norm(userAnswer) === norm(q.textAnswer);
   } else {
     const numAnswer = parseFloat(userAnswer);
     isCorrect = numAnswer === q.answer;
@@ -1317,6 +1475,16 @@ document.addEventListener('keydown', (e) => {
 
 // ── Streak Display ─────────────────────────────────────────────────
 function updateStreak() {
+  if (isCatTheme()) {
+    let catEmoji = '';
+    if (state.streak >= 10) catEmoji = '😻';
+    else if (state.streak >= 7) catEmoji = '😸';
+    else if (state.streak >= 3) catEmoji = '😺';
+    else if (state.streak >= 1) catEmoji = '🐱';
+    document.getElementById('streak-display').innerHTML =
+      state.streak + ' <span id="streak-flame">' + catEmoji + '</span>';
+    return;
+  }
   document.getElementById('streak-display').innerHTML =
     state.streak + ' <span id="streak-flame"></span>';
 
@@ -1350,12 +1518,12 @@ function profileGames() { return ProfileManager.get('gamesPlayed', 0); }
 
 // ── Boosts System ───────────────────────────────────────────────
 const BOOSTS = [
-  { id: 'xp_boost', name: 'Boost XP', icon: '⚡', price: 50, desc: 'XP ×2 (×3 en difficile)', effect: 'xp' },
-  { id: 'coin_boost', name: 'Boost Pièces', icon: '💰', price: 60, desc: 'Pièces ×2 (×3 en difficile)', effect: 'coins' },
-  { id: 'score_boost', name: 'Boost Score', icon: '🎯', price: 40, desc: 'Score ×1.5 (×2 en difficile)', effect: 'score' },
+  { id: 'xp_boost', name: 'Boost XP', icon: '⚡', price: 50, desc: 'XP ×2 si score parfait (×3 en difficile)', effect: 'xp' },
+  { id: 'coin_boost', name: 'Boost Pièces', icon: '💰', price: 60, desc: 'Pièces ×2 si score parfait (×3 en difficile)', effect: 'coins' },
+  { id: 'score_boost', name: 'Boost Score', icon: '🎯', price: 40, desc: 'Score ×1.5 si score parfait (×2 en difficile)', effect: 'score' },
   { id: 'hint_pack', name: 'Pack Indices', icon: '💡', price: 30, desc: '3 indices gratuits pour cette partie', effect: 'hints' },
   { id: 'streak_shield', name: 'Bouclier de série', icon: '🛡️', price: 75, desc: 'Protège ta série 1 fois (1 erreur pardonnée)', effect: 'shield' },
-  { id: 'coin_rain', name: 'Pluie de pièces', icon: '🌧️', price: 100, desc: 'Ignore le diminishing returns (1 partie)', effect: 'rain' },
+  { id: 'coin_rain', name: 'Pluie de pièces', icon: '🌧️', price: 30, desc: 'Pas de réduction de pièces après 3 parties (1 partie)', effect: 'rain' },
 ];
 
 function getBoostMultiplier(catLevelValue) {
@@ -1413,6 +1581,8 @@ const BADGE_DEFS = [
   { id: 'master_geometrie', name: 'Maître Géométrie', icon: '📐', category: 'master', check: () => (state.categoryStats.geometrie?.correct || 0) >= 50, progress: () => ({ cur: Math.min(state.categoryStats.geometrie?.correct || 0, 50), max: 50 }) },
   { id: 'master_fractions', name: 'Maître Fractions', icon: '🍕', category: 'master', check: () => (state.categoryStats.fractions?.correct || 0) >= 50, progress: () => ({ cur: Math.min(state.categoryStats.fractions?.correct || 0, 50), max: 50 }) },
   { id: 'master_mesures', name: 'Maître Mesures', icon: '📏', category: 'master', check: () => (state.categoryStats.mesures?.correct || 0) >= 50, progress: () => ({ cur: Math.min(state.categoryStats.mesures?.correct || 0, 50), max: 50 }) },
+  { id: 'master_geographie', name: 'Maître Géographie', icon: '🌍', category: 'master', check: () => (state.categoryStats.geographie?.correct || 0) >= 50, progress: () => ({ cur: Math.min(state.categoryStats.geographie?.correct || 0, 50), max: 50 }) },
+  { id: 'master_conjugaison', name: 'Maître Conjugaison', icon: '✏️', category: 'master', check: () => (state.categoryStats.conjugaison?.correct || 0) >= 50, progress: () => ({ cur: Math.min(state.categoryStats.conjugaison?.correct || 0, 50), max: 50 }) },
   { id: 'master_ouvert', name: 'Maître Ouvert', icon: '💡', category: 'master', check: () => (state.categoryStats.ouvert?.correct || 0) >= 50, progress: () => ({ cur: Math.min(state.categoryStats.ouvert?.correct || 0, 50), max: 50 }) },
   { id: 'grand_master', name: 'Grand Maître', icon: '🎓', category: 'master', check: () => {
     return ['calcul','logique','geometrie','fractions','mesures','ouvert'].every(c => (state.categoryStats[c]?.correct || 0) >= 50);
@@ -1610,8 +1780,8 @@ function applyBoostRewards(rewards, avgLevel) {
 }
 
 function applyPetEffects(rewards) {
+  if (ProfileManager.get('vacationMode', false)) return;
   addPetXP(state.score);
-  drainPetHunger();
   checkDragonSkip(state.questionCount);
 
   const petBonus = getPetBonus();
@@ -1665,7 +1835,10 @@ function renderEndScreen(isNewRecord, rewards, oldXP, finalXP, gamesPlayed, ches
   // Record
   const newRecordEl = document.getElementById('new-record');
   newRecordEl.style.display = isNewRecord ? '' : 'none';
-  if (isNewRecord) launchBigConfetti();
+  if (isNewRecord) {
+    newRecordEl.textContent = isCatTheme() ? '😻 Nouveau record !' : '🏆 Nouveau record !';
+    launchBigConfetti();
+  }
 
   // Badges
   const badgesContainer = document.getElementById('badges-unlocked');
@@ -1727,6 +1900,18 @@ function renderEndScreen(isNewRecord, rewards, oldXP, finalXP, gamesPlayed, ches
       almostEl.style.display = '';
     } else {
       almostEl.style.display = 'none';
+    }
+  }
+
+  // Adventure expedition result
+  const advInfoEl = document.getElementById('end-adventure-info');
+  if (advInfoEl) {
+    if (state.adventureMode && state.adventureExpResult) {
+      const r = state.adventureExpResult;
+      advInfoEl.innerHTML = (r.starAwarded ? '<p class="adventure-star-earned">⭐ +1 étoile !</p>' : '<p class="adventure-no-star">Pas d\'étoile cette fois...</p>')
+        + (r.bossUnlocked ? '<p class="adventure-boss-unlocked">⚔️ Boss débloqué !</p>' : '');
+    } else {
+      advInfoEl.innerHTML = '';
     }
   }
 
@@ -1835,11 +2020,31 @@ function endGame() {
 
   saveProfileData();
 
+  // ── Daily quests tracking ──
+  const playedCategory = state.category === 'all'
+    ? Object.keys(state.categoryStats)[0] || 'calcul'
+    : state.category;
+
+  updateQuestProgress('play_games', 1);
+  updateQuestProgress('play_category', 1, { category: playedCategory });
+  updateQuestProgress('correct_streak', state.bestStreakThisGame);
+
+  const isPerfect = state.bestStreakThisGame >= state.questionCount && state.score > 0;
+  if (isPerfect) {
+    updateQuestProgress('perfect_game', 1);
+  }
+
   // Rewards pipeline — NB: rewards object is mutated by boost and pet effects
   const { rewards, avgLevel, oldXP } = computeRewards();
   applyBoostRewards(rewards, avgLevel);
   applyPetEffects(rewards);
   const { gamesPlayed, finalXP, chestWaiting } = updateGameStreak();
+
+  // Adventure mode: complete expedition
+  if (state.adventureMode && _adventureZoneId) {
+    const expResult = completeExpedition(state.score, state.questionCount, _adventureZoneId);
+    state.adventureExpResult = expResult;
+  }
 
   // Render
   renderEndScreen(isNewRecord, rewards, oldXP, finalXP, gamesPlayed, chestWaiting);
@@ -1850,9 +2055,16 @@ function endGame() {
 
   showScreen('screen-end');
 
-  // Track games since boss
-  state.gamesSinceBoss++;
-  saveBossState();
+  // Keep adventure zone for replay, reset mode flag after replay check
+  state._adventureReturnZone = state.adventureMode ? _adventureZoneId : null;
+
+  // Track games since boss (skip in adventure mode — adventure has its own bosses)
+  if (!state.adventureMode) {
+    state.gamesSinceBoss++;
+    saveBossState();
+  }
+
+  state.adventureMode = false;
 }
 
 // ── Replay / Menu ──────────────────────────────────────────────────
@@ -1860,6 +2072,17 @@ document.getElementById('btn-replay').addEventListener('click', () => {
   // Revision replay: restart same set
   if (state.revisionMode && state.revisionSetId) {
     startRevisionGame(state.revisionSetId);
+    return;
+  }
+  // Adventure replay: go back to zone detail
+  if (state._adventureReturnZone) {
+    const zoneId = state._adventureReturnZone;
+    state._adventureReturnZone = null;
+    if (state.pendingChests && state.pendingChests.length > 0) {
+      state.replayAfterChests = false;
+      showChest(state.pendingChests.shift());
+    }
+    openZoneDetail(zoneId);
     return;
   }
   if (state.pendingChests && state.pendingChests.length > 0) {
@@ -1908,6 +2131,7 @@ document.getElementById('btn-menu').addEventListener('click', () => {
   } else {
     updateProfileHeader();
     renderRecords();
+    renderDailyQuests();
     checkRevisionSets();
     if (shouldTriggerBoss()) {
       triggerBoss();
@@ -1918,34 +2142,460 @@ document.getElementById('btn-menu').addEventListener('click', () => {
   }
 });
 
+// ── Daily Quests UI ─────────────────────────────────────────────────────────
+function renderDailyQuests() {
+  const panel = document.getElementById('daily-quests-panel');
+  if (!panel) return;
+
+  const data = getDailyQuests();
+  const streak = getDailyStreak();
+
+  let html = '<div class="dq-header">';
+  html += '<h3 class="dq-title">📋 Quêtes du jour</h3>';
+  if (streak.count > 0) {
+    html += '<span class="dq-streak">🔥 ' + streak.count + ' jour' + (streak.count > 1 ? 's' : '') + '</span>';
+  }
+  html += '</div>';
+
+  data.quests.forEach((quest, i) => {
+    const pct = Math.min(100, Math.round((quest.progress / quest.target) * 100));
+    html += '<div class="dq-quest' + (quest.done ? ' dq-done' : '') + '">';
+    html += '<span class="dq-icon">' + quest.icon + '</span>';
+    html += '<div class="dq-info">';
+    html += '<span class="dq-text">' + quest.text + '</span>';
+    html += '<div class="dq-bar-container"><div class="dq-bar" style="width:' + pct + '%"></div></div>';
+    html += '</div>';
+    html += '<span class="dq-status">' + (quest.done ? '✅' : quest.progress + '/' + quest.target) + '</span>';
+    html += '<span class="dq-reward">🪙 ' + quest.reward + '</span>';
+    html += '</div>';
+  });
+
+  // 3/3 bonus chest button
+  if (data.allDone && !data.chestClaimed) {
+    html += '<button class="btn-primary dq-chest-btn" id="btn-dq-chest">🎁 Ouvrir le coffre du jour !</button>';
+  } else if (data.chestClaimed) {
+    html += '<div class="dq-complete">✨ Quêtes terminées — reviens demain !</div>';
+  }
+
+  panel.innerHTML = html;
+
+  // Chest button handler
+  const chestBtn = document.getElementById('btn-dq-chest');
+  if (chestBtn) {
+    chestBtn.addEventListener('click', () => {
+      const result = claimDailyChest();
+      if (result) {
+        // Show sticker toasts
+        result.stickerRewards.forEach(stk => {
+          const toast = document.createElement('div');
+          toast.className = 'coin-toast mastery-toast';
+          toast.textContent = stk.icon + ' ' + stk.name + ' !';
+          document.body.appendChild(toast);
+          setTimeout(() => toast.remove(), 4000);
+        });
+        // Show chest
+        showChest({ id: 'daily_' + getTodayStr(), tier: result.tier });
+        // Re-render after chest
+        setTimeout(() => renderDailyQuests(), 500);
+      }
+    });
+  }
+}
+
+// ── Adventure Mode ─────────────────────────────────────────────
+let _adventureZoneId = null;
+
+document.getElementById('btn-adventure')?.addEventListener('click', () => {
+  // Check star decay on map open
+  const decayed = checkStarDecay();
+  showScreen('screen-adventure-map');
+  requestAnimationFrame(() => {
+    renderAdventureMap();
+    // Show decay notification if stars were lost
+    if (decayed.length > 0) {
+      const names = decayed.map(d => d.name).filter((v, i, a) => a.indexOf(v) === i);
+      const msg = `⚠️ Tu n'as pas joué depuis longtemps...\n${names.join(', ')} : -${decayed.length} étoile${decayed.length > 1 ? 's' : ''}`;
+      setTimeout(() => alert(msg), 300);
+    }
+  });
+});
+document.getElementById('btn-adventure-back')?.addEventListener('click', () => {
+  showScreen('screen-home');
+});
+document.getElementById('btn-zone-back')?.addEventListener('click', () => {
+  showScreen('screen-adventure-map');
+  requestAnimationFrame(() => renderAdventureMap());
+});
+
+function renderAdventureMap() {
+  const adv = initAdventure();
+  const mapEl = document.getElementById('adventure-map');
+  if (!mapEl) return;
+
+  const order = ['calcul', 'logique', 'geometrie', 'geographie', 'fractions', 'conjugaison', 'mesures', 'ouvert'];
+  // Use actual container size (padding-bottom: 100% makes it square)
+  const w = mapEl.offsetWidth;
+  const h = w; // square
+  const cx = w / 2, cy = h / 2;
+  const radius = cx * 0.68;
+
+  // Check if all bosses defeated → master unlocked
+  const allDefeated = order.every(z => adv.zones[z].bossDefeated);
+
+  let html = '';
+
+  // Connection lines + zone nodes
+  order.forEach((zoneId, i) => {
+    const zone = adv.zones[zoneId];
+    const def = ADVENTURE_ZONES[zoneId];
+    const angle = (i * 360 / order.length) - 90; // start from top
+    const rad = angle * Math.PI / 180;
+    const x = cx + radius * Math.cos(rad);
+    const y = cy + radius * Math.sin(rad);
+
+    let stateClass = 'locked';
+    if (zone.bossDefeated) stateClass = 'completed';
+    else if (zone.stars > 0) stateClass = 'in-progress';
+    else if (zone.unlocked) stateClass = 'unlocked';
+
+    const connClass = zone.bossDefeated ? 'completed' : zone.unlocked ? 'active' : '';
+    const starsStr = zone.stars > 0 ? '⭐'.repeat(Math.min(zone.stars, 5)) : '';
+
+    // Connection line from center
+    html += `<div class="map-connection ${connClass}" style="transform: rotate(${angle}deg)"></div>`;
+
+    // Zone node
+    html += `<div class="map-node ${stateClass}" data-zone="${zoneId}" style="left:${x}px;top:${y}px">
+      <div class="map-node-icon">${def.icon}</div>
+      <div class="map-node-name">${def.name}</div>
+      ${starsStr ? `<div class="map-node-stars">${starsStr}</div>` : ''}
+    </div>`;
+  });
+
+  // Master node in center
+  const masterClass = allDefeated ? 'ready' : 'locked';
+  html += `<div class="map-master ${masterClass}">
+    <div class="map-master-icon">👑</div>
+    <div class="map-master-name">MASTER</div>
+  </div>`;
+
+  mapEl.innerHTML = html;
+
+  // Click handlers
+  mapEl.querySelectorAll('.map-node:not(.locked)').forEach(node => {
+    node.addEventListener('click', () => {
+      openZoneDetail(node.dataset.zone);
+    });
+  });
+}
+
+function openZoneDetail(zoneId) {
+  const adv = getAdventure();
+  const zone = adv.zones[zoneId];
+  const def = ADVENTURE_ZONES[zoneId];
+  _adventureZoneId = zoneId;
+
+  document.getElementById('zone-title').textContent = def.name;
+
+  // Build dungeon path (bottom to top: start at bottom, boss at top)
+  const pathEl = document.getElementById('dungeon-path');
+  let html = '';
+
+  // Boss at top
+  const bossReady = zone.bossUnlocked && !zone.bossDefeated;
+  const bossDefeated = zone.bossDefeated;
+  const bossClass = bossDefeated ? 'defeated' : bossReady ? 'ready' : 'locked';
+  const bossConnClass = bossDefeated ? 'completed' : bossReady ? 'active' : '';
+  const bossIcon = bossDefeated ? '👑' : '💀';
+  const bossLabelClass = bossDefeated ? 'defeated' : bossReady ? 'ready' : 'locked';
+
+  html += `<div class="dungeon-boss-wrapper">
+    <div class="dungeon-boss-node ${bossClass}" data-boss="true">
+      ${bossIcon}
+    </div>
+    <div class="dungeon-boss-label ${bossLabelClass}">${def.bossName}</div>
+  </div>`;
+  html += `<div class="dungeon-connector ${bossConnClass}"></div>`;
+
+  // Star nodes top to bottom (5 down to 1)
+  for (let i = STARS_FOR_BOSS; i >= 1; i--) {
+    const isCompleted = zone.stars >= i;
+    const isCurrent = zone.stars === i - 1 && !zone.bossDefeated;
+    const nodeClass = isCompleted ? 'completed' : isCurrent ? 'current' : 'locked';
+    const connClass = isCompleted ? 'completed' : isCurrent ? 'active' : '';
+    const icon = isCompleted ? '⭐' : isCurrent ? '⚔️' : '🔒';
+    const label = isCompleted ? `Étoile ${i}` : isCurrent ? 'Expédition !' : `Étoile ${i}`;
+
+    // Node
+    html += `<div class="dungeon-node ${nodeClass}" data-star="${i}">
+      ${icon}
+      <span class="dungeon-node-label">${label}</span>
+    </div>`;
+
+    // Connector below (except after last)
+    if (i > 1) {
+      const prevCompleted = zone.stars >= i - 1;
+      const prevCurrent = zone.stars === i - 2 && !zone.bossDefeated;
+      const prevConnClass = prevCompleted ? 'completed' : prevCurrent ? 'active' : '';
+      html += `<div class="dungeon-connector ${prevConnClass}"></div>`;
+    }
+  }
+
+  // Zone header at bottom (start point)
+  html += `<div class="dungeon-connector ${zone.stars >= 1 ? 'completed' : 'active'}"></div>`;
+  html += `<div class="dungeon-zone-header">
+    <div class="dungeon-zone-icon">${def.icon}</div>
+    <div class="dungeon-zone-name">${def.name}</div>
+  </div>`;
+
+  // Post-boss: replay node at very top
+  if (bossDefeated) {
+    const replayHtml = `<div class="dungeon-node completed" data-star="replay" style="border-color:#4ecdc4">
+      🔄
+      <span class="dungeon-node-label">Rejouer</span>
+    </div>
+    <div class="dungeon-connector completed"></div>`;
+    html = replayHtml + html;
+  }
+
+  pathEl.innerHTML = html;
+
+  // Click handlers — launch expedition
+  pathEl.querySelectorAll('.dungeon-node.current, .dungeon-node.completed, .dungeon-node[data-star="replay"]').forEach(node => {
+    node.addEventListener('click', () => {
+      state.category = _adventureZoneId;
+      state.questionCount = EXPEDITION_LENGTH;
+      state.revisionMode = false;
+      state.adventureMode = true;
+      startGame();
+    });
+  });
+
+  // Boss node
+  const bossNode = pathEl.querySelector('.dungeon-boss-node.ready');
+  if (bossNode) {
+    bossNode.addEventListener('click', () => {
+      launchAdventureBoss(_adventureZoneId);
+    });
+  }
+
+  showScreen('screen-adventure-zone');
+
+  // Auto-scroll to current node (we climb up, so scroll down to see start)
+  setTimeout(() => {
+    const current = pathEl.querySelector('.dungeon-node.current') || pathEl.querySelector('.dungeon-boss-node.ready');
+    if (current) current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    else pathEl.scrollTop = pathEl.scrollHeight;
+  }, 100);
+}
+
+// ── Adventure Boss Fight ──────────────────────────────────────
+let _criticalBarInterval = null;
+let _criticalBarStart = 0;
+const CRITICAL_BAR_DURATION = 10;
+
+function launchAdventureBoss(zoneId) {
+  const boss = startAdventureBoss(zoneId);
+  const def = ADVENTURE_ZONES[zoneId];
+
+  document.getElementById('adv-boss-emoji').textContent = def.icon;
+  document.getElementById('adv-boss-name').textContent = def.bossName;
+  updateAdvBossHpBar(boss.hp, boss.maxHp);
+  renderErrorPips(boss.errorsMax, 0);
+
+  const subLevel = getSubLevel(zoneId);
+  state.adventureBossQuestions = [];
+  for (let i = 0; i < boss.maxHp + boss.errorsMax + 5; i++) {
+    state.adventureBossQuestions.push(generateQuestion(zoneId, subLevel, null));
+  }
+  state.adventureBossQIndex = 0;
+
+  showScreen('screen-adventure-boss');
+  showNextAdvBossQuestion();
+}
+
+function showNextAdvBossQuestion() {
+  const q = state.adventureBossQuestions[state.adventureBossQIndex];
+  if (!q) return;
+  document.getElementById('adv-boss-question').textContent = q.text;
+  const input = document.getElementById('adv-boss-answer');
+  input.value = '';
+  input.focus();
+  _criticalBarStart = performance.now();
+  startCriticalBar();
+}
+
+function startCriticalBar() {
+  const fill = document.getElementById('critical-bar-fill');
+  if (_criticalBarInterval) cancelAnimationFrame(_criticalBarInterval);
+  function tick() {
+    const elapsed = (performance.now() - _criticalBarStart) / 1000;
+    const pct = Math.min(100, (elapsed / CRITICAL_BAR_DURATION) * 100);
+    fill.style.width = pct + '%';
+    if (pct < 100) _criticalBarInterval = requestAnimationFrame(tick);
+  }
+  _criticalBarInterval = requestAnimationFrame(tick);
+}
+
+function stopCriticalBar() {
+  if (_criticalBarInterval) cancelAnimationFrame(_criticalBarInterval);
+  _criticalBarInterval = null;
+}
+
+document.getElementById('adv-boss-submit')?.addEventListener('click', submitAdvBossAnswer);
+document.getElementById('adv-boss-answer')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitAdvBossAnswer();
+});
+
+function submitAdvBossAnswer() {
+  const q = state.adventureBossQuestions[state.adventureBossQIndex];
+  const input = document.getElementById('adv-boss-answer');
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  stopCriticalBar();
+  const elapsed = (performance.now() - _criticalBarStart) / 1000;
+  const threshold = getCriticalThreshold(_adventureZoneId);
+
+  const correct = checkAdvAnswer(raw, q);
+
+  if (correct) {
+    const isCritical = elapsed <= threshold;
+    bossDamage(isCritical);
+    const boss = getAdventureBoss();
+    updateAdvBossHpBar(boss.hp, boss.maxHp);
+
+    if (isCritical) {
+      document.querySelector('.adventure-boss-arena')?.classList.add('screen-shake');
+      document.querySelector('.adventure-boss-emoji')?.classList.add('critical-impact');
+      setTimeout(() => {
+        document.querySelector('.adventure-boss-arena')?.classList.remove('screen-shake');
+        document.querySelector('.adventure-boss-emoji')?.classList.remove('critical-impact');
+      }, 500);
+    }
+
+    if (boss.victory) {
+      setTimeout(() => showAdventureBossEnd(true), 600);
+      return;
+    }
+  } else {
+    bossError();
+    const boss = getAdventureBoss();
+    renderErrorPips(boss.errorsMax, boss.errors);
+
+    if (boss.defeated) {
+      setTimeout(() => showAdventureBossEnd(false), 600);
+      return;
+    }
+  }
+
+  state.adventureBossQIndex++;
+  setTimeout(showNextAdvBossQuestion, 400);
+}
+
+function checkAdvAnswer(raw, question) {
+  if (question.textAnswer) {
+    return raw.toLowerCase().trim() === question.textAnswer.toLowerCase().trim();
+  }
+  const num = parseFloat(raw.replace(',', '.'));
+  return !isNaN(num) && Math.abs(num - question.answer) < 0.01;
+}
+
+function updateAdvBossHpBar(hp, maxHp) {
+  const pct = (hp / maxHp) * 100;
+  document.getElementById('adv-boss-hp-fill').style.width = pct + '%';
+  document.getElementById('adv-boss-hp-text').textContent = `${hp}/${maxHp}`;
+}
+
+function renderErrorPips(max, used) {
+  document.getElementById('adv-boss-errors').innerHTML = Array.from({ length: max }, (_, i) =>
+    `<div class="boss-error-pip ${i < used ? 'used' : ''}"></div>`
+  ).join('');
+}
+
+function showAdventureBossEnd(victory) {
+  const def = ADVENTURE_ZONES[_adventureZoneId];
+  document.getElementById('adv-boss-end-emoji').textContent = def.icon;
+  document.getElementById('adv-boss-end-title').textContent = victory ? 'Victoire !' : 'Défaite...';
+  document.getElementById('adv-boss-end-subtitle').textContent = victory
+    ? `Tu as vaincu ${def.bossName} !`
+    : `${def.bossName} est trop fort... pour l'instant.`;
+
+  const rewardsEl = document.getElementById('adv-boss-end-rewards');
+  if (victory) {
+    const coins = 50;
+    const xp = 100;
+    ProfileManager.set('coins', (ProfileManager.get('coins', 0) || 0) + coins);
+    ProfileManager.set('xp', (ProfileManager.get('xp', 0) || 0) + xp);
+    const adv = getAdventure();
+    const zone = adv.zones[_adventureZoneId];
+    const titles = ProfileManager.get('titles', []);
+    if (zone.bossTitle && !titles.includes(zone.bossTitle)) {
+      titles.push(zone.bossTitle);
+      ProfileManager.set('titles', titles);
+    }
+    rewardsEl.innerHTML = `
+      <p>🪙 +${coins} pièces</p>
+      <p>✨ +${xp} XP</p>
+      <p>🏅 Titre : ${zone.bossTitle}</p>
+    `;
+    state.pendingChests.push({ tier: 'big', source: 'adventure-boss' });
+  } else {
+    rewardsEl.innerHTML = `<p>Réessaie — tu seras plus fort la prochaine fois !</p>`;
+  }
+  showScreen('screen-adventure-boss-end');
+}
+
+document.getElementById('btn-adventure-boss-continue')?.addEventListener('click', () => {
+  if (state.pendingChests.length > 0) {
+    showChest(state.pendingChests.shift());
+  } else {
+    openZoneDetail(_adventureZoneId);
+  }
+});
+
 // ── Shop Screen ────────────────────────────────────────────────────
 document.getElementById('btn-shop').addEventListener('click', () => { renderShop(); showScreen('screen-shop'); });
 document.getElementById('btn-shop-back').addEventListener('click', () => { updateProfileHeader(); showScreen('screen-home'); });
 
 async function renderShop() {
   const coins = ProfileManager.get('coins', 0);
-  const ownedThemes = ProfileManager.get('ownedThemes', []);
+  const ownedPalettes = ProfileManager.get('ownedPalettes', []);
+  const ownedVisuals = ProfileManager.get('ownedVisuals', []);
   const ownedStickers = ProfileManager.get('ownedStickers', []);
-  const activeTheme = ProfileManager.get('activeTheme', 'nuit');
   document.getElementById('shop-coins').textContent = coins;
   const container = document.getElementById('shop-grid');
 
-  // === SECTION 1: Thèmes (only unpurchased) ===
-  const paidThemes = getThemeList().filter(t => t.price > 0);
-  const unboughtThemes = paidThemes.filter(t => !ownedThemes.includes(t.id));
+  // === SECTION 1: Palettes (only unpurchased paid) ===
+  const paidPalettes = getPaletteList().filter(p => p.price > 0);
+  const unboughtPalettes = paidPalettes.filter(p => !ownedPalettes.includes(p.id));
   let html = '';
-  if (unboughtThemes.length > 0) {
-    html += '<h3 class="shop-section-title">🎨 Thèmes</h3>';
-    html += unboughtThemes.map(t => {
-      return `<div class="shop-item shop-theme" data-theme="${t.id}">
-        <span class="shop-icon">${t.preview}</span>
-        <span class="shop-name">${t.name}</span>
-        <span class="shop-price">🪙 ${t.price}</span>
+  if (unboughtPalettes.length > 0) {
+    html += '<h3 class="shop-section-title">🎨 Palettes</h3>';
+    html += unboughtPalettes.map(p => {
+      return `<div class="shop-item shop-palette" data-palette="${p.id}">
+        <span class="shop-icon">${p.preview}</span>
+        <span class="shop-name">${p.name}</span>
+        <span class="shop-price">🪙 ${p.price}</span>
       </div>`;
     }).join('');
   }
 
-  const allThemesOwned = unboughtThemes.length === 0;
+  // === SECTION 1b: Thèmes visuels (only unpurchased paid) ===
+  const paidVisuals = getVisualList().filter(v => v.price > 0);
+  const unboughtVisuals = paidVisuals.filter(v => !ownedVisuals.includes(v.id));
+  if (unboughtVisuals.length > 0) {
+    html += '<h3 class="shop-section-title">🖼️ Thèmes visuels</h3>';
+    html += unboughtVisuals.map(v => {
+      return `<div class="shop-item shop-visual" data-visual="${v.id}">
+        <span class="shop-icon">${v.preview}</span>
+        <span class="shop-name">${v.name}</span>
+        <span class="shop-price">🪙 ${v.price}</span>
+      </div>`;
+    }).join('');
+  }
+
+  const allThemesOwned = unboughtPalettes.length === 0 && unboughtVisuals.length === 0;
 
   // === SECTION 2: Stickers saisonniers (only unpurchased) ===
   const unboughtStickers = STICKERS.filter(s => !ownedStickers.includes(s.id));
@@ -1967,10 +2617,12 @@ async function renderShop() {
   // === SECTION 3: Boosts (verrouillés tant que tout n'est pas acheté) ===
   html += '<h3 class="shop-section-title">⚡ Boosts de partie</h3>';
   if (!boostsUnlocked) {
-    const themesLeft = paidThemes.filter(t => !ownedThemes.includes(t.id)).length;
+    const palettesLeft = unboughtPalettes.length;
+    const visualsLeft = unboughtVisuals.length;
     const stickersLeft = STICKERS.filter(s => !ownedStickers.includes(s.id)).length;
-    html += `<div class="shop-locked-msg">🔒 Achète tous les thèmes${STICKERS.length > 0 ? ' et stickers' : ''} pour débloquer les boosts !`;
-    if (themesLeft > 0) html += `<br><span class="shop-locked-detail">${themesLeft} thème${themesLeft > 1 ? 's' : ''} restant${themesLeft > 1 ? 's' : ''}</span>`;
+    html += `<div class="shop-locked-msg">🔒 Achète toutes les palettes, thèmes visuels${STICKERS.length > 0 ? ' et stickers' : ''} pour débloquer les boosts !`;
+    if (palettesLeft > 0) html += `<br><span class="shop-locked-detail">${palettesLeft} palette${palettesLeft > 1 ? 's' : ''} restante${palettesLeft > 1 ? 's' : ''}</span>`;
+    if (visualsLeft > 0) html += `<br><span class="shop-locked-detail">${visualsLeft} thème${visualsLeft > 1 ? 's' : ''} visuel${visualsLeft > 1 ? 's' : ''} restant${visualsLeft > 1 ? 's' : ''}</span>`;
     if (stickersLeft > 0) html += `<br><span class="shop-locked-detail">${stickersLeft} sticker${stickersLeft > 1 ? 's' : ''} restant${stickersLeft > 1 ? 's' : ''}</span>`;
     html += '</div>';
   } else {
@@ -2031,22 +2683,42 @@ async function renderShop() {
     });
   });
 
-  // Theme buy (shop only shows unbought)
-  container.querySelectorAll('.shop-theme').forEach(item => {
+  // Palette buy
+  container.querySelectorAll('.shop-palette').forEach(item => {
     item.addEventListener('click', () => {
-      const themeId = item.dataset.theme;
-      const theme = THEMES[themeId];
+      const paletteId = item.dataset.palette;
+      const palette = PALETTES[paletteId];
       const c = ProfileManager.get('coins', 0);
-      if (c >= theme.price) {
-        if (confirm(`Acheter ${theme.name} ${theme.preview} pour ${theme.price} 🪙 ?`)) {
-          ProfileManager.set('coins', c - theme.price);
-          const o = ProfileManager.get('ownedThemes', []);
-          o.push(themeId);
-          ProfileManager.set('ownedThemes', o);
+      if (c >= palette.price) {
+        if (confirm(`Acheter ${palette.name} ${palette.preview} pour ${palette.price} 🪙 ?`)) {
+          ProfileManager.set('coins', c - palette.price);
+          const o = ProfileManager.get('ownedPalettes', []);
+          o.push(paletteId);
+          ProfileManager.set('ownedPalettes', o);
           renderShop();
         }
       } else {
-        alert(`Pas assez de pièces ! (${c}/${theme.price})`);
+        alert(`Pas assez de pièces ! (${c}/${palette.price})`);
+      }
+    });
+  });
+
+  // Visual theme buy
+  container.querySelectorAll('.shop-visual').forEach(item => {
+    item.addEventListener('click', () => {
+      const visualId = item.dataset.visual;
+      const visual = VISUAL_THEMES[visualId];
+      const c = ProfileManager.get('coins', 0);
+      if (c >= visual.price) {
+        if (confirm(`Acheter ${visual.name} ${visual.preview} pour ${visual.price} 🪙 ?`)) {
+          ProfileManager.set('coins', c - visual.price);
+          const o = ProfileManager.get('ownedVisuals', []);
+          o.push(visualId);
+          ProfileManager.set('ownedVisuals', o);
+          renderShop();
+        }
+      } else {
+        alert(`Pas assez de pièces ! (${c}/${visual.price})`);
       }
     });
   });
@@ -2096,8 +2768,9 @@ async function renderShop() {
 
 // ── Chest Screen ───────────────────────────────────────────────────
 function showChest(chest) {
-  const owned = ProfileManager.get('ownedThemes', []);
-  const loot = generateChestLoot(chest.tier, owned);
+  const ownedPal = ProfileManager.get('ownedPalettes', []);
+  const ownedVis = ProfileManager.get('ownedVisuals', []);
+  const loot = generateChestLoot(chest.tier, ownedPal, ownedVis);
   showScreen('screen-chest');
   const box = document.getElementById('chest-box');
   const itemsContainer = document.getElementById('chest-items');
@@ -2145,6 +2818,7 @@ document.getElementById('btn-chest-close').addEventListener('click', () => {
   } else {
     updateProfileHeader();
     renderRecords();
+    renderDailyQuests();
     showScreen('screen-home');
   }
 });
@@ -2219,28 +2893,61 @@ async function renderProfileDetail() {
   ageHtml += '</div></div>';
   document.getElementById('profile-card').innerHTML += ageHtml;
 
-  // === Theme selector ===
-  const ownedThemeIds = ProfileManager.get('ownedThemes', []);
-  const activeThemeId = ProfileManager.get('activeTheme', 'nuit');
-  // All owned themes: free + bought + boss
-  const allOwnedThemes = [...FREE_THEMES, ...ownedThemeIds]
-    .filter((id, i, arr) => arr.indexOf(id) === i) // dedupe
-    .map(id => THEMES[id])
+  // === Palette selector ===
+  const ownedPaletteIds = ProfileManager.get('ownedPalettes', []);
+  const activePaletteId = ProfileManager.get('activePalette', 'none');
+  const allOwnedPalettes = [...FREE_PALETTES, ...ownedPaletteIds]
+    .filter((id, i, arr) => arr.indexOf(id) === i)
+    .map(id => PALETTES[id])
     .filter(Boolean);
 
-  let themeHtml = '<h3>🎨 Mes Thèmes</h3><div class="theme-selector">';
-  allOwnedThemes.forEach(t => {
-    const isActive = t.id === activeThemeId;
-    const isBoss = t.price === -1;
-    themeHtml += `<div class="theme-select-item ${isActive ? 'theme-active' : ''}" data-theme="${t.id}">
-      <span class="theme-select-icon">${t.preview}</span>
-      <span class="theme-select-name">${t.name}</span>
+  let paletteHtml = '<h3>🎨 Palette de couleur</h3><div class="theme-selector">';
+  // "None" option
+  const palNoneActive = activePaletteId === 'none';
+  paletteHtml += `<div class="theme-select-item ${palNoneActive ? 'theme-active' : ''}" data-palette="none">
+    <span class="theme-select-icon">🚫</span>
+    <span class="theme-select-name">Aucune</span>
+    ${palNoneActive ? '<span class="theme-select-check">✓</span>' : ''}
+  </div>`;
+  allOwnedPalettes.forEach(p => {
+    const isActive = p.id === activePaletteId;
+    paletteHtml += `<div class="theme-select-item ${isActive ? 'theme-active' : ''}" data-palette="${p.id}">
+      <span class="theme-select-icon">${p.preview}</span>
+      <span class="theme-select-name">${p.name}</span>
+      ${isActive ? '<span class="theme-select-check">✓</span>' : ''}
+    </div>`;
+  });
+  paletteHtml += '</div>';
+  document.getElementById('profile-card').innerHTML += paletteHtml;
+
+  // === Visual theme selector ===
+  const ownedVisualIds = ProfileManager.get('ownedVisuals', []);
+  const activeVisualId = ProfileManager.get('activeVisual', 'none');
+  const allOwnedVisuals = [...FREE_VISUALS, ...ownedVisualIds]
+    .filter((id, i, arr) => arr.indexOf(id) === i)
+    .map(id => VISUAL_THEMES[id])
+    .filter(Boolean);
+
+  let visualHtml = '<h3>🖼️ Thème visuel</h3><div class="theme-selector">';
+  // "None" option
+  const visNoneActive = activeVisualId === 'none';
+  visualHtml += `<div class="theme-select-item ${visNoneActive ? 'theme-active' : ''}" data-visual="none">
+    <span class="theme-select-icon">🚫</span>
+    <span class="theme-select-name">Aucun</span>
+    ${visNoneActive ? '<span class="theme-select-check">✓</span>' : ''}
+  </div>`;
+  allOwnedVisuals.forEach(v => {
+    const isActive = v.id === activeVisualId;
+    const isBoss = v.price === -1;
+    visualHtml += `<div class="theme-select-item ${isActive ? 'theme-active' : ''}" data-visual="${v.id}">
+      <span class="theme-select-icon">${v.preview}</span>
+      <span class="theme-select-name">${v.name}</span>
       ${isBoss ? '<span class="theme-select-badge">⚔️</span>' : ''}
       ${isActive ? '<span class="theme-select-check">✓</span>' : ''}
     </div>`;
   });
-  themeHtml += '</div>';
-  document.getElementById('profile-card').innerHTML += themeHtml;
+  visualHtml += '</div>';
+  document.getElementById('profile-card').innerHTML += visualHtml;
 
   // V5: Title selector
   const ownedTitles = ProfileManager.get('bossTitles', []) || [];
@@ -2272,15 +2979,42 @@ async function renderProfileDetail() {
     <div style="margin-top:0.25rem;font-size:0.6rem;color:var(--text-secondary);word-break:break-all;text-align:center;opacity:0.5">
       ID : ${firebaseUid || 'non connecté'}
     </div>
+    <div style="margin-top:0.75rem;text-align:center">
+      <button id="btn-force-update-profile" style="background:none;border:none;color:var(--text-muted,#888);font-size:0.7rem;cursor:pointer;text-decoration:underline;opacity:0.6">🔄 Forcer la mise à jour</button>
+    </div>
   `;
 
-  // Theme selector click handlers
-  document.querySelectorAll('.theme-select-item').forEach(item => {
+  // Force update button in profile
+  document.getElementById('btn-force-update-profile').addEventListener('click', async () => {
+    if (!confirm('Forcer la mise à jour ? L\'app va redémarrer.')) return;
+    try {
+      const [regs, keys] = await Promise.all([
+        navigator.serviceWorker.getRegistrations(),
+        caches.keys()
+      ]);
+      await Promise.all([...regs.map(r => r.unregister()), ...keys.map(k => caches.delete(k))]);
+    } catch (e) { /* no SW support */ }
+    location.reload();
+  });
+
+  // Palette selector click handlers
+  document.querySelectorAll('[data-palette]').forEach(item => {
     item.addEventListener('click', () => {
-      const themeId = item.dataset.theme;
-      ProfileManager.set('activeTheme', themeId);
-      ProfileManager.updateMeta(ProfileManager.getActiveId(), { theme: themeId });
-      applyTheme(themeId);
+      const paletteId = item.dataset.palette;
+      ProfileManager.set('activePalette', paletteId);
+      const currentVisual = ProfileManager.get('activeVisual', 'none');
+      applyThemeCombo(paletteId === 'none' ? null : paletteId, currentVisual === 'none' ? null : currentVisual);
+      renderProfileDetail();
+    });
+  });
+
+  // Visual theme selector click handlers
+  document.querySelectorAll('[data-visual]').forEach(item => {
+    item.addEventListener('click', () => {
+      const visualId = item.dataset.visual;
+      ProfileManager.set('activeVisual', visualId);
+      const currentPalette = ProfileManager.get('activePalette', 'none');
+      applyThemeCombo(currentPalette === 'none' ? null : currentPalette, visualId === 'none' ? null : visualId);
       renderProfileDetail();
     });
   });
@@ -2430,7 +3164,7 @@ document.getElementById('btn-delete-profile').addEventListener('click', () => {
   if (!confirm('Supprimer le profil de ' + profile.name + ' ?\nToute sa progression sera perdue.')) return;
   if (!confirm('VRAIMENT supprimer ' + profile.name + ' ? Cette action est irréversible !')) return;
   ProfileManager.delete(profile.id);
-  applyTheme('nuit');
+  applyThemeCombo('none', 'none');
   renderProfilesList();
   showScreen('screen-profiles');
 });
@@ -2549,6 +3283,8 @@ MQSync.syncOnLaunch().then(() => {
   }
   // Check for active revision sets
   checkRevisionSets();
+  // Re-check daily question now that Firebase auth is ready
+  checkDailyQuestion();
 }).catch(() => {});
 
 // ══════════════════════════════════════════════════════════════════════
@@ -2774,7 +3510,8 @@ function handleBossAnswer(timedOut) {
   if (timedOut) {
     isCorrect = false;
   } else if (q.textAnswer !== undefined) {
-    isCorrect = userAnswer.toLowerCase() === q.textAnswer.toLowerCase();
+    const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    isCorrect = norm(userAnswer) === norm(q.textAnswer);
   } else {
     isCorrect = parseFloat(userAnswer) === q.answer;
   }
@@ -3328,6 +4065,11 @@ async function renderGroupDetail(code) {
       actHtml += '<button class="btn-primary" onclick="showDashboard(\'' + code + '\')">📊 Dashboard</button>';
     }
 
+    // Homework upload button for parents
+    if (isParent) {
+      actHtml += '<button class="btn-primary" style="margin-top:0.5rem" onclick="document.getElementById(\'homework-overlay\').style.display=\'\'">📷 Envoyer un devoir</button>';
+    }
+
     // Admin-only actions
     if (isAdmin) {
       actHtml += '<button class="btn-danger" style="margin-top:0.5rem" onclick="regenerateCodeAction(\'' + code + '\')">🔄 Régénérer le code</button>';
@@ -3607,18 +4349,48 @@ const joinCode = urlParams.get('join');
 if (joinCode) {
   // Clean URL
   window.history.replaceState({}, '', window.location.pathname);
-  // Wait for Firebase auth then join
-  setTimeout(async () => {
+  // Store for after profile creation (if no profile yet)
+  sessionStorage.setItem('pendingJoinCode', joinCode);
+  // If already signed in with a profile, join immediately
+  if (firebaseUid && ProfileManager.getActiveId()) {
+    _consumePendingJoin();
+  }
+}
+
+function _refreshGroupBanner() {
+  const noGroupBanner = document.getElementById('no-group-banner');
+  if (!noGroupBanner) return;
+  getMyGroups().then(groups => {
+    if (groups.length > 0) {
+      noGroupBanner.style.display = 'none';
+      document.getElementById('btn-play').parentNode.style.display = '';
+    }
+  }).catch(() => {});
+}
+
+async function _consumePendingJoin() {
+  const code = sessionStorage.getItem('pendingJoinCode');
+  if (!code) return;
+  const normalized = code.toUpperCase().trim();
+  try {
     if (!firebaseUid) await firebaseSignIn();
     if (firebaseUid) {
-      try {
-        const result = await joinGroup(joinCode);
-        alert('Groupe "' + result.name + '" rejoint ! 🎉');
-      } catch(e) {
-        alert('Impossible de rejoindre : ' + e.message);
+      const memberSnap = await db.ref('groups/' + normalized + '/members/' + firebaseUid).once('value');
+      if (memberSnap.exists()) {
+        // Ensure players/{uid}/groups is consistent (may be missing after migration)
+        await db.ref('players/' + firebaseUid + '/groups/' + normalized).set(true);
+        sessionStorage.removeItem('pendingJoinCode');
+        _refreshGroupBanner();
+        return;
       }
+      const result = await joinGroup(normalized);
+      sessionStorage.removeItem('pendingJoinCode');
+      alert('Groupe "' + result.name + '" rejoint ! 🎉');
+      _refreshGroupBanner();
     }
-  }, 2000);
+  } catch(e) {
+    alert('Impossible de rejoindre : ' + e.message);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -3642,7 +4414,7 @@ document.getElementById('btn-admin-back').addEventListener('click', () => {
   showScreen('screen-home');
 });
 
-document.getElementById('btn-force-update').addEventListener('click', async () => {
+document.getElementById('btn-admin-force-update').addEventListener('click', async () => {
   if (!confirm('Forcer la mise à jour sur TOUS les appareils ? Ils rechargeront au prochain lancement.')) return;
   try {
     const snap = await db.ref('app_version').once('value');
@@ -3674,6 +4446,8 @@ async function renderAdminDashboard() {
       await renderAdminGroups(contentEl);
     } else if (adminTab === 'riddles') {
       await renderAdminRiddles(contentEl);
+    } else if (adminTab === 'feedback') {
+      await renderAdminFeedback(contentEl);
     }
   } catch(e) {
     contentEl.innerHTML = '<p style="color:var(--accent-red)">Erreur : ' + e.message + '</p>';
@@ -3695,7 +4469,7 @@ async function renderAdminPlayers(el) {
   let html = '<p style="text-align:center;color:var(--text-secondary);font-size:0.85rem">' + players.length + ' joueur' + (players.length > 1 ? 's' : '') + '</p>';
 
   const allCats = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert'];
-  const catLabelsAdmin = { calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes' };
+  const catLabelsAdmin = { calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes', geographie: '🌍 Géographie', conjugaison: '✏️ Conjugaison' };
 
   players.forEach(p => {
     const rankIcon = rankIcons[p.rank] || '🥉';
@@ -3851,6 +4625,161 @@ async function renderAdminRiddles(el) {
   el.innerHTML = html;
 }
 
+// ── Admin Feedback Tab ─────────────────────────────────────────────
+async function renderAdminFeedback(el) {
+  const feedbacks = await getAllFeedbacks();
+
+  if (!feedbacks.length) {
+    el.innerHTML = '<p style="text-align:center;color:var(--text-secondary)">Aucun feedback reçu.</p>';
+    return;
+  }
+
+  const groups = { new: [], implement: [], done: [], discard: [] };
+  feedbacks.forEach(fb => {
+    const s = fb.status || 'new';
+    if (groups[s]) groups[s].push(fb);
+    else groups['new'].push(fb);
+  });
+
+  const QUICK_REPLIES = [
+    "Merci, c'est noté !",
+    "C'est corrigé !",
+    "Bonne idée, on va l'ajouter !"
+  ];
+
+  function timeAgo(ts) {
+    if (!ts) return '';
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'à l\'instant';
+    if (mins < 60) return 'il y a ' + mins + 'min';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return 'il y a ' + hrs + 'h';
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return 'il y a ' + days + 'j';
+    return new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  }
+
+  function renderCard(fb) {
+    const icon = fb.type === 'bug' ? '🐛' : '💡';
+    const name = escapeHtml(fb.profileName || 'Anonyme');
+    const text = escapeHtml(fb.text);
+    const screenshotHtml = fb.screenshot
+      ? '<img src="' + fb.screenshot + '" class="admin-fb-thumb" onclick="var lb=document.createElement(\'div\');lb.className=\'admin-fb-lightbox\';lb.innerHTML=\'<img src=&quot;\'+this.src+\'&quot;>\';lb.onclick=function(){lb.remove()};document.body.appendChild(lb)" alt="screenshot">'
+      : '';
+    const replyHtml = fb.adminReply
+      ? '<div class="admin-fb-reply-sent">✉️ ' + escapeHtml(fb.adminReply) + '</div>'
+      : '<div class="admin-fb-reply-zone">' +
+           '<div class="admin-fb-quick-replies">' +
+             QUICK_REPLIES.map(function(r) { return '<button class="admin-fb-quick-btn" data-reply="' + escapeHtml(r) + '">' + escapeHtml(r) + '</button>'; }).join('') +
+           '</div>' +
+           '<div style="display:flex;gap:0.5rem;margin-top:0.5rem">' +
+             '<input type="text" class="admin-fb-reply-input" placeholder="Répondre..." maxlength="200" style="flex:1">' +
+             '<button class="admin-fb-reply-send">Envoyer</button>' +
+           '</div>' +
+         '</div>';
+
+    const s = fb.status || 'new';
+    const statusBtns = {
+      new: '<button class="admin-fb-action btn-small" data-action="implement">✅ Implémenter</button>' +
+           '<button class="admin-fb-action btn-small btn-danger-small" data-action="discard">❌ Discard</button>',
+      implement: '<button class="admin-fb-action btn-small" data-action="done">✔️ Done</button>' +
+           '<button class="admin-fb-action btn-small btn-danger-small" data-action="discard">❌ Discard</button>',
+      done: '<button class="admin-fb-action btn-small" data-action="implement">↩️ Réouvrir</button>',
+      discard: '<button class="admin-fb-action btn-small" data-action="implement">✅ Implémenter</button>'
+    };
+
+    var notesHtml = (s === 'implement' || s === 'done')
+      ? '<div class="admin-fb-notes-zone">' +
+          '<textarea class="admin-fb-notes-input" placeholder="Détails d\'implémentation..." rows="2">' + escapeHtml(fb.adminNotes || '') + '</textarea>' +
+          '<button class="admin-fb-notes-save btn-small">💾 Sauver notes</button>' +
+        '</div>'
+      : (fb.adminNotes ? '<div class="admin-fb-notes-display">📋 ' + escapeHtml(fb.adminNotes) + '</div>' : '');
+
+    return '<div class="admin-fb-card ' + (s === 'discard' ? 'admin-fb-discarded' : '') + (s === 'done' ? ' admin-fb-done' : '') + '" data-fb-id="' + fb.id + '">' +
+      '<div class="admin-fb-header">' +
+        '<span>' + icon + ' <strong>' + name + '</strong></span>' +
+        '<span class="admin-fb-time">' + timeAgo(fb.timestamp) + '</span>' +
+      '</div>' +
+      '<p class="admin-fb-text">' + text + '</p>' +
+      screenshotHtml +
+      '<div class="admin-fb-actions">' + statusBtns[s] + '</div>' +
+      notesHtml +
+      replyHtml +
+    '</div>';
+  }
+
+  function renderSection(title, items, collapsed) {
+    if (!items.length) return '';
+    return '<div class="admin-fb-section ' + (collapsed ? 'collapsed' : '') + '">' +
+      '<div class="admin-fb-section-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">' +
+        '<span>' + title + ' (' + items.length + ')</span>' +
+        '<span class="admin-fb-chevron">▼</span>' +
+      '</div>' +
+      '<div class="admin-fb-section-body">' +
+        items.map(renderCard).join('') +
+      '</div>' +
+    '</div>';
+  }
+
+  el.innerHTML =
+    renderSection('🆕 Nouveau', groups.new, false) +
+    renderSection('✅ À implémenter', groups.implement, true) +
+    renderSection('✔️ Done', groups.done, true) +
+    renderSection('🗑️ Discard', groups.discard, true);
+
+  // Event delegation for actions (cleanup previous listener on re-render)
+  if (el._adminFbHandler) el.removeEventListener('click', el._adminFbHandler);
+  async function adminFbHandler(e) {
+    const card = e.target.closest('.admin-fb-card');
+    if (!card) return;
+    const fbId = card.dataset.fbId;
+
+    // Status change
+    const actionBtn = e.target.closest('.admin-fb-action');
+    if (actionBtn) {
+      const action = actionBtn.dataset.action;
+      await setFeedbackStatus(fbId, action);
+      await renderAdminFeedback(el);
+      return;
+    }
+
+    // Save notes
+    const notesBtn = e.target.closest('.admin-fb-notes-save');
+    if (notesBtn) {
+      const textarea = card.querySelector('.admin-fb-notes-input');
+      const notes = textarea?.value?.trim() || '';
+      notesBtn.textContent = '⏳';
+      await saveAdminNotes(fbId, notes);
+      notesBtn.textContent = '✅ Sauvé';
+      setTimeout(function() { notesBtn.textContent = '💾 Sauver notes'; }, 1500);
+      return;
+    }
+
+    // Quick reply — fills the input
+    const quickBtn = e.target.closest('.admin-fb-quick-btn');
+    if (quickBtn) {
+      const input = card.querySelector('.admin-fb-reply-input');
+      if (input) input.value = quickBtn.dataset.reply;
+      return;
+    }
+
+    // Send reply
+    const sendBtn = e.target.closest('.admin-fb-reply-send');
+    if (sendBtn) {
+      const input = card.querySelector('.admin-fb-reply-input');
+      const text = input?.value?.trim();
+      if (!text) return;
+      sendBtn.disabled = true;
+      await sendAdminReply(fbId, text);
+      await renderAdminFeedback(el);
+      return;
+    }
+  }
+  el._adminFbHandler = adminFbHandler;
+  el.addEventListener('click', adminFbHandler);
+}
+
 async function adminDeleteRiddleAction(riddleId) {
   if (!confirm('Supprimer cette énigme ?')) return;
   try {
@@ -3921,7 +4850,7 @@ function renderProgressionScreen() {
   showScreen('screen-progression');
 
   const catKeys = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert'];
-  const catIcons = { calcul: '🧮', logique: '⚙️', geometrie: '📐', fractions: '🔢', mesures: '📏', ouvert: '💡' };
+  const catIcons = { calcul: '🧮', logique: '⚙️', geometrie: '📐', fractions: '🔢', mesures: '📏', ouvert: '💡', geographie: '🌍', conjugaison: '✏️' };
 
   // Section 1: Mastery bars
   let barsHtml = '';
@@ -4038,7 +4967,7 @@ function renderPetZone() {
   if (petBtn) {
     petBtn.style.display = '';
     petBtn.textContent = pet.emoji;
-    petBtn.className = 'pet-icon-header' + (isHungry ? ' hungry' : '');
+    petBtn.className = 'pet-icon-header' + ((isHungry || vacation) ? ' hungry' : '');
   }
 
   // Hunger bar in header (under XP bar)
@@ -4108,11 +5037,12 @@ function renderMyPetScreen() {
   const coins = ProfileManager.get('coins', 0);
 
   let html = '<div style="text-align:center">' +
-    '<div style="font-size:4rem;margin:0.5rem 0' + (isHungry ? ';filter:grayscale(0.7);opacity:0.7' : '') + '">' + pet.emoji + '</div>' +
+    '<div style="font-size:4rem;margin:0.5rem 0' + ((isHungry || vacation) ? ';filter:grayscale(0.7);opacity:0.7' : '') + '">' + pet.emoji + '</div>' +
     '<div style="font-size:1.3rem;font-weight:700">' + pet.name + '</div>' +
     '<div style="font-size:0.85rem;color:var(--accent-orange);margin:0.25rem 0">' + stage.label + '</div>' +
-    (hasBonus ? '<div style="font-size:0.75rem;color:var(--text-secondary)">✨ ' + getPetBonusDesc(petType, stage) + '</div>' : '') +
-    (isHungry ? '<div style="font-size:0.85rem;color:#f44336;margin-top:0.25rem">😢 A faim !</div>' : '') +
+    (vacation ? '<div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.25rem">🏖️ En vacances — bonus désactivés</div>' :
+      (hasBonus ? '<div style="font-size:0.75rem;color:var(--text-secondary)">✨ ' + getPetBonusDesc(petType, stage) + '</div>' : '')) +
+    (isHungry && !vacation ? '<div style="font-size:0.85rem;color:#f44336;margin-top:0.25rem">😢 A faim !</div>' : '') +
     '</div>';
 
   // XP bar
@@ -4206,6 +5136,8 @@ function renderSkipButton() {
       if (state.currentIndex >= state.questionCount) {
         endGame();
       } else {
+        const lastCat = state.questions[state.currentIndex - 1]?.category;
+        state.questions.push(generateQuestion(state.category, getSubLevel(lastCat || state.category), lastCat));
         showQuestion();
       }
     }
@@ -4234,7 +5166,20 @@ async function checkDailyQuestion() {
       btn.textContent = '🌟 Question du jour';
       btn.onclick = () => openDailyQuestion(data);
     }
-  } catch(e) { if (btn) btn.style.display = 'none'; }
+  } catch(e) {
+    if (btn) btn.style.display = 'none';
+    // Debug toast for Test group only
+    try {
+      const groups = await getMyGroups();
+      if (groups.some(g => g.name === 'Test')) {
+        const t = document.createElement('div');
+        t.textContent = '🐛 Daily Q error: ' + (e.message || e);
+        Object.assign(t.style, { position:'fixed',bottom:'1rem',left:'50%',transform:'translateX(-50%)',background:'#ff5722',color:'#fff',padding:'0.5rem 1rem',borderRadius:'8px',zIndex:'9999',fontSize:'0.8rem',maxWidth:'90vw',wordBreak:'break-all' });
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 8000);
+      }
+    } catch(_) {}
+  }
 }
 
 function openDailyQuestion(data) {
@@ -4249,6 +5194,9 @@ function openDailyQuestion(data) {
   document.getElementById('daily-answer-section').style.display = '';
   document.getElementById('daily-result').style.display = 'none';
   const input = document.getElementById('daily-answer-input');
+  const isTextQuestion = q.textAnswer !== undefined || q.acceptedAnswers || ['conjugaison', 'geographie'].includes(q.category);
+  input.type = isTextQuestion ? 'text' : 'number';
+  input.inputMode = isTextQuestion ? 'text' : 'decimal';
   input.value = '';
   setTimeout(() => input.focus(), 100);
 
@@ -4264,7 +5212,7 @@ function openDailyQuestion(data) {
     const elapsed = Date.now() - startTime;
     newBtn.disabled = true;
     try {
-      const correct = await submitDailyAnswer(data.date, Number(val), elapsed);
+      const correct = await submitDailyAnswer(data.date, isTextQuestion ? val : Number(val), elapsed);
       document.getElementById('daily-answer-section').style.display = 'none';
       const secs = (elapsed / 1000).toFixed(1);
       let html = correct
@@ -4274,7 +5222,7 @@ function openDailyQuestion(data) {
           '<div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary)">Classement disponible demain</div>'
         : '<div style="text-align:center"><div style="font-size:2rem;margin-bottom:0.5rem">❌</div>' +
           '<div style="font-weight:700;font-size:1.2rem;color:#f44336">Mauvaise réponse</div>' +
-          '<div style="margin-top:0.5rem;color:var(--text-secondary)">Réponse : ' + q.answer + '</div>';
+          '<div style="margin-top:0.5rem;color:var(--text-secondary)">Réponse : ' + (q.textAnswer !== undefined ? q.textAnswer : q.answer) + '</div>';
       if (q.explanation) html += '<div style="margin-top:1rem;font-size:0.85rem;color:var(--text-secondary)">' + q.explanation + '</div>';
       html += '</div>';
       document.getElementById('daily-result').innerHTML = html;
@@ -4396,7 +5344,7 @@ document.getElementById('btn-duel-find').addEventListener('click', async () => {
   const code = document.getElementById('duel-join-code').value;
   const duel = await Duel.find(code);
   if (!duel) return;
-  const catNames = { calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes', all: '🎯 Toutes' };
+  const catNames = { calcul: '🧮 Calcul', logique: '🧩 Logique', geometrie: '📐 Géométrie', fractions: '🍕 Fractions', mesures: '📏 Mesures', ouvert: '💡 Problèmes', geographie: '🌍 Géographie', conjugaison: '✏️ Conjugaison', all: '🎯 Toutes' };
   document.getElementById('duel-join-category').textContent = catNames[duel.category] || duel.category;
   document.getElementById('duel-join-stake').textContent = duel.stake.a + ' 🪙';
   document.getElementById('duel-join-opponent').textContent = duel.players.a.name;
@@ -4487,6 +5435,7 @@ document.getElementById('btn-session-stop').addEventListener('click', () => {
       const data = {
         type: feedbackType,
         text: text,
+        status: 'new',
         uid: firebaseUid || 'anonymous',
         profileName: ProfileManager.getActive()?.name || 'unknown',
         appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
@@ -4532,6 +5481,224 @@ document.getElementById('btn-session-stop').addEventListener('click', () => {
       document.getElementById('btn-feedback-send').disabled = false;
     }
   });
+})();
+
+// ── Homework Upload (Parent) ─────────────────────────────────────────
+(function initHomeworkUpload() {
+  const overlay = document.getElementById('homework-overlay');
+  if (!overlay) return;
+
+  let selectedSubject = 'maths';
+  let compressedBase64 = null;
+
+  // Subject toggle
+  overlay.querySelectorAll('#homework-subject-selector .feedback-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      overlay.querySelectorAll('#homework-subject-selector .feedback-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedSubject = btn.dataset.subject;
+    });
+  });
+
+  // Photo preview + compression
+  document.getElementById('homework-photo').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      document.getElementById('homework-preview').style.display = 'none';
+      compressedBase64 = null;
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        // Resize to max 1200px width, JPEG quality 0.6
+        const MAX_W = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+        document.getElementById('homework-preview-img').src = compressedBase64;
+        document.getElementById('homework-preview').style.display = '';
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Cancel
+  document.getElementById('btn-homework-cancel').addEventListener('click', () => {
+    overlay.style.display = 'none';
+  });
+
+  // Send
+  document.getElementById('btn-homework-send').addEventListener('click', async () => {
+    const title = document.getElementById('homework-title').value.trim();
+    const statusEl = document.getElementById('homework-status');
+
+    if (!title) { statusEl.textContent = 'Le titre est obligatoire.'; statusEl.style.color = 'var(--error)'; return; }
+    if (!compressedBase64) { statusEl.textContent = 'Choisis une photo.'; statusEl.style.color = 'var(--error)'; return; }
+
+    statusEl.textContent = 'Envoi en cours...';
+    statusEl.style.color = '';
+    document.getElementById('btn-homework-send').disabled = true;
+
+    try {
+      await uploadHomework(currentGroupCode, title, selectedSubject, compressedBase64);
+      statusEl.textContent = 'Photo envoyée ! Le devoir sera disponible prochainement. 🎉';
+      statusEl.style.color = 'var(--accent-green)';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        document.getElementById('btn-homework-send').disabled = false;
+        // Reset form
+        document.getElementById('homework-title').value = '';
+        document.getElementById('homework-photo').value = '';
+        document.getElementById('homework-preview').style.display = 'none';
+        compressedBase64 = null;
+        statusEl.textContent = '';
+      }, 1500);
+    } catch (e) {
+      statusEl.textContent = 'Erreur — réessaie plus tard.';
+      statusEl.style.color = 'var(--error)';
+      document.getElementById('btn-homework-send').disabled = false;
+    }
+  });
+})();
+
+// ── User Inbox: launch popup + FAB badge ────────────────────────────
+(function initInbox() {
+  let unreadReplies = [];
+  let popupIndex = 0;
+
+  function showPopup(idx) {
+    if (idx >= unreadReplies.length) {
+      document.getElementById('inbox-popup-overlay').style.display = 'none';
+      return;
+    }
+    const fb = unreadReplies[idx];
+    const origText = fb.text.length > 80 ? fb.text.substring(0, 80) + '...' : fb.text;
+    document.getElementById('inbox-popup-original').textContent = '« ' + origText + ' »';
+    document.getElementById('inbox-popup-reply').textContent = fb.adminReply;
+    document.getElementById('inbox-popup-overlay').style.display = 'flex';
+    popupIndex = idx;
+  }
+
+  // OK button — mark read, show next
+  document.getElementById('btn-inbox-popup-ok')?.addEventListener('click', async () => {
+    const fb = unreadReplies[popupIndex];
+    if (fb) await markFeedbackRead(fb.id);
+    showPopup(popupIndex + 1);
+    updateBadge();
+  });
+
+  // View all messages
+  document.getElementById('btn-inbox-popup-view')?.addEventListener('click', () => {
+    document.getElementById('inbox-popup-overlay').style.display = 'none';
+    openInbox();
+  });
+
+  // Inbox close
+  document.getElementById('btn-inbox-close')?.addEventListener('click', () => {
+    document.getElementById('inbox-overlay').style.display = 'none';
+  });
+
+  // New message from inbox
+  document.getElementById('btn-inbox-new')?.addEventListener('click', () => {
+    document.getElementById('inbox-overlay').style.display = 'none';
+    document.getElementById('feedback-overlay').style.display = 'flex';
+    document.getElementById('feedback-text').value = '';
+    document.getElementById('feedback-status').textContent = '';
+  });
+
+  async function openInbox() {
+    const listEl = document.getElementById('inbox-list');
+    let items;
+    try {
+      items = (await getMyFeedbacks()).filter(function(fb) { return !fb.readByUser; });
+    } catch(e) {
+      listEl.innerHTML = '<p style="color:var(--text-secondary)">Impossible de charger tes messages.</p>';
+      document.getElementById('inbox-overlay').style.display = 'flex';
+      return;
+    }
+
+    if (!items.length) {
+      listEl.innerHTML = '<p style="color:var(--text-secondary)">Pas de nouveau message.</p>';
+    } else {
+      listEl.innerHTML = items.map(function(fb) {
+        const icon = fb.type === 'bug' ? '🐛' : '💡';
+        const origText = fb.text.length > 60 ? fb.text.substring(0, 60) + '...' : fb.text;
+        const date = fb.adminReplyAt ? new Date(fb.adminReplyAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
+        return '<div class="inbox-item inbox-item-unread" data-fb-id="' + fb.id + '">' +
+          '<div class="inbox-item-header">' +
+            '<span>' + icon + ' ' + escapeHtml(origText) + '</span>' +
+            '<span class="inbox-item-date">' + date + '</span>' +
+          '</div>' +
+          '<div class="inbox-item-reply">↪ ' + escapeHtml(fb.adminReply) + '</div>' +
+          '<button class="inbox-item-delete btn-small btn-danger-small">🗑️ Supprimer</button>' +
+        '</div>';
+      }).join('');
+    }
+    document.getElementById('inbox-overlay').style.display = 'flex';
+
+    // Delete handler
+    listEl.querySelectorAll('.inbox-item-delete').forEach(function(btn) {
+      btn.addEventListener('click', async function() {
+        const item = btn.closest('.inbox-item');
+        const fbId = item.dataset.fbId;
+        await markFeedbackRead(fbId);
+        item.remove();
+        updateBadge();
+        if (!listEl.querySelector('.inbox-item')) {
+          listEl.innerHTML = '<p style="color:var(--text-secondary)">Pas de nouveau message.</p>';
+        }
+      });
+    });
+  }
+
+  function updateBadge(count) {
+    const fab = document.getElementById('btn-feedback');
+    const existing = fab?.querySelector('.inbox-badge');
+    if (existing) existing.remove();
+    if (count === undefined) {
+      getUnreadReplies().then(function(u) { updateBadge(u.length); }).catch(function() {});
+      return;
+    }
+    if (count > 0 && fab) {
+      const badge = document.createElement('span');
+      badge.className = 'inbox-badge';
+      badge.textContent = count;
+      fab.appendChild(badge);
+    }
+  }
+
+  // Override FAB click: if unread replies exist, show inbox instead of feedback form
+  const fab = document.getElementById('btn-feedback');
+  if (fab) {
+    fab.addEventListener('click', async function(e) {
+      let unreads = [];
+      try { unreads = await getUnreadReplies(); } catch(err) {}
+      if (unreads.length > 0) {
+        e.stopImmediatePropagation();
+        openInbox();
+      }
+    }, true); // capture phase to intercept before initFeedback handler
+  }
+
+  // Expose for startup call
+  window.checkInboxOnLaunch = async function() {
+    try {
+      unreadReplies = await getUnreadReplies();
+      if (unreadReplies.length > 0) {
+        showPopup(0);
+      }
+      updateBadge(unreadReplies.length);
+    } catch(e) {
+    }
+  };
 })();
 
 } // end initApp()
