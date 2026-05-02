@@ -2358,22 +2358,10 @@ function openZoneDetail(zoneId) {
     html = replayHtml + html;
   }
 
-  // Expedition limit counter
-  const remaining = getRemainingExpeditions();
-  html += `<div class="dungeon-limit-info">
-    <span class="dungeon-limit-icon">${remaining > 0 ? '🗺️' : '⏳'}</span>
-    <span>${remaining > 0 ? `${remaining} expédition${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''} aujourd'hui` : "Reviens demain pour continuer !"}</span>
-  </div>`;
-
   pathEl.innerHTML = html;
 
-  // Click handlers — star nodes launch expedition (if limit not reached)
-  const canExpedition = remaining > 0;
+  // Click handlers — launch expedition
   pathEl.querySelectorAll('.dungeon-node.current, .dungeon-node.completed, .dungeon-node[data-star="replay"]').forEach(node => {
-    if (!canExpedition) {
-      node.classList.add('exhausted');
-      return;
-    }
     node.addEventListener('click', () => {
       state.category = _adventureZoneId;
       state.questionCount = EXPEDITION_LENGTH;

@@ -32,7 +32,6 @@ const STARS_FOR_BOSS = 5;
 const EXPEDITION_PASS_THRESHOLD = 4; // out of 7
 const RIDDLE_CHANCE = 0.15;
 const MAX_BOSS_ERRORS = 3;
-const DAILY_EXPEDITION_LIMIT = 3;
 const DECAY_DAYS = 3; // lose 1 star after N days of inactivity
 
 // Critical thresholds (seconds) per category
@@ -75,7 +74,7 @@ function getUnlockedZones() {
   return Object.keys(adv.zones).filter(k => adv.zones[k].unlocked);
 }
 
-// ── Daily Limit ────────────────────────────────────────────────────
+// ── Daily tracking (no limit) ──────────────────────────────────────
 function _today() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -87,7 +86,7 @@ function getExpeditionsToday() {
 }
 
 function getRemainingExpeditions() {
-  return Math.max(0, DAILY_EXPEDITION_LIMIT - getExpeditionsToday());
+  return Infinity;
 }
 
 function _trackExpedition() {
