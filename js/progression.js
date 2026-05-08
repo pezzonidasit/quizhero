@@ -12,6 +12,7 @@ const RANKS = [
   { id: 'diamant', name: 'Diamant', xp: 3500,  icon: '💎', color: '#00bcd4' },
   { id: 'maitre',  name: 'Maître',  xp: 7000,  icon: '👑', color: '#ff9800' },
   { id: 'legende', name: 'Légende', xp: 15000, icon: '⭐', color: '#e040fb' },
+  { id: 'divin',   name: 'Divin',   xp: 50000, icon: '🔱', color: '#26c6da' },
 ];
 
 /** Returns highest rank where xp >= rank.xp */
@@ -329,6 +330,7 @@ const TITLE_NAMES = {
   boss_alchimiste: 'Maître Alchimiste',
   boss_kraken: 'Dompteur de Kraken',
   dresseur_legendaire: 'Dresseur Légendaire 🐾',
+  ascendant: 'Ascendant 👑',
 };
 
 // ─── Mastery Levels ─────────────────────────────────────────────────
@@ -429,12 +431,26 @@ const PET_TYPES = {
   fox:    { name: 'Renard', emoji: '🦊', bonus: 'coins', bonusDesc: '+10% pièces' },
 };
 
+const PET_LEGENDARY_EMOJI = { dragon: '🐲', robot: '👾', fox: '🦄' };
+
+/**
+ * Returns the pet emoji to display for a given type + stage.
+ * At stage 6 (Légendaire), uses the exclusive legendary emoji per type.
+ */
+function getPetEmoji(petType, stage) {
+  if (stage >= 6 && PET_LEGENDARY_EMOJI[petType]) {
+    return PET_LEGENDARY_EMOJI[petType];
+  }
+  return PET_TYPES[petType]?.emoji || '🐾';
+}
+
 const PET_STAGES = [
   { stage: 1, label: 'Œuf',        minXP: 0,    bonusPct: 0.05, dragonThreshold: 25, dragonMax: 1 },
   { stage: 2, label: 'Bébé',       minXP: 100,  bonusPct: 0.10, dragonThreshold: 20, dragonMax: 2 },
   { stage: 3, label: 'Jeune',      minXP: 350,  bonusPct: 0.15, dragonThreshold: 15, dragonMax: 3 },
   { stage: 4, label: 'Adulte',     minXP: 800,  bonusPct: 0.20, dragonThreshold: 12, dragonMax: 4 },
   { stage: 5, label: 'Majestueux', minXP: 1500, bonusPct: 0.25, dragonThreshold: 10, dragonMax: 5 },
+  { stage: 6, label: 'Légendaire', minXP: 5000, bonusPct: 0.35, dragonThreshold: 8,  dragonMax: 6 },
 ];
 
 const PET_FOOD = [
@@ -552,7 +568,39 @@ function checkPetMajestueux() {
     ProfileManager.set('unlockedTitles', titles);
   }
 
-  return { petType, emoji: PET_TYPES[petType]?.emoji || '🐾', name: PET_TYPES[petType]?.name || petType };
+  return { petType, emoji: getPetEmoji(petType, 5), name: PET_TYPES[petType]?.name || petType };
+}
+
+/**
+ * Checks if the pet just reached Légendaire (stage 6) for the first time.
+ * Grants +1000 coins, badge, and title 'ascendant'. Returns reward info or null.
+ */
+function checkPetLegendaire() {
+  const petType = ProfileManager.get('petType', null);
+  if (!petType) return null;
+  const xp = ProfileManager.get('petXP', 0);
+  if (getPetStage(xp).stage < 6) return null;
+
+  const key = 'petLegendaireRewarded_' + petType;
+  if (ProfileManager.get(key, false)) return null;
+
+  ProfileManager.set(key, true);
+  ProfileManager.set('coins', (ProfileManager.get('coins', 0)) + 1000);
+
+  const badgeId = 'pet_legendaire_' + petType;
+  const badges = ProfileManager.get('badges', []);
+  if (!badges.includes(badgeId)) {
+    badges.push(badgeId);
+    ProfileManager.set('badges', badges);
+  }
+
+  const titles = ProfileManager.get('unlockedTitles', []);
+  if (!titles.includes('ascendant')) {
+    titles.push('ascendant');
+    ProfileManager.set('unlockedTitles', titles);
+  }
+
+  return { petType, emoji: getPetEmoji(petType, 6), name: PET_TYPES[petType]?.name || petType };
 }
 
 function onBossLost() {

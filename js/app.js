@@ -1,6 +1,6 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '7.5.1';
+const APP_VERSION = '7.6.0';
 
 // ── Theme Helpers ───────────────────────────────────────────────
 function isCatTheme() {
@@ -4966,7 +4966,7 @@ function renderPetZone() {
   // Header pet icon (left of rank)
   if (petBtn) {
     petBtn.style.display = '';
-    petBtn.textContent = pet.emoji;
+    petBtn.textContent = getPetEmoji(petType, stage.stage);
     petBtn.className = 'pet-icon-header' + ((isHungry || vacation) ? ' hungry' : '');
   }
 
@@ -5037,7 +5037,7 @@ function renderMyPetScreen() {
   const coins = ProfileManager.get('coins', 0);
 
   let html = '<div style="text-align:center">' +
-    '<div style="font-size:4rem;margin:0.5rem 0' + ((isHungry || vacation) ? ';filter:grayscale(0.7);opacity:0.7' : '') + '">' + pet.emoji + '</div>' +
+    '<div style="font-size:4rem;margin:0.5rem 0' + ((isHungry || vacation) ? ';filter:grayscale(0.7);opacity:0.7' : '') + '">' + getPetEmoji(petType, stage.stage) + '</div>' +
     '<div style="font-size:1.3rem;font-weight:700">' + pet.name + '</div>' +
     '<div style="font-size:0.85rem;color:var(--accent-orange);margin:0.25rem 0">' + stage.label + '</div>' +
     (vacation ? '<div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.25rem">🏖️ En vacances — bonus désactivés</div>' :
