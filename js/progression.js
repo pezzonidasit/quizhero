@@ -468,7 +468,7 @@ function getPetStage(petXP) {
 
 function getPetStageProgress(petXP) {
   const current = getPetStage(petXP);
-  if (current.stage >= 5) return { current, next: null, progress: 1 };
+  if (current.stage >= 6) return { current, next: null, progress: 1 };
   const next = PET_STAGES[current.stage];
   const progress = (petXP - current.minXP) / (next.minXP - current.minXP);
   return { current, next, progress: Math.min(1, progress) };

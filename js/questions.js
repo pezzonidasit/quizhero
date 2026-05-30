@@ -1120,6 +1120,15 @@ const RIDDLE_BANK = [
   },
   {
     category: 'logique',
+    text: 'Trouve le nombre suivant : 10, 11, 21, 22, 43, 44, 87, 88, ?  (énigme inventée par Mathéo)',
+    unit: '',
+    answer: 175,
+    hint: 'Les nombres vont par paires de jumeaux (un nombre et son voisin +1). Pour la paire suivante, additionne les deux derniers : 87 + 88.',
+    explanation: 'Les nombres avancent par paires de jumeaux : 10-11, 21-22, 43-44, 87-88 (le 2e jumeau = le 1er + 1). Pour passer à la paire suivante, on additionne les deux jumeaux : 10+11=21, 21+22=43, 43+44=87, et enfin 87+88 = 175.',
+    level: 2
+  },
+  {
+    category: 'logique',
     text: 'Un nombre palindrome se lit de la même façon dans les deux sens (ex : 121). Combien y a-t-il de palindromes à 3 chiffres entre 100 et 200 ?',
     unit: '',
     answer: 10,
