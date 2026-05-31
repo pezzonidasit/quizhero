@@ -131,7 +131,7 @@ function getSubLevel(category) {
   // If no specific category (e.g. 'all' mode), return the full map
   // so generateQuestion can resolve per-category after picking
   if (!category) return catLevel;
-  return Math.max(1, Math.min(3, catLevel[category] || 2));
+  return Math.max(1, Math.min(4, catLevel[category] || 2));
 }
 
 // ── Profile-aware Persistence ──────────────────────────────────────
@@ -671,7 +671,7 @@ function renderBoostSelector() {
     const currentLevel = state.category !== 'all' ? (catLevel[state.category] || 2) : 2;
     const mult = getBoostMultiplier(currentLevel);
     const pctLabel = mult === 0.75 ? '75%' : mult === 1.5 ? '×1.5' : '100%';
-    const levelLabel = currentLevel === 1 ? 'Débutant' : currentLevel === 3 ? 'Avancé' : 'Normal';
+    const levelLabel = currentLevel === 1 ? 'Débutant' : currentLevel === 4 ? 'Expert' : currentLevel === 3 ? 'Avancé' : 'Normal';
     html += `<div class="boost-warning">⚠️ Effet ${pctLabel} en ${levelLabel} — perdu si pas 100% correct !</div>`;
   }
 
@@ -830,7 +830,7 @@ function startGame() {
     const current = ProfileManager.get('freeHints', 0);
     const catLevel = ProfileManager.get('catLevel', {});
     const currentLevel = state.category !== 'all' ? (catLevel[state.category] || 2) : 2;
-    const hintsToAdd = currentLevel === 3 ? 6 : 3;
+    const hintsToAdd = currentLevel >= 3 ? 6 : 3;
     ProfileManager.set('freeHints', current + hintsToAdd);
   }
 
@@ -1317,7 +1317,7 @@ function processAnswer(isCorrect, q) {
       const cat = q.category;
       if (cat && cat !== 'revision') {
         const catLevel = ProfileManager.get('catLevel', {});
-        catLevel[cat] = Math.min(3, (catLevel[cat] || 2) + 1);
+        catLevel[cat] = Math.min(4, (catLevel[cat] || 2) + 1);
         ProfileManager.set('catLevel', catLevel);
       }
       state.consecutiveCorrect = 0;
@@ -1528,7 +1528,7 @@ const BOOSTS = [
 
 function getBoostMultiplier(catLevelValue) {
   if (catLevelValue === 1) return 0.75;
-  if (catLevelValue === 3) return 1.5;
+  if (catLevelValue >= 3) return 1.5;
   return 1;
 }
 
@@ -2105,7 +2105,7 @@ document.getElementById('btn-share-score').addEventListener('click', () => {
   const avgLevel2 = playedCats2.length > 0
     ? Math.round(playedCats2.reduce((sum, c) => sum + (catLevel[c] || 2), 0) / playedCats2.length)
     : 2;
-  const diff = avgLevel2 === 1 ? 'Débutant' : avgLevel2 === 3 ? 'Avancé' : 'Normal';
+  const diff = avgLevel2 === 1 ? 'Débutant' : avgLevel2 >= 4 ? 'Expert' : avgLevel2 === 3 ? 'Avancé' : 'Normal';
   const text = `🎯 QuizHero — ${score} points en ${cat} (${diff}) !\nTu peux faire mieux ? 🧮`;
   if (navigator.share) {
     navigator.share({ title: 'QuizHero', text, url: 'https://pezzonidasit.github.io/quizhero/' }).catch(() => {});
@@ -3359,7 +3359,7 @@ function startBossFight(boss) {
   const isEnraged = defeated.includes(boss.id);
   const maxPlayerHP = 3;
   const maxBossHP = isEnraged ? boss.hp + 2 : boss.hp;
-  const subLevel = Math.min(3, getSubLevel(boss.category) + 1);
+  const subLevel = Math.min(4, getSubLevel(boss.category) + 1);
   const phase1Questions = [];
   let lastCat = null;
   for (let i = 0; i < 3; i++) {
