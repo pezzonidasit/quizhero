@@ -139,7 +139,7 @@ function generateCalcul(subLevel) {
     const s = pick(scenarios)();
     return { category: 'calcul', text: s.text, unit: '', answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: 'multiplication' };
 
-  } else {
+  } else if (subLevel === 3) {
     // 6e (11-12 ans): opérations combinées, priorités, grands nombres
     const scenarios = [
       () => {
@@ -194,13 +194,78 @@ function generateCalcul(subLevel) {
     ];
     const s = pick(scenarios)();
     return { category: 'calcul', text: s.text, unit: '', answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: 'calcul_mental' };
+
+  } else {
+    // L4 Expert (6e solide / début 5e): priorités à parenthèses, division euclidienne, ×2 chiffres, pourcentages
+    const scenarios = [
+      () => {
+        const a = rand(3, 9);
+        const b = rand(5, 20);
+        const c = rand(5, 20);
+        const answer = a * (b + c);
+        return {
+          text: `Combien font ${a} × (${b} + ${c}) ?`,
+          answer,
+          hint: `Les parenthèses d'abord : calcule ${b} + ${c}, puis multiplie par ${a}.`,
+          explanation: `${b} + ${c} = ${b + c}, puis ${a} × ${b + c} = ${answer}.`
+        };
+      },
+      () => {
+        const b = rand(3, 9);
+        const q = rand(11, 30);
+        const r = rand(1, b - 1);
+        const a = b * q + r;
+        return {
+          text: `Dans la division de ${a} par ${b}, quel est le quotient (le nombre de fois entier) ?`,
+          answer: q,
+          hint: `Combien de fois ${b} entre dans ${a} sans le dépasser ?`,
+          explanation: `${b} × ${q} = ${b * q}, et il reste ${r}. Le quotient est ${q}.`
+        };
+      },
+      () => {
+        const b = rand(3, 9);
+        const q = rand(11, 30);
+        const r = rand(1, b - 1);
+        const a = b * q + r;
+        return {
+          text: `Dans la division de ${a} par ${b}, quel est le reste ?`,
+          answer: r,
+          hint: `Enlève le plus grand multiple de ${b} possible à ${a}.`,
+          explanation: `${b} × ${q} = ${b * q}, et ${a} − ${b * q} = ${r}. Le reste est ${r}.`
+        };
+      },
+      () => {
+        const a = rand(12, 25);
+        const b = rand(12, 25);
+        const answer = a * b;
+        return {
+          text: `Combien font ${a} × ${b} ?`,
+          answer,
+          hint: `Décompose : ${a} × ${b} = ${a} × ${Math.floor(b / 10) * 10} + ${a} × ${b % 10}.`,
+          explanation: `${a} × ${b} = ${answer}.`
+        };
+      },
+      () => {
+        const pct = pick([25, 50, 75]);
+        const base = rand(4, 40) * 4; // multiple de 4 → 25 %/75 % entiers
+        const answer = base * pct / 100;
+        return {
+          text: `Combien font ${pct} % de ${base} ?`,
+          answer,
+          hint: `Astuce : 25 % = un quart, 50 % = la moitié, 75 % = trois quarts.`,
+          explanation: `${pct} % de ${base} = ${base} × ${pct} ÷ 100 = ${answer}.`
+        };
+      }
+    ];
+    const s = pick(scenarios)();
+    return { category: 'calcul', text: s.text, unit: '', answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: 'calcul_mental' };
   }
 }
 
 function generateLogique(subLevel) {
   // Sometimes generate a "qui suis-je" riddle instead
   if (Math.random() < 0.3) {
-    const maxN = subLevel === 1 ? 10 : 25;
+    const maxN = subLevel === 1 ? 10 : subLevel >= 4 ? 50 : 25;
     const n = rand(3, maxN) * 2;
     const double = n * 2;
     return {
@@ -214,7 +279,7 @@ function generateLogique(subLevel) {
   }
 
   // Pick a random sequence type to avoid repetition
-  const seqTypes = subLevel === 1 ? [0, 1, 2] : subLevel === 2 ? [3, 4, 5] : [6, 7, 8];
+  const seqTypes = subLevel === 1 ? [0, 1, 2] : subLevel === 2 ? [3, 4, 5] : subLevel === 3 ? [6, 7, 8] : [9, 10, 11];
   const type = seqTypes[Math.floor(Math.random() * seqTypes.length)];
 
   switch (type) {
@@ -313,6 +378,36 @@ function generateLogique(subLevel) {
         hint: `La différence entre chaque nombre augmente de 1 à chaque fois.`,
         explanation: `On ajoute +1, +2, +3, +4, +5, +6. ${seq[5]} + 6 = ${answer}.` };
     }
+    case 9: { // L4 — Cubes 1, 8, 27, 64...
+      const offset = rand(0, 2);
+      const seq = [];
+      for (let i = 1; i <= 5; i++) { const n = i + offset; seq.push(n * n * n); }
+      const m = 6 + offset;
+      const answer = m * m * m;
+      return { category: 'logique', text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`, unit: '', answer,
+        hint: `Ce sont des cubes : 1×1×1, 2×2×2, 3×3×3…`,
+        explanation: `${seq[0]} = ${1 + offset}³, … Le suivant est ${m}³ = ${m}×${m}×${m} = ${answer}.` };
+    }
+    case 10: { // L4 — Nombres premiers
+      const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43];
+      const start = rand(0, 4);
+      const seq = primes.slice(start, start + 5);
+      const answer = primes[start + 5];
+      return { category: 'logique', text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`, unit: '', answer,
+        hint: `Ce sont des nombres qui ne se divisent que par 1 et par eux-mêmes…`,
+        explanation: `Ce sont les nombres premiers. Après ${seq[4]}, le prochain est ${answer}.` };
+    }
+    case 11: { // L4 — Écarts en progression : +d, +2d, +3d...
+      const start = rand(2, 10);
+      const d = rand(2, 4);
+      const seq = [start];
+      let val = start;
+      for (let i = 1; i <= 4; i++) { val += d * i; seq.push(val); }
+      const answer = val + d * 5;
+      return { category: 'logique', text: `Trouve le nombre suivant : ${seq.join(', ')}, ?`, unit: '', answer,
+        hint: `Regarde les écarts : ils augmentent régulièrement.`,
+        explanation: `Les écarts sont +${d}, +${2 * d}, +${3 * d}, +${4 * d}, +${5 * d}. ${seq[4]} + ${5 * d} = ${answer}.` };
+    }
   }
 }
 
@@ -378,7 +473,7 @@ function generateGeometrie(subLevel) {
       ficheKey: 'aire'
     };
 
-  } else {
+  } else if (subLevel === 3) {
     // 6e (11-12 ans): aires composées, aire triangle, volume pavé
     const scenarios = [
       () => {
@@ -417,6 +512,50 @@ function generateGeometrie(subLevel) {
           hint: `Volume = longueur × largeur × hauteur.`,
           explanation: `${l} × ${w} × ${h} = ${answer} cm³.`,
           ficheKey: 'volume'
+        };
+      }
+    ];
+    const s = pick(scenarios)();
+    return { category: 'geometrie', text: s.text, unit: s.unit, answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: s.ficheKey };
+
+  } else {
+    // L4 Expert: aire par soustraction (forme évidée), volume composé, triangle rectangle
+    const scenarios = [
+      () => {
+        const L = rand(10, 20), W = rand(8, 15);
+        const l = rand(3, 7), w = rand(2, 5); // toujours < L et < W
+        const answer = L * W - l * w;
+        return {
+          text: `Une plaque rectangulaire de ${L} cm × ${W} cm a un trou rectangulaire de ${l} cm × ${w} cm. Quelle est l'aire restante ?`,
+          unit: 'cm²', answer,
+          hint: `Aire totale moins l'aire du trou.`,
+          explanation: `Plaque : ${L} × ${W} = ${L * W}. Trou : ${l} × ${w} = ${l * w}. Reste : ${L * W} − ${l * w} = ${answer} cm².`,
+          ficheKey: 'aire'
+        };
+      },
+      () => {
+        const a = rand(3, 8), b = rand(2, 6), c = rand(2, 5);
+        const d = rand(2, 6), e = rand(2, 5), f = rand(2, 4);
+        const answer = a * b * c + d * e * f;
+        return {
+          text: `Une construction est faite de deux pavés : l'un de ${a}×${b}×${c} cm, l'autre de ${d}×${e}×${f} cm. Quel est le volume total ?`,
+          unit: 'cm³', answer,
+          hint: `Calcule le volume de chaque pavé, puis additionne.`,
+          explanation: `${a}×${b}×${c} = ${a * b * c} et ${d}×${e}×${f} = ${d * e * f}. Total = ${answer} cm³.`,
+          ficheKey: 'volume'
+        };
+      },
+      () => {
+        const base = rand(3, 12);
+        let haut = rand(3, 12);
+        if ((base * haut) % 2 !== 0) haut += 1; // produit pair → aire entière
+        const answer = base * haut / 2;
+        return {
+          text: `Un triangle rectangle a ses deux côtés de l'angle droit qui mesurent ${base} cm et ${haut} cm. Quelle est son aire ?`,
+          unit: 'cm²', answer,
+          hint: `Aire = (côté × côté) ÷ 2.`,
+          explanation: `(${base} × ${haut}) ÷ 2 = ${base * haut} ÷ 2 = ${answer} cm².`,
+          ficheKey: 'aire'
         };
       }
     ];
@@ -479,7 +618,7 @@ function generateFractions(subLevel) {
       ficheKey: 'fractions_lire'
     };
 
-  } else {
+  } else if (subLevel === 3) {
     // 6e (11-12 ans): addition fractions, p/n de X, addition décimale
     const scenarios = [
       () => {
@@ -523,6 +662,61 @@ function generateFractions(subLevel) {
           hint: `Additionne d'abord les centièmes, puis les dixièmes, puis les unités.`,
           explanation: `${a_str} + ${b_str} = ${answer_str.replace('.', ',')}.`,
           ficheKey: 'fractions_decimales'
+        };
+      }
+    ];
+    const s = pick(scenarios)();
+    return { category: 'fractions', text: s.text, unit: s.unit, answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: s.ficheKey || 'fractions_lire' };
+
+  } else {
+    // L4 Expert: addition à dénominateurs différents (l'un multiple de l'autre), fraction d'une fraction, simplification
+    const scenarios = [
+      () => {
+        const d1 = pick([2, 3, 4, 5]);
+        const k = pick([2, 3]);
+        const d2 = d1 * k;
+        const a = rand(1, d1 - 1);
+        const b = rand(1, d2 - 1);
+        const answer = a * k + b; // numérateur une fois tout sur d2
+        return {
+          text: `Combien font ${a}/${d1} + ${b}/${d2} ? Donne le numérateur une fois tout mis sur ${d2} (le dénominateur reste ${d2}).`,
+          unit: '', answer,
+          hint: `Mets ${a}/${d1} sur ${d2} : multiplie en haut et en bas par ${k}.`,
+          explanation: `${a}/${d1} = ${a * k}/${d2}. Donc ${a * k}/${d2} + ${b}/${d2} = ${answer}/${d2}. Le numérateur est ${answer}.`,
+          ficheKey: 'fractions_additionner'
+        };
+      },
+      () => {
+        const s_ = pick([2, 3, 4]);
+        const q_ = pick([2, 3]);
+        const r = rand(1, s_ - 1);
+        const p = rand(1, q_ - 1);
+        const base = s_ * q_ * rand(2, 6); // divisible par s_ et par q_
+        const inner = base * r / s_;
+        const answer = inner * p / q_;
+        return {
+          text: `Combien valent ${p}/${q_} de (${r}/${s_} de ${base}) ?`,
+          unit: '', answer,
+          hint: `Calcule d'abord ${r}/${s_} de ${base}, puis prends ${p}/${q_} du résultat.`,
+          explanation: `${r}/${s_} de ${base} = ${inner}. Puis ${p}/${q_} de ${inner} = ${answer}.`,
+          ficheKey: 'fractions_lire'
+        };
+      },
+      () => {
+        const gcd = (x, y) => (y === 0 ? x : gcd(y, x % y));
+        let a, b;
+        do {
+          a = rand(1, 5);
+          b = a + rand(1, 4); // b > a
+        } while (gcd(a, b) !== 1); // a/b doit déjà être irréductible
+        const k = pick([2, 3, 4]);
+        const num = a * k, den = b * k;
+        return {
+          text: `Simplifie la fraction ${num}/${den} au maximum. Donne le numérateur (le dénominateur devient ${b}).`,
+          unit: '', answer: a,
+          hint: `Cherche par quel nombre on peut diviser ${num} et ${den} en même temps.`,
+          explanation: `On divise haut et bas par ${k} : ${num}÷${k}=${a} et ${den}÷${k}=${b}. Donc ${a}/${b}. Le numérateur est ${a}.`,
+          ficheKey: 'fractions_lire'
         };
       }
     ];
@@ -615,7 +809,7 @@ function generateMesures(subLevel) {
     const s = pick(scenarios)();
     return { category: 'mesures', text: s.text, unit: s.unit, answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: s.ficheKey };
 
-  } else {
+  } else if (subLevel === 3) {
     // 6e (11-12 ans): km+m→m, vitesse×temps=distance, surface rectangulaire (m²)
     const scenarios = [
       () => {
@@ -652,6 +846,63 @@ function generateMesures(subLevel) {
           hint: `Surface = longueur × largeur.`,
           explanation: `${l} × ${w} = ${answer} m².`,
           ficheKey: 'aire'
+        };
+      }
+    ];
+    const s = pick(scenarios)();
+    return { category: 'mesures', text: s.text, unit: s.unit, answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: s.ficheKey };
+
+  } else {
+    // L4 Expert: vitesse (distance ÷ temps), débit, conversion multiple, durée composée
+    const scenarios = [
+      () => {
+        const temps = rand(2, 6);
+        const vitesse = pick([20, 30, 40, 50, 60, 70, 80, 90]);
+        const dist = vitesse * temps;
+        return {
+          text: `Une voiture parcourt ${dist} km en ${temps} heures. Quelle est sa vitesse moyenne ?`,
+          unit: 'km/h', answer: vitesse,
+          hint: `Vitesse = distance ÷ temps.`,
+          explanation: `${dist} ÷ ${temps} = ${vitesse} km/h.`,
+          ficheKey: 'vitesse'
+        };
+      },
+      () => {
+        const debit = pick([3, 4, 5, 6, 8, 10]);
+        const temps = rand(3, 9);
+        const vol = debit * temps;
+        return {
+          text: `Un robinet remplit ${vol} litres en ${temps} minutes. Quel est son débit en litres par minute ?`,
+          unit: 'L/min', answer: debit,
+          hint: `Débit = volume ÷ temps.`,
+          explanation: `${vol} ÷ ${temps} = ${debit} litres par minute.`,
+          ficheKey: 'vitesse'
+        };
+      },
+      () => {
+        const km = rand(1, 5);
+        const answer = km * 100000;
+        return {
+          text: `Convertis ${km} km en centimètres.`,
+          unit: 'cm', answer,
+          hint: `1 km = 1 000 m, et 1 m = 100 cm.`,
+          explanation: `${km} km = ${km * 1000} m = ${km * 1000} × 100 = ${answer} cm.`,
+          ficheKey: 'longueurs'
+        };
+      },
+      () => {
+        const h1 = rand(8, 11), m1 = pick([0, 15, 30, 45]);
+        const dur = rand(2, 4) * 60 + pick([0, 15, 30, 45]);
+        const startMin = h1 * 60 + m1;
+        const endMin = startMin + dur;
+        const eh = Math.floor(endMin / 60), em = endMin % 60;
+        const fmt = (h, m) => `${h}h${m.toString().padStart(2, '0')}`;
+        return {
+          text: `Un film commence à ${fmt(h1, m1)} et se termine à ${fmt(eh, em)}. Combien de minutes dure-t-il ?`,
+          unit: 'min', answer: dur,
+          hint: `Compte les heures entières puis les minutes, puis convertis tout en minutes.`,
+          explanation: `De ${fmt(h1, m1)} à ${fmt(eh, em)} il s'écoule ${Math.floor(dur / 60)} h ${dur % 60} min = ${dur} minutes.`,
+          ficheKey: 'durees'
         };
       }
     ];
@@ -711,7 +962,7 @@ function generateOuvert(subLevel) {
       explanation: `${tops} × ${bottoms} = ${answer} tenues possibles.`
     };
 
-  } else {
+  } else if (subLevel === 3) {
     // Handshake problem: n(n-1)/2
     const n = rand(4, 8);
     const answer = n * (n - 1) / 2;
@@ -723,6 +974,52 @@ function generateOuvert(subLevel) {
       hint: `La première personne serre la main de ${n - 1} personnes, la deuxième de ${n - 2}…`,
       explanation: `${n} × ${n - 1} ÷ 2 = ${answer} poignées de main.`
     };
+
+  } else {
+    // L4 Expert: problèmes à 3-4 étapes
+    const scenarios = [
+      () => {
+        const prix = pick([12, 15, 18, 20, 25]);
+        const personnes = rand(4, 9);
+        const reduction = pick([5, 10, 20]);
+        const total = prix * personnes - reduction;
+        return {
+          text: `Un groupe de ${personnes} personnes va au cinéma. Chaque place coûte ${prix} €, mais le groupe a un bon de réduction de ${reduction} €. Combien paie le groupe en tout ?`,
+          answer: total,
+          hint: `Calcule d'abord le prix sans réduction, puis enlève le bon.`,
+          explanation: `${personnes} × ${prix} = ${prix * personnes} €. Puis ${prix * personnes} − ${reduction} = ${total} €.`
+        };
+      },
+      () => {
+        const boites = rand(3, 6);
+        const parBoite = rand(6, 12);
+        const casses = rand(2, 5);
+        const parSachet = pick([4, 5, 6]);
+        const reste = boites * parBoite - casses;
+        const sachets = Math.floor(reste / parSachet);
+        return {
+          text: `Tu as ${boites} boîtes de ${parBoite} œufs. ${casses} œufs sont cassés. Avec les œufs restants, combien de sachets de ${parSachet} œufs peux-tu remplir complètement ?`,
+          answer: sachets,
+          hint: `Compte les œufs au total, enlève les cassés, puis fais des paquets de ${parSachet}.`,
+          explanation: `${boites} × ${parBoite} = ${boites * parBoite} œufs. Moins ${casses} cassés = ${reste}. ${reste} ÷ ${parSachet} = ${sachets} sachets complets (reste ${reste % parSachet}).`
+        };
+      },
+      () => {
+        const depart = rand(50, 90);
+        const gagne1 = rand(15, 40);
+        const depense = rand(20, 50);
+        const gagne2 = rand(10, 30);
+        const total = depart + gagne1 - depense + gagne2;
+        return {
+          text: `Léa a ${depart} € d'économies. Elle gagne ${gagne1} € en gardant des enfants, dépense ${depense} € en cadeaux, puis reçoit ${gagne2} € pour son anniversaire. Combien a-t-elle maintenant ?`,
+          answer: total,
+          hint: `Suis chaque étape dans l'ordre : ajoute, enlève, ajoute.`,
+          explanation: `${depart} + ${gagne1} = ${depart + gagne1}. ${depart + gagne1} − ${depense} = ${depart + gagne1 - depense}. Puis + ${gagne2} = ${total} €.`
+        };
+      }
+    ];
+    const s = pick(scenarios)();
+    return { category: 'ouvert', text: s.text, unit: '', answer: s.answer, hint: s.hint, explanation: s.explanation };
   }
 }
 
@@ -3867,7 +4164,7 @@ function generateQuestion(category, subLevel, lastCategory) {
   // If subLevel is a catLevel map (object), resolve to number for this category
   let level = subLevel;
   if (typeof subLevel === 'object' && subLevel !== null) {
-    level = Math.max(1, Math.min(3, subLevel[cat] || 2));
+    level = Math.max(1, Math.min(4, subLevel[cat] || 2));
   }
 
   // 20% chance to pick from RIDDLE_BANK
