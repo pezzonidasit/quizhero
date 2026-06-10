@@ -44,6 +44,36 @@ function checkNumeric(raw, expected) {
   return !isNaN(num) && Math.abs(num - expected) < 1e-6;
 }
 
+/**
+ * Riddles matching a category at a given level. Prefers the exact level (a
+ * riddle with no `level` matches any level); if none exist at that level —
+ * e.g. Expert (L4), which has no dedicated riddles — falls back to any riddle
+ * of the category at or below the requested level so high/low levels still get
+ * artisanal riddles instead of always dropping through to the generator.
+ */
+function riddlesForLevel(cat, level) {
+  let matches = RIDDLE_BANK.filter(r => r.category === cat && (!r.level || r.level === level));
+  if (matches.length === 0) {
+    matches = RIDDLE_BANK.filter(r => r.category === cat && (!r.level || r.level <= level));
+  }
+  return matches;
+}
+
+/**
+ * Generate a question avoiding texts already seen this game. Re-rolls a few
+ * times on collision so a single quiz doesn't serve the same question twice
+ * (mono-template generators otherwise repeat). Best-effort: after a few tries
+ * it returns whatever it got, so a low-variety category never loops forever.
+ */
+function generateUniqueQuestion(category, subLevel, lastCat, seenTexts) {
+  const seen = seenTexts instanceof Set ? seenTexts : new Set(seenTexts || []);
+  let q = generateQuestion(category, subLevel, lastCat);
+  for (let i = 0; i < 5 && seen.has(q.text); i++) {
+    q = generateQuestion(category, subLevel, lastCat);
+  }
+  return q;
+}
+
 // ── Generators ──────────────────────────────────────────────────────
 
 function generateCalcul(subLevel) {
@@ -4398,7 +4428,7 @@ function generateQuestion(category, subLevel, lastCategory) {
 
   // 20% chance to pick from RIDDLE_BANK
   if (Math.random() < 0.2) {
-    const matches = RIDDLE_BANK.filter(r => r.category === cat && (!r.level || r.level === level));
+    const matches = riddlesForLevel(cat, level);
     if (matches.length > 0) {
       return { ...pick(matches) };
     }

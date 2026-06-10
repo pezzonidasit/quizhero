@@ -1,6 +1,6 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '7.6.1';
+const APP_VERSION = '7.6.2';
 
 // ── Theme Helpers ───────────────────────────────────────────────
 function isCatTheme() {
@@ -478,7 +478,7 @@ function selectProfile(id) {
     } else {
       if (!state.questions[state.currentIndex]) {
         const lastCat = state.questions[state.currentIndex - 1]?.category;
-        state.questions.push(generateQuestion(state.category, getSubLevel(lastCat || state.category), lastCat));
+        state.questions.push(generateUniqueQuestion(state.category, getSubLevel(lastCat || state.category), lastCat, state.questions.map(q => q.text)));
       }
       showScreen('screen-game');
       if (state.timerEnabled) {
@@ -843,7 +843,7 @@ function startGame() {
   state.coinRainActive = (state.activeBoost === 'coin_rain');
 
   const firstCat = state.category === 'all' ? null : state.category;
-  state.questions.push(generateQuestion(state.category, getSubLevel(firstCat), null));
+  state.questions.push(generateUniqueQuestion(state.category, getSubLevel(firstCat), null, state.questions.map(q => q.text)));
 
   showScreen('screen-game');
 
@@ -1504,7 +1504,7 @@ document.getElementById('btn-next').addEventListener('click', () => {
     endGame();
   } else {
     const lastCat = state.questions[state.currentIndex - 1]?.category;
-    state.questions.push(generateQuestion(state.category, getSubLevel(lastCat || state.category), lastCat));
+    state.questions.push(generateUniqueQuestion(state.category, getSubLevel(lastCat || state.category), lastCat, state.questions.map(q => q.text)));
     showQuestion();
   }
 });
@@ -4849,7 +4849,7 @@ window.quickCreateGroup = quickCreateGroup;
 function renderProgressionScreen() {
   showScreen('screen-progression');
 
-  const catKeys = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert'];
+  const catKeys = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert', 'geographie', 'conjugaison'];
   const catIcons = { calcul: '🧮', logique: '⚙️', geometrie: '📐', fractions: '🔢', mesures: '📏', ouvert: '💡', geographie: '🌍', conjugaison: '✏️' };
 
   // Section 1: Mastery bars
@@ -5137,7 +5137,7 @@ function renderSkipButton() {
         endGame();
       } else {
         const lastCat = state.questions[state.currentIndex - 1]?.category;
-        state.questions.push(generateQuestion(state.category, getSubLevel(lastCat || state.category), lastCat));
+        state.questions.push(generateUniqueQuestion(state.category, getSubLevel(lastCat || state.category), lastCat, state.questions.map(q => q.text)));
         showQuestion();
       }
     }

@@ -85,6 +85,9 @@ function getExpeditionsToday() {
   return adv.dailyExpeditions || 0;
 }
 
+/** Daily expedition limit was removed — expeditions are unlimited.
+ *  Kept as the public "remaining" contract (always Infinity); covered by
+ *  tests/test_adventure.py. */
 function getRemainingExpeditions() {
   return Infinity;
 }

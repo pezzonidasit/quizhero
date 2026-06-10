@@ -23,7 +23,7 @@ const QUEST_POOL = {
   ]
 };
 
-const QUEST_CATEGORIES = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert'];
+const QUEST_CATEGORIES = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert', 'geographie', 'conjugaison'];
 
 const QUEST_REWARDS = { easy: 10, medium: 12, hard: 15 };
 
@@ -73,7 +73,7 @@ function getDailyQuests() {
     const quest = { ...template, progress: 0, reward: QUEST_REWARDS[difficulty], done: false };
     if (quest.needsCat) {
       const cat = seededPick(QUEST_CATEGORIES, seed + seedOffset);
-      const catLabels = { calcul: 'Calcul', logique: 'Logique', geometrie: 'Géométrie', fractions: 'Fractions', mesures: 'Mesures', ouvert: 'Problèmes ouverts' };
+      const catLabels = { calcul: 'Calcul', logique: 'Logique', geometrie: 'Géométrie', fractions: 'Fractions', mesures: 'Mesures', ouvert: 'Problèmes ouverts', geographie: 'Géographie', conjugaison: 'Conjugaison' };
       quest.text = quest.text.replace('{cat}', catLabels[cat] || cat);
       quest.category = cat;
     }

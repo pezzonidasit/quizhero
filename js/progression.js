@@ -370,7 +370,10 @@ function getMasteryProgress(cat) {
 
 const MASTERY_BADGE_LEVELS = ['apprenti', 'confirme', 'expert', 'legende'];
 const MASTERY_BADGE_LEVEL_NUMS = { apprenti: 2, confirme: 3, expert: 4, legende: 5 };
-const CAT_KEYS = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert'];
+// All playable categories (matches the category pills, excludes 'revision').
+// Used for per-category mastery on "Toutes" games AND the cross-category
+// "Maître absolu" badge — which now requires geo + conjugaison too.
+const CAT_KEYS = ['calcul', 'logique', 'geometrie', 'fractions', 'mesures', 'ouvert', 'geographie', 'conjugaison'];
 
 function checkMasteryUp(playedCategory) {
   const cats = playedCategory === 'all' ? CAT_KEYS : [playedCategory];
@@ -606,11 +609,6 @@ function checkPetLegendaire() {
 function onBossLost() {
   const hunger = ProfileManager.get('petHunger', 100);
   ProfileManager.set('petHunger', Math.max(0, hunger - 20));
-}
-
-/** @deprecated No longer used — hunger now decays daily, not per game. Kept for reference. */
-function drainPetHunger() {
-  // No-op: per-game drain removed in v7.4.0
 }
 
 function changePet(newType) {
