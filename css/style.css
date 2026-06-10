@@ -794,6 +794,18 @@ h2 {
   align-self: flex-start;
 }
 
+.revanche-badge {
+  display: inline-block;
+  background: var(--accent-violet, #a855f7);
+  color: #fff;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  margin-left: 0.4rem;
+}
+
 .category-badge[data-cat="calcul"] {
   background: rgba(74, 158, 255, 0.18);
   color: var(--cat-calcul);

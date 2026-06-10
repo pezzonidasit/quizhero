@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quizhero-v772';
+const CACHE_NAME = 'quizhero-v773';
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const ASSETS = [
   './js/profiles.js',
   './js/questions.js',
   './js/progression.js',
+  './js/errorBank.js',
   './js/app.js',
   './js/duel.js',
   './js/firebase.js',

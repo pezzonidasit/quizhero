@@ -174,6 +174,8 @@ const Duel = {
       correct = Math.abs(Number(value) - q.answer) < 0.01;
     }
 
+    if (typeof ErrorBank !== 'undefined') ErrorBank.handleAnswer(q, correct);
+
     await db.ref('duels/' + this.code + '/rounds/' + round + '/answers/' + this.role).set({
       value: (q.textAnswer !== undefined || q.acceptedAnswers) ? value : Number(value),
       time: elapsed,

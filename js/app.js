@@ -1,6 +1,6 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '7.6.2';
+const APP_VERSION = '7.6.3';
 
 // ── Theme Helpers ───────────────────────────────────────────────
 function isCatTheme() {
@@ -136,6 +136,20 @@ function getSubLevel(category) {
   return Math.max(1, Math.min(4, catLevel[category] || 2));
 }
 
+/** Construit une question de revanche pour une carte (niveau adaptatif courant). */
+function buildRevancheQuestion(card, seenTexts) {
+  const level = getSubLevel(card.category);
+  let q = generateUniqueQuestion(card.category, level, null, seenTexts);
+  if (card.ficheKey) {
+    for (let i = 0; i < 5 && q.ficheKey !== card.ficheKey; i++) {
+      q = generateUniqueQuestion(card.category, level, null, seenTexts);
+    }
+  }
+  q._revanche = true;
+  q._cardKey = card.key;
+  return q;
+}
+
 // ── Profile-aware Persistence ──────────────────────────────────────
 function loadProfileData() {
   state.records = ProfileManager.get('records', {});
@@ -162,6 +176,7 @@ function saveGameState() {
     consecutiveCorrect: state.consecutiveCorrect,
     consecutiveWrong: state.consecutiveWrong,
     noHintCount: state.noHintCount,
+    revanchesCleared: state.revanchesCleared || 0,
     gameStartTime: state.gameStartTime,
     elapsedBeforeSave: Date.now() - state.gameStartTime,
   });
@@ -180,6 +195,7 @@ function saveGameStateInProgress() {
     consecutiveCorrect: state.consecutiveCorrect,
     consecutiveWrong: state.consecutiveWrong,
     noHintCount: state.noHintCount,
+    revanchesCleared: state.revanchesCleared || 0,
     gameStartTime: state.gameStartTime,
     elapsedBeforeSave: Date.now() - state.gameStartTime,
   });
@@ -468,6 +484,7 @@ function selectProfile(id) {
     state.consecutiveCorrect = savedGame.consecutiveCorrect;
     state.consecutiveWrong = savedGame.consecutiveWrong;
     state.noHintCount = savedGame.noHintCount;
+    state.revanchesCleared = savedGame.revanchesCleared || 0;
     state.gameStartTime = Date.now() - (savedGame.elapsedBeforeSave || 0);
     state.answered = false;
     // Resume: if currentIndex already has a question, show it (mid-question refresh).
@@ -598,6 +615,15 @@ function updateProfileHeader() {
   renderPetZone();
   checkDailyQuestion();
   renderDailyQuests();
+
+  // Spaced repetition: bouton « Révise tes erreurs » + compteur
+  const revBtn = document.getElementById('btn-revision-erreurs');
+  if (revBtn && typeof ErrorBank !== 'undefined') {
+    const n = ErrorBank.getDueCount();
+    revBtn.style.display = n > 0 ? '' : 'none';
+    const cnt = document.getElementById('revision-count');
+    if (cnt) cnt.textContent = n;
+  }
 
   // V4: Admin button only visible for admins (set manually in Firebase)
   const adminBtn = document.getElementById('btn-admin');
@@ -807,6 +833,7 @@ function startGame() {
   state.badgesUnlocked = [];
   state.noHintCount = 0;
   state.streakLostMessage = null;
+  state.revanchesCleared = 0;
   state.timerPaused = false;
   state.timerPausedAt = null;
   state.ficheReturnScreen = 'screen-game';
@@ -845,6 +872,9 @@ function startGame() {
   const firstCat = state.category === 'all' ? null : state.category;
   state.questions.push(generateUniqueQuestion(state.category, getSubLevel(firstCat), null, state.questions.map(q => q.text)));
 
+  // Spaced repetition: cartes dues à injecter dès la 2e question
+  state.revancheQueue = (typeof ErrorBank !== 'undefined') ? ErrorBank.getDueCards().slice(0, EB_MAX_REVANCHE) : [];
+
   showScreen('screen-game');
 
   // Daily quest: try_new_cat
@@ -870,6 +900,30 @@ function startGame() {
     document.getElementById('timer-stat').style.display = 'none';
   }
 
+  showQuestion();
+}
+
+// Spaced repetition: écran dédié « Révise tes erreurs »
+// (nommé startErrorRevisionGame pour éviter la collision avec startRevisionGame,
+//  qui gère les sets de révision Firebase — feature différente)
+function startErrorRevisionGame() {
+  if (typeof ErrorBank === 'undefined') return;
+  const due = ErrorBank.getDueCards().slice(0, EB_MAX_SESSION);
+  if (due.length === 0) return;
+  state.category = 'all';
+  state.adventureMode = false;
+  startGame();                 // réinitialise l'état + affiche screen-game + pousse 1 question normale
+  // Remplace toutes les questions par des revanches
+  state.questions = [];
+  const seen = [];
+  due.forEach(card => {
+    const q = buildRevancheQuestion(card, seen);
+    seen.push(q.text);
+    state.questions.push(q);
+  });
+  state.questionCount = state.questions.length;
+  state.currentIndex = 0;
+  state.revancheQueue = [];
   showQuestion();
 }
 
@@ -1012,6 +1066,7 @@ async function startRevisionGame(setId) {
   state.badgesUnlocked = [];
   state.noHintCount = 0;
   state.streakLostMessage = null;
+  state.revanchesCleared = 0;
   state.gameStartTime = Date.now();
   state.activeBoost = null;
   state.shieldActive = false;
@@ -1054,6 +1109,7 @@ async function startRevisionGame(setId) {
 
 document.getElementById('btn-revisions').addEventListener('click', showRevisionsList);
 document.getElementById('btn-revisions-back').addEventListener('click', () => showScreen('screen-home'));
+document.getElementById('btn-revision-erreurs')?.addEventListener('click', startErrorRevisionGame);
 
 // ── Fiches d'aide ──────────────────────────────────────────────────────
 function loadFichesAndShow(ficheKey) {
@@ -1131,6 +1187,9 @@ function showQuestion() {
   badge.textContent = catInfo ? catInfo.label : q.category;
   badge.setAttribute('data-cat', q.category);
   document.getElementById('question-card').setAttribute('data-cat', q.category);
+
+  const revBadge = document.getElementById('revanche-badge');
+  if (revBadge) revBadge.style.display = q._revanche ? '' : 'none';
 
   document.getElementById('question-text').textContent = q.text;
   const unitEl = document.getElementById('question-unit');
@@ -1355,6 +1414,10 @@ function processAnswer(isCorrect, q) {
   state.categoryStats[q.category].total++;
   if (isCorrect) state.categoryStats[q.category].correct++;
 
+  // Spaced repetition: enregistre l'erreur ou met à jour la carte de revanche
+  ErrorBank.handleAnswer(q, isCorrect);
+  if (q._revanche && isCorrect) state.revanchesCleared = (state.revanchesCleared || 0) + 1;
+
   // V3: Track contract metrics
   if (state.contractGameResult) {
     const cr = state.contractGameResult;
@@ -1504,7 +1567,13 @@ document.getElementById('btn-next').addEventListener('click', () => {
     endGame();
   } else {
     const lastCat = state.questions[state.currentIndex - 1]?.category;
-    state.questions.push(generateUniqueQuestion(state.category, getSubLevel(lastCat || state.category), lastCat, state.questions.map(q => q.text)));
+    const seen = state.questions.map(q => q.text);
+    if (state.revancheQueue && state.revancheQueue.length > 0) {
+      const card = state.revancheQueue.shift();
+      state.questions.push(buildRevancheQuestion(card, seen));
+    } else {
+      state.questions.push(generateUniqueQuestion(state.category, getSubLevel(lastCat || state.category), lastCat, seen));
+    }
     showQuestion();
   }
 });
@@ -1561,6 +1630,12 @@ const BADGE_DEFS = [
   { id: 'on_fire', name: 'En feu !', icon: '🔥', category: 'perf', check: () => state.bestStreakThisGame >= 10, hint: '10 bonnes réponses d\'affilée' },
   { id: 'inferno', name: 'Inferno', icon: '🌋', category: 'perf', check: () => state.bestStreakThisGame >= 20, hint: '20 bonnes réponses d\'affilée' },
   { id: 'no_hints', name: 'Sans aide', icon: '🧠', category: 'perf', check: () => state.noHintCount >= 5, hint: '5 réponses sans indice en 1 partie' },
+  { id: 'revanche_10', name: 'Mémoire d\'éléphant', icon: '🐘', category: 'perf',
+    check: () => (typeof ErrorBank !== 'undefined') && ErrorBank.getCleared() >= 10,
+    progress: () => ({ cur: Math.min(ErrorBank.getCleared(), 10), max: 10 }) },
+  { id: 'revanche_50', name: 'Maître de la révision', icon: '🎓', category: 'perf',
+    check: () => (typeof ErrorBank !== 'undefined') && ErrorBank.getCleared() >= 50,
+    progress: () => ({ cur: Math.min(ErrorBank.getCleared(), 50), max: 50 }) },
   { id: 'no_hints_10', name: 'Cerveau d\'acier', icon: '🦾', category: 'perf', check: () => state.noHintCount >= 10, hint: '10 réponses sans indice en 1 partie' },
   { id: 'speedster', name: 'Rapide', icon: '⚡', category: 'perf', check: () => state.timerEnabled && (Date.now() - state.gameStartTime) < 120000, hint: 'Finis en moins de 2 min (chrono)' },
   { id: 'flash', name: 'Flash', icon: '💨', category: 'perf', check: () => state.timerEnabled && (Date.now() - state.gameStartTime) < 60000, hint: 'Finis en moins de 1 min (chrono)' },
@@ -2039,6 +2114,13 @@ function endGame() {
   const { rewards, avgLevel, oldXP } = computeRewards();
   applyBoostRewards(rewards, avgLevel);
   applyPetEffects(rewards);
+  // Spaced repetition: +5 🪙 par revanche réussie (créditée ET affichée via coins-earned)
+  if (state.revanchesCleared > 0) {
+    const revBonus = state.revanchesCleared * 5;
+    rewards.coins += revBonus;
+    ProfileManager.set('coins', ProfileManager.get('coins', 0) + revBonus);
+  }
+  state.revanchesCleared = 0; // reset après crédit : évite tout double-crédit via un autre point d'entrée (ex. sets de révision Firebase)
   const { gamesPlayed, finalXP, chestWaiting } = updateGameStreak();
 
   // Adventure mode: complete expedition
@@ -2459,6 +2541,7 @@ function submitAdvBossAnswer() {
   const threshold = getCriticalThreshold(_adventureZoneId);
 
   const correct = checkAdvAnswer(raw, q);
+  ErrorBank.handleAnswer(q, correct);
 
   if (correct) {
     const isCritical = elapsed <= threshold;
@@ -3515,6 +3598,7 @@ function handleBossAnswer(timedOut) {
   } else {
     isCorrect = checkNumeric(userAnswer, q.answer);
   }
+  ErrorBank.handleAnswer(q, isCorrect);
   const isCritical = isCorrect && elapsed < (bs.timerDuration / 2000);
   const emoji = document.getElementById('boss-fight-emoji');
   if (isCorrect) {
@@ -5213,6 +5297,7 @@ function openDailyQuestion(data) {
     newBtn.disabled = true;
     try {
       const correct = await submitDailyAnswer(data.date, isTextQuestion ? val : Number(val), elapsed);
+      ErrorBank.handleAnswer(q, correct);
       document.getElementById('daily-answer-section').style.display = 'none';
       const secs = (elapsed / 1000).toFixed(1);
       let html = correct
