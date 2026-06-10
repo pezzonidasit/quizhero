@@ -30,6 +30,20 @@ function shuffleArray(arr) {
   return arr;
 }
 
+/**
+ * Check a numeric answer typed by the player against the expected value.
+ * Accepts both '.' and ',' as decimal separators (French keyboards on mobile
+ * produce a comma), and compares with a small tolerance so floating-point
+ * representation never marks a correct answer wrong.
+ * This is the single source of truth used by every quiz mode (main quiz,
+ * boss fights, adventure boss) so they all behave identically.
+ */
+function checkNumeric(raw, expected) {
+  if (raw === null || raw === undefined) return false;
+  const num = parseFloat(String(raw).replace(',', '.'));
+  return !isNaN(num) && Math.abs(num - expected) < 1e-6;
+}
+
 // ── Generators ──────────────────────────────────────────────────────
 
 function generateCalcul(subLevel) {
@@ -1915,6 +1929,221 @@ const RIDDLE_BANK = [
     hint: 'Calcule l\'aire de chaque rectangle séparément.',
     explanation: 'Rectangle horizontal : 6 × 2 = 12 cm². Rectangle vertical : 2 × 4 = 8 cm². Total : 12 + 8 = 20 cm².',
     ficheKey: 'aire',
+    level: 2
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // GÉOMÉTRIE — PRD 2026-05-31 (20 nouvelles)
+  // aire (5) · périmètre (5) · angles (4) · symétrie (3) · solides 3D (3)
+  // ═══════════════════════════════════════════════════════════════════
+
+  // --- Aire (5) ---
+  {
+    category: 'geometrie',
+    text: 'Un carré a un côté de 7 cm. Quelle est son aire ?',
+    unit: 'cm²',
+    answer: 49,
+    hint: 'L\'aire d\'un carré, c\'est côté × côté.',
+    explanation: 'Imagine le carré rempli de petits carreaux de 1 cm : 7 rangées de 7 carreaux. 7 × 7 = 49 cm².',
+    ficheKey: 'aire',
+    level: 1
+  },
+  {
+    category: 'geometrie',
+    text: 'Un rectangle mesure 9 cm de long et 4 cm de large. Quelle est son aire ?',
+    unit: 'cm²',
+    answer: 36,
+    hint: 'Aire du rectangle = longueur × largeur.',
+    explanation: 'Comme une tablette de chocolat de 9 carrés sur 4 rangées : 9 × 4 = 36 cm².',
+    ficheKey: 'aire',
+    level: 1
+  },
+  {
+    category: 'geometrie',
+    text: 'Un potager rectangulaire mesure 6 m de long et 5 m de large. Combien de m² peut-on semer ?',
+    unit: 'm²',
+    answer: 30,
+    hint: 'On cherche l\'aire : longueur × largeur.',
+    explanation: 'Le potager se remplit comme un quadrillage de 6 par 5 : 6 × 5 = 30 m².',
+    ficheKey: 'aire',
+    level: 1
+  },
+  {
+    category: 'geometrie',
+    text: 'Une affiche carrée mesure 10 cm de côté. Quelle est son aire ?',
+    unit: 'cm²',
+    answer: 100,
+    hint: 'Aire du carré = côté × côté.',
+    explanation: 'Comme une planche de timbres rangés en 10 lignes de 10 : 10 × 10 = 100 cm².',
+    ficheKey: 'aire',
+    level: 1
+  },
+  {
+    category: 'geometrie',
+    text: 'Un carré mesure 5 cm de côté et un rectangle mesure 6 cm sur 4 cm. Combien de cm² le carré a-t-il de plus que le rectangle ?',
+    unit: 'cm²',
+    answer: 1,
+    hint: 'Calcule les deux aires, puis compare.',
+    explanation: 'Carré : 5 × 5 = 25 cm². Rectangle : 6 × 4 = 24 cm². Le carré a 25 − 24 = 1 cm² de plus.',
+    ficheKey: 'aire',
+    level: 2
+  },
+
+  // --- Périmètre (5) ---
+  {
+    category: 'geometrie',
+    text: 'Un carré a un côté de 12 cm. Quel est son périmètre ?',
+    unit: 'cm',
+    answer: 48,
+    hint: 'Le périmètre, c\'est le tour : 4 côtés égaux.',
+    explanation: 'Faire le tour du carré, c\'est longer 4 côtés identiques : 4 × 12 = 48 cm.',
+    ficheKey: 'perimetre',
+    level: 1
+  },
+  {
+    category: 'geometrie',
+    text: 'Un jardin rectangulaire mesure 15 m de long et 7 m de large. Quel est son périmètre ?',
+    unit: 'm',
+    answer: 44,
+    hint: 'Périmètre = 2 × (longueur + largeur).',
+    explanation: 'Le tour du jardin longe 2 longueurs et 2 largeurs : 2 × (15 + 7) = 2 × 22 = 44 m.',
+    ficheKey: 'perimetre',
+    level: 2
+  },
+  {
+    category: 'geometrie',
+    text: 'On veut encadrer une photo rectangulaire de 20 cm sur 15 cm. Quelle longueur de baguette faut-il pour faire tout le tour ?',
+    unit: 'cm',
+    answer: 70,
+    hint: 'La baguette suit le périmètre de la photo.',
+    explanation: 'Le cadre fait le tour de la photo : 2 × (20 + 15) = 2 × 35 = 70 cm de baguette.',
+    ficheKey: 'perimetre',
+    level: 2
+  },
+  {
+    category: 'geometrie',
+    text: 'Un panneau en forme de pentagone régulier a des côtés de 6 cm. Quel est son périmètre ?',
+    unit: 'cm',
+    answer: 30,
+    hint: 'Un pentagone régulier a 5 côtés égaux.',
+    explanation: 'Une maison dessinée (un carré surmonté d\'un toit) a 5 côtés, comme le pentagone régulier : 5 × 6 = 30 cm.',
+    ficheKey: 'perimetre',
+    level: 1
+  },
+  {
+    category: 'geometrie',
+    text: 'Une alvéole de ruche a la forme d\'un hexagone régulier de 4 cm de côté. Quel est son périmètre ?',
+    unit: 'cm',
+    answer: 24,
+    hint: 'Un hexagone régulier a 6 côtés égaux.',
+    explanation: 'L\'alvéole d\'abeille a 6 côtés tous pareils : 6 × 4 = 24 cm pour faire le tour.',
+    ficheKey: 'perimetre',
+    level: 2
+  },
+
+  // --- Angles (4) ---
+  {
+    category: 'geometrie',
+    text: 'Combien de degrés mesure un angle droit ?',
+    unit: '°',
+    answer: 90,
+    hint: 'C\'est l\'angle du coin d\'une feuille de papier.',
+    explanation: 'Le coin d\'une feuille ou d\'un livre forme un angle droit : il mesure 90°.',
+    ficheKey: 'angles',
+    level: 1
+  },
+  {
+    category: 'geometrie',
+    text: 'Quand l\'aiguille d\'une horloge fait un tour complet, de combien de degrés a-t-elle tourné ?',
+    unit: '°',
+    answer: 360,
+    hint: 'Un tour complet ramène l\'aiguille à son point de départ.',
+    explanation: 'Faire un tour entier, comme l\'aiguille qui revient à sa place, c\'est tourner de 360°.',
+    ficheKey: 'angles',
+    level: 1
+  },
+  {
+    category: 'geometrie',
+    text: 'Tu regardes devant toi, puis tu fais demi-tour pour regarder derrière. De combien de degrés as-tu tourné ?',
+    unit: '°',
+    answer: 180,
+    hint: 'Un demi-tour, c\'est la moitié d\'un tour complet.',
+    explanation: 'Un tour complet fait 360°. Le demi-tour, c\'est la moitié : 360 ÷ 2 = 180°.',
+    ficheKey: 'angles',
+    level: 1
+  },
+  {
+    category: 'geometrie',
+    text: 'Une pizza est coupée en 6 parts égales. Quel angle fait chaque part au centre de la pizza ?',
+    unit: '°',
+    answer: 60,
+    hint: 'Le tour complet du centre fait 360°, partagé en 6.',
+    explanation: 'Le centre de la pizza fait un tour complet de 360°, partagé en 6 parts égales : 360 ÷ 6 = 60°.',
+    ficheKey: 'angles',
+    level: 2
+  },
+
+  // --- Symétrie (3) ---
+  {
+    category: 'geometrie',
+    text: 'Combien d\'axes de symétrie possède un rectangle qui n\'est pas un carré ?',
+    unit: '',
+    answer: 2,
+    hint: 'Plie une feuille rectangulaire pour que les bords se superposent : de combien de façons ?',
+    explanation: 'On peut plier le rectangle en deux dans le sens de la hauteur ou de la largeur : 2 axes de symétrie.',
+    ficheKey: 'symetrie',
+    level: 1
+  },
+  {
+    category: 'geometrie',
+    text: 'Combien d\'axes de symétrie possède la lettre majuscule A ?',
+    unit: '',
+    answer: 1,
+    hint: 'Imagine un miroir posé verticalement au milieu de la lettre.',
+    explanation: 'Un miroir vertical au milieu du A renvoie exactement la même moitié : il a 1 axe de symétrie.',
+    ficheKey: 'symetrie',
+    level: 1
+  },
+  {
+    category: 'geometrie',
+    text: 'Un flocon de neige a la forme d\'un hexagone régulier. Combien d\'axes de symétrie possède-t-il ?',
+    unit: '',
+    answer: 6,
+    hint: 'Un hexagone régulier a autant d\'axes de symétrie que de côtés.',
+    explanation: 'Le flocon hexagonal se replie exactement sur lui-même de 6 façons : il a 6 axes de symétrie.',
+    ficheKey: 'symetrie',
+    level: 2
+  },
+
+  // --- Solides / formes 3D (3) ---
+  {
+    category: 'geometrie',
+    text: 'Combien de faces a un pavé droit, comme une boîte à chaussures ?',
+    unit: '',
+    answer: 6,
+    hint: 'Compte : dessus, dessous, devant, derrière, et les 2 côtés.',
+    explanation: 'Comme une boîte à chaussures : dessus, dessous, devant, derrière, gauche, droite = 6 faces.',
+    ficheKey: 'solides',
+    level: 1
+  },
+  {
+    category: 'geometrie',
+    text: 'Combien de sommets a une pyramide à base carrée, comme une pyramide d\'Égypte ?',
+    unit: '',
+    answer: 5,
+    hint: 'Compte les 4 coins de la base, plus la pointe du haut.',
+    explanation: 'La base carrée a 4 coins, et il y a 1 pointe tout en haut : 4 + 1 = 5 sommets.',
+    ficheKey: 'solides',
+    level: 2
+  },
+  {
+    category: 'geometrie',
+    text: 'Combien de sommets a une pyramide à base triangulaire ?',
+    unit: '',
+    answer: 4,
+    hint: 'Compte les 3 coins de la base triangulaire, plus la pointe du haut.',
+    explanation: 'La base triangulaire a 3 coins, et il y a 1 pointe au sommet : 3 + 1 = 4 sommets.',
+    ficheKey: 'solides',
     level: 2
   },
 

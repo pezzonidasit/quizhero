@@ -1,6 +1,6 @@
 /* QuizHero V2 — App Logic (profile-aware) */
 
-const APP_VERSION = '7.6.0';
+const APP_VERSION = '7.6.1';
 
 // ── Theme Helpers ───────────────────────────────────────────────
 function isCatTheme() {
@@ -42,10 +42,12 @@ function migrateThemeData() {
 }
 
 // ── HTML Sanitization ────────────────────────────────────────────
-const _escapeDiv = document.createElement('div');
+// Escapes the 5 HTML-significant chars. Unlike a textContent round-trip,
+// this also escapes both quote characters, so the result is safe to inject
+// in text content AND inside single- or double-quoted attribute values.
+const _HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 function escapeHtml(str) {
-  _escapeDiv.textContent = str || '';
-  return _escapeDiv.innerHTML;
+  return String(str == null ? '' : str).replace(/[&<>"']/g, c => _HTML_ESCAPES[c]);
 }
 
 // V4: No PIN gate — app opens directly
@@ -1434,8 +1436,7 @@ function validateAnswer() {
     const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
     isCorrect = norm(userAnswer) === norm(q.textAnswer);
   } else {
-    const numAnswer = parseFloat(userAnswer);
-    isCorrect = numAnswer === q.answer;
+    isCorrect = checkNumeric(userAnswer, q.answer);
   }
 
   processAnswer(isCorrect, q);
@@ -2497,8 +2498,7 @@ function checkAdvAnswer(raw, question) {
   if (question.textAnswer) {
     return raw.toLowerCase().trim() === question.textAnswer.toLowerCase().trim();
   }
-  const num = parseFloat(raw.replace(',', '.'));
-  return !isNaN(num) && Math.abs(num - question.answer) < 0.01;
+  return checkNumeric(raw, question.answer);
 }
 
 function updateAdvBossHpBar(hp, maxHp) {
@@ -3513,7 +3513,7 @@ function handleBossAnswer(timedOut) {
     const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     isCorrect = norm(userAnswer) === norm(q.textAnswer);
   } else {
-    isCorrect = parseFloat(userAnswer) === q.answer;
+    isCorrect = checkNumeric(userAnswer, q.answer);
   }
   const isCritical = isCorrect && elapsed < (bs.timerDuration / 2000);
   const emoji = document.getElementById('boss-fight-emoji');
@@ -3829,7 +3829,7 @@ async function renderLeaderboard() {
     tabsHtml += '<button class="lb-tab ' + (currentLbTab === 'global' ? 'active' : '') + '" data-tab="global">🌍 Tous</button>';
   }
   lbGroups.forEach(g => {
-    tabsHtml += '<button class="lb-tab ' + (currentLbTab === g.code ? 'active' : '') + '" data-tab="' + g.code + '">' + g.name + '</button>';
+    tabsHtml += '<button class="lb-tab ' + (currentLbTab === g.code ? 'active' : '') + '" data-tab="' + g.code + '">' + escapeHtml(g.name) + '</button>';
   });
   // Default to first group if no tab selected or only 1 group
   if (!currentLbTab || currentLbTab === 'global') {
@@ -3900,7 +3900,7 @@ async function renderLeaderboard() {
     return '<div class="lb-entry ' + (isMe ? 'me' : '') + ' ' + (isChampion ? 'champion' : '') + '">' +
       '<span class="lb-rank">' + rankDisplay + '</span>' +
       '<span class="lb-rank-icon">' + (rankIcons[e.rank] || '🥉') + '</span>' +
-      '<div class="lb-info"><div class="lb-name">' + (e.name || 'Joueur') + '</div>' +
+      '<div class="lb-info"><div class="lb-name">' + escapeHtml(e.name || 'Joueur') + '</div>' +
       titleDisplay +
       '<div class="lb-stats">Streak: ' + (e.bestStreak || 0) + ' | Boss: ' + (e.bossesDefeated || 0) + '</div></div>' +
       '<span class="lb-xp">' + (e.xp || 0) + ' XP</span>' +
@@ -3959,7 +3959,7 @@ async function renderGroupsScreen(backTo) {
       return '<div class="group-card" data-code="' + g.code + '">' +
         '<span class="group-icon">👥</span>' +
         '<div class="group-info">' +
-        '<div class="group-name">' + g.name + '</div>' +
+        '<div class="group-name">' + escapeHtml(g.name) + '</div>' +
         '<div class="group-code">Code : ' + g.code + ' · ' + g.memberCount + ' membre' + (g.memberCount > 1 ? 's' : '') + '</div>' +
         '</div></div>';
     }).join('');
@@ -4050,7 +4050,7 @@ async function renderGroupDetail(code) {
           return '<div class="lb-entry ' + (isMe ? 'me' : '') + ' ' + (i === 0 ? 'champion' : '') + '">' +
             '<span class="lb-rank">' + rankDisplay + '</span>' +
             '<span class="lb-rank-icon">' + (rankIcons[e.rank] || '🥉') + '</span>' +
-            '<div class="lb-info"><div class="lb-name">' + (e.name || 'Joueur') + '</div>' +
+            '<div class="lb-info"><div class="lb-name">' + escapeHtml(e.name || 'Joueur') + '</div>' +
             gTitleDisplay + '</div>' +
             '<span class="lb-xp">' + (e.xp || 0) + ' XP</span>' +
             '</div>';
@@ -4239,10 +4239,10 @@ async function showDashboard(code) {
       } else {
         rewards.forEach(r => {
           html += '<div class="dash-member" style="padding:0.5rem 0.75rem">' +
-            '<span style="font-size:1.2rem;margin-right:0.5rem">' + (r.icon || '🎁') + '</span>' +
-            '<strong>' + r.name + '</strong> — ' + r.price + ' 🪙' +
-            '<br><span style="font-size:0.75rem;color:var(--text-secondary)">' + (r.description || '') + '</span>' +
-            '<button class="btn-danger" style="font-size:0.65rem;padding:0.15rem 0.4rem;margin-left:0.5rem" onclick="removeRewardAction(\'' + code + '\',\'' + r.id + '\',\'' + r.name.replace(/'/g, '') + '\')">×</button>' +
+            '<span style="font-size:1.2rem;margin-right:0.5rem">' + escapeHtml(r.icon || '🎁') + '</span>' +
+            '<strong>' + escapeHtml(r.name) + '</strong> — ' + r.price + ' 🪙' +
+            '<br><span style="font-size:0.75rem;color:var(--text-secondary)">' + escapeHtml(r.description || '') + '</span>' +
+            '<button class="btn-danger" style="font-size:0.65rem;padding:0.15rem 0.4rem;margin-left:0.5rem" onclick="removeRewardAction(\'' + code + '\',\'' + r.id + '\',\'' + escapeHtml(r.name) + '\')">×</button>' +
             '</div>';
         });
       }
@@ -4284,7 +4284,7 @@ async function showCreateRiddleScreen() {
   try {
     const groups = await getMyGroups();
     groups.forEach(g => {
-      select.innerHTML += '<option value="' + g.code + '">👥 ' + g.name + '</option>';
+      select.innerHTML += '<option value="' + escapeHtml(g.code) + '">👥 ' + escapeHtml(g.name) + '</option>';
     });
   } catch(e) {}
 
@@ -4573,7 +4573,7 @@ async function renderAdminGroups(el) {
     const bannedCount = g.banned ? Object.keys(g.banned).length : 0;
 
     html += '<div class="dash-member">';
-    html += '<div class="dash-member-name">👥 ' + (g.name || 'Sans nom') + '</div>';
+    html += '<div class="dash-member-name">👥 ' + escapeHtml(g.name || 'Sans nom') + '</div>';
     html += '<div style="font-size:0.8rem;color:var(--text-secondary)">';
     html += 'Code : <span style="font-family:monospace;color:var(--accent-yellow);letter-spacing:2px">' + g.code + '</span>';
     html += ' — ' + memberCount + ' membre' + (memberCount > 1 ? 's' : '');
@@ -4586,13 +4586,13 @@ async function renderAdminGroups(el) {
       for (const uid of Object.keys(g.members)) {
         const snap = await db.ref('players/' + uid + '/name').once('value');
         const name = snap.val() || 'Joueur';
-        html += '<span style="font-size:0.7rem;background:var(--bg-card-hover);padding:0.2rem 0.5rem;border-radius:6px">' + name + '</span>';
+        html += '<span style="font-size:0.7rem;background:var(--bg-card-hover);padding:0.2rem 0.5rem;border-radius:6px">' + escapeHtml(name) + '</span>';
       }
       html += '</div>';
     }
 
     // Delete group button
-    html += '<button class="btn-danger" style="font-size:0.7rem;padding:0.2rem 0.6rem;margin-top:0.5rem" onclick="adminDeleteGroupAction(\'' + g.code + '\',\'' + (g.name || '').replace(/'/g, '') + '\')">Supprimer ce groupe</button>';
+    html += '<button class="btn-danger" style="font-size:0.7rem;padding:0.2rem 0.6rem;margin-top:0.5rem" onclick="adminDeleteGroupAction(\'' + g.code + '\',\'' + escapeHtml(g.name || '') + '\')">Supprimer ce groupe</button>';
 
     html += '</div>';
   }
@@ -4615,8 +4615,8 @@ async function renderAdminRiddles(el) {
     const approval = totalVotes > 0 ? Math.round(r.upvotes / totalVotes * 100) : 0;
 
     html += '<div class="dash-member">';
-    html += '<div class="dash-member-name">📝 ' + (r.creatorName || 'Anonyme') + ' <span style="font-size:0.7rem;color:var(--text-secondary)">' + (r.category || '') + '</span></div>';
-    html += '<p style="font-size:0.85rem;margin:0.3rem 0">"' + (r.text || '').substring(0, 80) + (r.text && r.text.length > 80 ? '...' : '') + '"</p>';
+    html += '<div class="dash-member-name">📝 ' + escapeHtml(r.creatorName || 'Anonyme') + ' <span style="font-size:0.7rem;color:var(--text-secondary)">' + escapeHtml(r.category || '') + '</span></div>';
+    html += '<p style="font-size:0.85rem;margin:0.3rem 0">"' + escapeHtml((r.text || '').substring(0, 80)) + (r.text && r.text.length > 80 ? '...' : '') + '"</p>';
     html += '<div style="font-size:0.75rem;color:var(--text-secondary)">Réponse : ' + r.answer + ' | ' + (r.plays || 0) + ' plays | ' + approval + '% 👍</div>';
     html += '<button class="btn-danger" style="font-size:0.7rem;padding:0.2rem 0.5rem;margin-top:0.3rem" onclick="adminDeleteRiddleAction(\'' + r.id + '\')">Supprimer</button>';
     html += '</div>';
@@ -4665,7 +4665,7 @@ async function renderAdminFeedback(el) {
     const name = escapeHtml(fb.profileName || 'Anonyme');
     const text = escapeHtml(fb.text);
     const screenshotHtml = fb.screenshot
-      ? '<img src="' + fb.screenshot + '" class="admin-fb-thumb" onclick="var lb=document.createElement(\'div\');lb.className=\'admin-fb-lightbox\';lb.innerHTML=\'<img src=&quot;\'+this.src+\'&quot;>\';lb.onclick=function(){lb.remove()};document.body.appendChild(lb)" alt="screenshot">'
+      ? '<img src="' + escapeHtml(fb.screenshot) + '" class="admin-fb-thumb" onclick="var lb=document.createElement(\'div\');lb.className=\'admin-fb-lightbox\';lb.innerHTML=\'<img src=&quot;\'+this.src+\'&quot;>\';lb.onclick=function(){lb.remove()};document.body.appendChild(lb)" alt="screenshot">'
       : '';
     const replyHtml = fb.adminReply
       ? '<div class="admin-fb-reply-sent">✉️ ' + escapeHtml(fb.adminReply) + '</div>'
@@ -5187,9 +5187,9 @@ function openDailyQuestion(data) {
   const q = data.question;
   document.getElementById('daily-question-card').innerHTML =
     '<span class="category-badge" style="background:' + (CATEGORIES[q.category]?.color || '#888') + '">' +
-    (CATEGORIES[q.category]?.label || q.category) + '</span>' +
-    '<p class="question-text">' + q.text + '</p>' +
-    (q.unit ? '<p class="question-unit">' + q.unit + '</p>' : '');
+    escapeHtml(CATEGORIES[q.category]?.label || q.category) + '</span>' +
+    '<p class="question-text">' + escapeHtml(q.text) + '</p>' +
+    (q.unit ? '<p class="question-unit">' + escapeHtml(q.unit) + '</p>' : '');
 
   document.getElementById('daily-answer-section').style.display = '';
   document.getElementById('daily-result').style.display = 'none';
@@ -5222,8 +5222,8 @@ function openDailyQuestion(data) {
           '<div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary)">Classement disponible demain</div>'
         : '<div style="text-align:center"><div style="font-size:2rem;margin-bottom:0.5rem">❌</div>' +
           '<div style="font-weight:700;font-size:1.2rem;color:#f44336">Mauvaise réponse</div>' +
-          '<div style="margin-top:0.5rem;color:var(--text-secondary)">Réponse : ' + (q.textAnswer !== undefined ? q.textAnswer : q.answer) + '</div>';
-      if (q.explanation) html += '<div style="margin-top:1rem;font-size:0.85rem;color:var(--text-secondary)">' + q.explanation + '</div>';
+          '<div style="margin-top:0.5rem;color:var(--text-secondary)">Réponse : ' + escapeHtml(q.textAnswer !== undefined ? q.textAnswer : q.answer) + '</div>';
+      if (q.explanation) html += '<div style="margin-top:1rem;font-size:0.85rem;color:var(--text-secondary)">' + escapeHtml(q.explanation) + '</div>';
       html += '</div>';
       document.getElementById('daily-result').innerHTML = html;
       document.getElementById('daily-result').style.display = '';
