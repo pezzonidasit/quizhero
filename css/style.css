@@ -1970,6 +1970,14 @@ h2 {
     font-size: 1.1rem;
   }
 
+  /* Mobile étroit : empiler input + Valider (sinon le bouton déborde à droite). */
+  .answer-section {
+    flex-direction: column;
+  }
+  .answer-section .btn-primary {
+    width: 100%;
+  }
+
   .pill {
     padding: 6px 12px;
     font-size: 0.8rem;
