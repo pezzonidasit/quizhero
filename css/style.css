@@ -4852,7 +4852,7 @@ input.answer-input[type="number"], #answer-input, #boss-answer-input,
   border-radius: 18px;
 }
 .question-card[data-cat] { border-left: 1px solid var(--line); }
-.question-text { font-family: var(--font-head); font-weight: 600; color: #fff; }
+.question-text { font-family: var(--font-head); font-weight: 600; color: var(--text-primary); }
 
 /* Settings summary chip */
 .settings-summary { border-radius: 12px; }
@@ -4931,9 +4931,12 @@ input.answer-input[type="number"], #answer-input, #boss-answer-input,
 
 /* --- Boss arena accents (pink) --- */
 .boss-zone, .boss-zone-top, .adventure-boss-arena { color: var(--accent-red); }
-.boss-fight-name, .adventure-boss-name { font-family: var(--font-head); font-weight: 700; color: #fff; }
+/* .boss-fight-name reste blanc : posé sur boss-zone au fond sombre dynamique (app.js). */
+.boss-fight-name { font-family: var(--font-head); font-weight: 700; color: #fff; }
+/* .adventure-boss-name : arène sur var(--bg-dark) → theme-aware (sinon invisible sur palettes claires). */
+.adventure-boss-name { font-family: var(--font-head); font-weight: 700; color: var(--text-primary); }
 .boss-phase-label { color: var(--accent-red); letter-spacing: 0.1em; }
-.boss-question-text { font-family: var(--font-head); color: #fff; }
+.boss-question-text { font-family: var(--font-head); color: var(--text-primary); }
 
 /* --- Overlays --- */
 .overlay { background: rgba(5, 6, 9, 0.72); backdrop-filter: blur(6px); }
