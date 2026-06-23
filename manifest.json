@@ -4,8 +4,8 @@
   "description": "QuizHero — jeu de quiz gamifié pour enfants",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#1a1a2e",
+  "background_color": "#0d0e12",
+  "theme_color": "#0d0e12",
   "orientation": "portrait",
   "icons": [
     {
