@@ -11,22 +11,22 @@ const PALETTES = {
   // === FREE PALETTES ===
   nuit: {
     id: 'nuit',
-    name: 'Nuit étoilée',
+    name: 'Neon HUD',
     price: 0,
     rarity: 'common',
-    preview: '🌙',
+    preview: '🎮',
     vars: {
-      '--bg-dark': '#1a1a2e',
-      '--bg-card': '#25253e',
-      '--bg-card-hover': '#2d2d4e',
-      '--text-primary': '#e8e8f0',
-      '--text-secondary': '#a0a0b8',
-      '--accent-blue': '#4a9eff',
-      '--accent-green': '#4ecdc4',
-      '--accent-orange': '#ff8c42',
-      '--accent-violet': '#a855f7',
-      '--accent-red': '#ff6b6b',
-      '--accent-yellow': '#ffd93d'
+      '--bg-dark': '#0d0e12',
+      '--bg-card': '#15171e',
+      '--bg-card-hover': '#1d2029',
+      '--text-primary': '#E7EAF0',
+      '--text-secondary': '#9aa1b0',
+      '--accent-blue': '#34E7E4',
+      '--accent-green': '#C2FF4A',
+      '--accent-orange': '#FFB23E',
+      '--accent-violet': '#7C5CFF',
+      '--accent-red': '#FF4D9D',
+      '--accent-yellow': '#FFB23E'
     }
   },
   ocean: {

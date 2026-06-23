@@ -171,7 +171,7 @@ const Duel = {
       const accepted = q.acceptedAnswers || (q.textAnswer ? [q.textAnswer] : []);
       correct = accepted.length > 0 ? accepted.some(a => norm(value) === norm(a)) : norm(value) === norm(String(q.answer));
     } else {
-      correct = Math.abs(Number(value) - q.answer) < 0.01;
+      correct = checkNumeric(value, q.answer);
     }
 
     if (typeof ErrorBank !== 'undefined') ErrorBank.handleAnswer(q, correct);
@@ -238,7 +238,7 @@ const Duel = {
       const input = document.getElementById('duel-answer-input');
       const TEXT_CATEGORIES = ['conjugaison', 'geographie'];
       const isTextQ = q.textAnswer !== undefined || q.acceptedAnswers || TEXT_CATEGORIES.includes(q.category);
-      input.type = isTextQ ? 'text' : 'number';
+      input.type = 'text';
       input.inputMode = isTextQ ? 'text' : 'decimal';
       input.value = '';
       setTimeout(() => input.focus(), 100);

@@ -333,6 +333,132 @@ const TITLE_NAMES = {
   ascendant: 'Ascendant 👑',
 };
 
+// ─── Boss Titles Catalogue (équipables) ─────────────────────────────
+// Les titres de boss étaient attribués dans 3 stockages séparés mais jamais
+// rendus comme catalogue unifié (GD #7 : valeur dormante). Source de vérité :
+//   • arène   → BOSS_POOL (questions.js) + TITLE_NAMES, stockés dans `bossTitles`
+//   • compagnon → dresseur_legendaire / ascendant, stockés dans `unlockedTitles`
+//   • aventure → ADVENTURE_ZONES[*].bossTitle (adventure.js), stockés dans `titles`
+// On ne duplique aucune définition : les noms/conditions sont DÉRIVÉS de ces sources.
+
+const PET_TITLE_CONDITIONS = {
+  dresseur_legendaire: 'Faire évoluer ton compagnon au stade Majestueux',
+  ascendant: 'Faire évoluer ton compagnon au stade Légendaire',
+};
+
+/**
+ * Construit le catalogue complet des titres équipables. Fonction PURE : toutes
+ * les sources externes sont injectées (testable sans navigateur ni storage).
+ * @param {Array}  bossPool       BOSS_POOL (arène) — entrées avec un TITLE_NAMES match
+ * @param {Object} adventureZones ADVENTURE_ZONES { zone: { name, bossName, bossTitle } }
+ * @param {Object} titleNames     TITLE_NAMES (id → nom affiché)
+ * @returns {Array<{id,name,condition,source,zone?}>}
+ */
+function buildTitleCatalog(bossPool, adventureZones, titleNames) {
+  const names = titleNames || {};
+  const cat = [];
+
+  // Titres d'arène : un titre par boss vaincu (cf. endBossFight → bossTitles).
+  (bossPool || []).forEach(b => {
+    const id = 'boss_' + b.id;
+    if (names[id]) {
+      cat.push({ id, name: names[id], condition: 'Vaincre ' + b.name + " dans l'Arène", source: 'arena' });
+    }
+  });
+
+  // Titres de compagnon.
+  ['dresseur_legendaire', 'ascendant'].forEach(id => {
+    if (names[id]) {
+      cat.push({ id, name: names[id], condition: PET_TITLE_CONDITIONS[id] || '', source: 'pet' });
+    }
+  });
+
+  // Titres de zone d'aventure : id = adv_<zone>, nom = bossTitle de la zone.
+  Object.entries(adventureZones || {}).forEach(([zone, def]) => {
+    if (def && def.bossTitle) {
+      cat.push({
+        id: 'adv_' + zone,
+        name: def.bossTitle,
+        condition: 'Vaincre ' + def.bossName + ' (' + def.name + ')',
+        source: 'adventure',
+        zone,
+      });
+    }
+  });
+
+  return cat;
+}
+
+/**
+ * Agrège les 3 clés de stockage fragmentées en un ensemble d'ids débloqués.
+ * Fonction PURE : l'état stocké est injecté.
+ * @param {Array}  catalog buildTitleCatalog(...)
+ * @param {Object} stored  { bossTitles:[ids], unlockedTitles:[ids], titles:[strings] }
+ * @returns {Set<string>} ids du catalogue réellement débloqués (aucun fantôme)
+ */
+function resolveUnlockedTitleIds(catalog, stored) {
+  const s = stored || {};
+  const bossTitles = s.bossTitles || [];        // ids d'arène : boss_golem…
+  const unlockedTitles = s.unlockedTitles || []; // ids compagnon : ascendant…
+  const advNames = s.titles || [];               // aventure : strings bossTitle bruts
+  const owned = new Set();
+  (catalog || []).forEach(t => {
+    if (t.source === 'arena' && bossTitles.includes(t.id)) owned.add(t.id);
+    else if (t.source === 'pet' && unlockedTitles.includes(t.id)) owned.add(t.id);
+    else if (t.source === 'adventure' && advNames.includes(t.name)) owned.add(t.id);
+  });
+  return owned;
+}
+
+// ─── Wrappers liés à ProfileManager (testés via Playwright) ──────────
+
+/** Catalogue complet, branché sur les vraies sources globales. */
+function getTitleCatalog() {
+  return buildTitleCatalog(
+    typeof BOSS_POOL !== 'undefined' ? BOSS_POOL : [],
+    typeof ADVENTURE_ZONES !== 'undefined' ? ADVENTURE_ZONES : {},
+    TITLE_NAMES
+  );
+}
+
+/** Set des ids de titres débloqués pour le profil courant. */
+function getUnlockedTitleIds() {
+  return resolveUnlockedTitleIds(getTitleCatalog(), {
+    bossTitles: ProfileManager.get('bossTitles', []) || [],
+    unlockedTitles: ProfileManager.get('unlockedTitles', []) || [],
+    titles: ProfileManager.get('titles', []) || [],
+  });
+}
+
+/** Nom affichable d'un id de titre (toutes sources). */
+function getTitleName(id) {
+  if (!id) return null;
+  const t = getTitleCatalog().find(x => x.id === id);
+  return t ? t.name : (TITLE_NAMES[id] || null);
+}
+
+/**
+ * Équipe un titre. null/'' = retirer le titre. Refuse les titres non débloqués
+ * (pas de titre fantôme). Retourne true si l'opération a abouti.
+ */
+function equipTitle(id) {
+  if (id === null || id === undefined || id === '') {
+    ProfileManager.set('activeTitle', null);
+    return true;
+  }
+  if (!getUnlockedTitleIds().has(id)) return false;
+  ProfileManager.set('activeTitle', id);
+  return true;
+}
+
+/** Titre actuellement équipé { id, name } ou null (garde contre titre périmé). */
+function getEquippedTitle() {
+  const id = ProfileManager.get('activeTitle', null);
+  if (!id) return null;
+  if (!getUnlockedTitleIds().has(id)) return null;
+  return { id, name: getTitleName(id) };
+}
+
 // ─── Mastery Levels ─────────────────────────────────────────────────
 
 const MASTERY_LEVELS = [

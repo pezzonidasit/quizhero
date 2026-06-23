@@ -178,10 +178,24 @@ function generateCalcul(subLevel) {
           hint: `Calcule chaque groupe séparément, puis additionne.`,
           explanation: `${n1} × ${per1} = ${n1 * per1} et ${n2} × ${per2} = ${n2 * per2}. Total = ${answer}.`
         };
+      },
+      () => {
+        // Prix décimaux en centimes entiers (pas de flottant intermédiaire)
+        const aCents = pick([150, 175, 225, 250, 275, 325, 350]);
+        const bCents = pick([105, 110, 115, 120, 125, 130, 140]);
+        const fmt = (c) => (c / 100).toFixed(2).replace('.', ',');
+        const answer = (aCents + bCents) / 100;
+        return {
+          text: `À la boulangerie, tu achètes une baguette à ${fmt(aCents)} € et un croissant à ${fmt(bCents)} €. Combien paies-tu en tout ?`,
+          answer,
+          hint: `Pense en centimes, comme avec une tirelire : ${aCents} centimes + ${bCents} centimes, puis reviens aux euros.`,
+          explanation: `${fmt(aCents)} € + ${fmt(bCents)} € = ${fmt(aCents + bCents)} €.`,
+          ficheKey: 'decimaux'
+        };
       }
     ];
     const s = pick(scenarios)();
-    return { category: 'calcul', text: s.text, unit: '', answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: 'multiplication' };
+    return { category: 'calcul', text: s.text, unit: '', answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: s.ficheKey || 'multiplication' };
 
   } else if (subLevel === 3) {
     // 6e (11-12 ans): opérations combinées, priorités, grands nombres
@@ -234,10 +248,34 @@ function generateCalcul(subLevel) {
           hint: `Décompose : ${a} = ${Math.floor(a / 100) * 100} + ${a % 100}. Multiplie chaque partie par ${b}.`,
           explanation: `${a} × ${b} = ${answer}.`
         };
+      },
+      () => {
+        const k = rand(12, 980);
+        const big = k * 1000;
+        return {
+          text: `Combien y a-t-il de milliers dans ${big} ?`,
+          answer: k,
+          hint: `Un millier, c'est un paquet de 1 000. Compte les paquets complets, comme des rouleaux de 1 000 pièces.`,
+          explanation: `${big} = ${k} × 1 000, donc ${k} milliers.`,
+          ficheKey: 'grands_nombres'
+        };
+      },
+      () => {
+        const u = rand(2, 6);
+        const p = rand(2, 5);
+        const q2 = rand(6, 12);
+        const cost = p * u;
+        return {
+          text: `${p} cahiers identiques coûtent ${cost} €. Combien coûtent ${q2} cahiers ?`,
+          answer: q2 * u,
+          hint: `Trouve d'abord le prix d'UN cahier (comme partager une addition au restaurant), puis multiplie.`,
+          explanation: `1 cahier : ${cost} ÷ ${p} = ${u} €. Donc ${q2} cahiers : ${q2} × ${u} = ${q2 * u} €.`,
+          ficheKey: 'proportionnalite'
+        };
       }
     ];
     const s = pick(scenarios)();
-    return { category: 'calcul', text: s.text, unit: '', answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: 'calcul_mental' };
+    return { category: 'calcul', text: s.text, unit: '', answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: s.ficheKey || 'calcul_mental' };
 
   } else {
     // L4 Expert (6e solide / début 5e): priorités à parenthèses, division euclidienne, ×2 chiffres, pourcentages
@@ -503,19 +541,61 @@ function generateGeometrie(subLevel) {
     return { category: 'geometrie', text: s.text, unit: s.unit, answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: s.ficheKey };
 
   } else if (subLevel === 2) {
-    // CM2 (10 ans): aire du rectangle
-    const l = rand(3, 12);
-    const w = rand(2, 9);
-    const answer = l * w;
-    return {
-      category: 'geometrie',
-      text: `Un rectangle mesure ${l} cm de long et ${w} cm de large. Quelle est son aire ?`,
-      unit: 'cm²',
-      answer,
-      hint: `Aire = longueur × largeur.`,
-      explanation: `${l} × ${w} = ${answer} cm².`,
-      ficheKey: 'aire'
-    };
+    // CM2 (10 ans): aire du rectangle, périmètre composé, comparaison d'aires, carrelage
+    const scenarios = [
+      () => {
+        const l = rand(3, 12);
+        const w = rand(2, 9);
+        const answer = l * w;
+        return {
+          text: `Un rectangle mesure ${l} cm de long et ${w} cm de large. Quelle est son aire ?`,
+          unit: 'cm²', answer,
+          hint: `L'aire, c'est comme compter les carreaux d'une tablette de chocolat : ${l} colonnes de ${w} carreaux.`,
+          explanation: `${l} × ${w} = ${answer} cm².`,
+          ficheKey: 'aire'
+        };
+      },
+      () => {
+        const c = rand(2, 12);
+        const answer = 6 * c;
+        return {
+          text: `Deux carrés de côté ${c} cm sont collés côte à côte pour former un rectangle. Quel est le périmètre de ce rectangle ?`,
+          unit: 'cm', answer,
+          hint: `Deux carrés collés, c'est la forme d'un domino : ${2 * c} cm de long et ${c} cm de large. Le périmètre, c'est la clôture tout autour.`,
+          explanation: `Longueur ${2 * c} cm, largeur ${c} cm. Périmètre = 2 × (${2 * c} + ${c}) = ${answer} cm.`,
+          ficheKey: 'perimetre'
+        };
+      },
+      () => {
+        let l1, w1, l2, w2;
+        do {
+          l1 = rand(4, 10); w1 = rand(2, 6);
+          l2 = rand(4, 10); w2 = rand(2, 6);
+        } while (l1 * w1 === l2 * w2);
+        const answer = Math.abs(l1 * w1 - l2 * w2);
+        return {
+          text: `La carte A mesure ${l1} cm sur ${w1} cm, la carte B mesure ${l2} cm sur ${w2} cm. Quelle est la différence d'aire entre les deux cartes, en cm² ?`,
+          unit: 'cm²', answer,
+          hint: `Compte les carreaux de chaque carte comme sur une tablette de chocolat (longueur × largeur), puis compare les deux tablettes.`,
+          explanation: `Carte A : ${l1} × ${w1} = ${l1 * w1} cm². Carte B : ${l2} × ${w2} = ${l2 * w2} cm². Différence : ${answer} cm².`,
+          ficheKey: 'aire'
+        };
+      },
+      () => {
+        const l = rand(5, 12);
+        const w = rand(3, 9);
+        const answer = l * w;
+        return {
+          text: `Le sol d'une salle de bain mesure ${l} dm de long et ${w} dm de large. Combien faut-il de carreaux de 1 dm² pour couvrir tout le sol ?`,
+          unit: 'carreaux', answer,
+          hint: `Carreler le sol, c'est remplir un quadrillage : ${l} rangées de ${w} carreaux chacune.`,
+          explanation: `${l} × ${w} = ${answer} carreaux de 1 dm² (c'est exactement l'aire du sol).`,
+          ficheKey: 'aire'
+        };
+      }
+    ];
+    const s = pick(scenarios)();
+    return { category: 'geometrie', text: s.text, unit: s.unit, answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: s.ficheKey };
 
   } else if (subLevel === 3) {
     // 6e (11-12 ans): aires composées, aire triangle, volume pavé
@@ -648,19 +728,61 @@ function generateFractions(subLevel) {
     return { category: 'fractions', text: s.text, unit: s.unit, answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: 'fractions_lire' };
 
   } else if (subLevel === 2) {
-    // CM2 (10 ans): fraction of a number 1/n of X
-    const n = pick([2, 3, 4, 5]);
-    const x = n * rand(3, 10);
-    const answer = x / n;
-    return {
-      category: 'fractions',
-      text: `Combien vaut 1/${n} de ${x} ?`,
-      unit: '',
-      answer,
-      hint: `Divise ${x} par ${n}.`,
-      explanation: `${x} ÷ ${n} = ${answer}.`,
-      ficheKey: 'fractions_lire'
-    };
+    // CM2 (10 ans): fraction d'un nombre, comparaison, complément à l'unité
+    const scenarios = [
+      () => {
+        const n = pick([2, 3, 4, 5]);
+        const x = n * rand(3, 10);
+        const answer = x / n;
+        return {
+          text: `Combien vaut 1/${n} de ${x} ?`,
+          unit: '', answer,
+          hint: `Partage ${x} en ${n} paquets égaux, comme des bonbons entre ${n} amis : un paquet = 1/${n}.`,
+          explanation: `${x} ÷ ${n} = ${answer}.`,
+          ficheKey: 'fractions_lire'
+        };
+      },
+      () => {
+        const d = pick([6, 8, 10, 12]);
+        const a = rand(1, Math.floor((d - 1) / 2));
+        const b = rand(a + 1, d - a);
+        const answer = b - a;
+        return {
+          text: `Tom a mangé ${a}/${d} d'une pizza et Léa ${b}/${d} de la même pizza. Combien de parts de plus Léa a-t-elle mangées ?`,
+          unit: 'parts', answer,
+          hint: `La pizza est coupée en ${d} parts pour les deux : compte combien de parts Léa a mangées en plus.`,
+          explanation: `Même dénominateur (${d}), donc on compare les numérateurs : ${b} − ${a} = ${answer} parts.`,
+          ficheKey: 'fractions_comparer'
+        };
+      },
+      () => {
+        const d = pick([4, 5, 6, 8, 10]);
+        const a = rand(1, d - 1);
+        const answer = d - a;
+        return {
+          text: `Un gâteau est coupé en ${d} parts égales. Tu en manges ${a}/${d}. Quelle fraction du gâteau reste-t-il ? Donne le numérateur (le dénominateur reste ${d}).`,
+          unit: '', answer,
+          hint: `Le gâteau entier = ${d}/${d}, comme un puzzle complet de ${d} pièces. Enlève les ${a} pièces mangées.`,
+          explanation: `${d}/${d} − ${a}/${d} = ${answer}/${d}. Le numérateur est ${answer}.`,
+          ficheKey: 'fractions_lire'
+        };
+      },
+      () => {
+        const n = pick([3, 4, 5]);
+        const p = rand(2, n - 1);
+        const base = n * rand(3, 8);
+        const answer = (base * p) / n;
+        return {
+          text: `Tu as ${base} billes et tu en donnes ${p}/${n} à ton ami. Combien de billes lui donnes-tu ?`,
+          unit: 'billes', answer,
+          hint: `Fais ${n} paquets égaux de billes, puis donne ${p} paquets.`,
+          explanation: `1/${n} de ${base} = ${base / n} billes. ${p} × ${base / n} = ${answer} billes.`,
+          ficheKey: 'fractions_lire'
+        };
+      }
+    ];
+    const s = pick(scenarios)();
+    return { category: 'fractions', text: s.text, unit: s.unit, answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: s.ficheKey || 'fractions_lire' };
 
   } else if (subLevel === 3) {
     // 6e (11-12 ans): addition fractions, p/n de X, addition décimale
@@ -705,6 +827,17 @@ function generateFractions(subLevel) {
           unit: '', answer,
           hint: `Additionne d'abord les centièmes, puis les dixièmes, puis les unités.`,
           explanation: `${a_str} + ${b_str} = ${answer_str.replace('.', ',')}.`,
+          ficheKey: 'fractions_decimales'
+        };
+      },
+      () => {
+        const n = rand(2, 9);
+        const answer = n / 10;
+        return {
+          text: `Écris ${n}/10 en nombre décimal.`,
+          unit: '', answer,
+          hint: `${n}/10, c'est comme ${n} pièces de 10 centimes : ça fait 0,${n}0 €, donc 0,${n}.`,
+          explanation: `${n}/10 = ${n} dixièmes = 0,${n}.`,
           ficheKey: 'fractions_decimales'
         };
       }
@@ -848,6 +981,18 @@ function generateMesures(subLevel) {
           explanation: `${kg} × 1 000 + ${g} = ${answer} g.`,
           ficheKey: 'masses'
         };
+      },
+      () => {
+        const w = rand(1, 9);
+        const t = rand(1, 9);
+        const answer = w * 100 + t * 10;
+        return {
+          text: `Convertis ${w},${t} m en centimètres.`,
+          unit: 'cm', answer,
+          hint: `${w},${t} m = ${w} mètres et ${t} dixièmes de mètre. Un dixième de mètre = 10 cm, environ la largeur de ta main.`,
+          explanation: `${w} m = ${w * 100} cm et 0,${t} m = ${t * 10} cm. Total : ${answer} cm.`,
+          ficheKey: 'conversions'
+        };
       }
     ];
     const s = pick(scenarios)();
@@ -890,6 +1035,19 @@ function generateMesures(subLevel) {
           hint: `Surface = longueur × largeur.`,
           explanation: `${l} × ${w} = ${answer} m².`,
           ficheKey: 'aire'
+        };
+      },
+      () => {
+        const w = rand(1, 5);
+        const grams = pick([125, 250, 375, 500, 625, 750, 875]);
+        const gs = String(grams).padStart(3, '0');
+        const answer = w * 1000 + grams;
+        return {
+          text: `Convertis ${w},${gs} kg en grammes.`,
+          unit: 'g', answer,
+          hint: `Sur une balance de cuisine : ${w} kg = ${w * 1000} g, et la partie après la virgule (${gs}) se lit directement en grammes.`,
+          explanation: `${w} kg = ${w * 1000} g, plus ${grams} g = ${answer} g.`,
+          ficheKey: 'conversions'
         };
       }
     ];
@@ -980,6 +1138,16 @@ function generateOuvert(subLevel) {
           hint: `Soustrais du total.`,
           explanation: `${total} − ${aiment} = ${answer} élèves.`
         };
+      },
+      () => {
+        const k = rand(2, 9);
+        const montant = 2 * k;
+        return {
+          text: `Tu veux payer ${montant} € en utilisant uniquement des pièces de 2 €. Combien de pièces te faut-il ?`,
+          answer: k,
+          hint: `Empile les pièces de 2 € une par une : chaque pièce ajoute 2 €.`,
+          explanation: `${montant} ÷ 2 = ${k} pièces de 2 €.`
+        };
       }
     ];
     const s = pick(scenarios)();
@@ -993,31 +1161,109 @@ function generateOuvert(subLevel) {
     };
 
   } else if (subLevel === 2) {
-    // Outfit combinations: tops × bottoms
-    const tops = rand(3, 6);
-    const bottoms = rand(2, 5);
-    const answer = tops * bottoms;
-    return {
-      category: 'ouvert',
-      text: `Tu as ${tops} t-shirts et ${bottoms} pantalons. Combien de tenues différentes peux-tu faire ?`,
-      unit: '',
-      answer,
-      hint: `Pour chaque t-shirt, tu peux porter n'importe quel pantalon.`,
-      explanation: `${tops} × ${bottoms} = ${answer} tenues possibles.`
-    };
+    // CM2 (10 ans): produit cartésien (tenues, menus, trajets) + proportionnalité simple
+    const scenarios = [
+      () => {
+        const tops = rand(3, 6);
+        const bottoms = rand(2, 5);
+        const answer = tops * bottoms;
+        return {
+          text: `Tu as ${tops} t-shirts et ${bottoms} pantalons. Combien de tenues différentes peux-tu faire ?`,
+          answer,
+          hint: `Pour chaque t-shirt, tu peux porter n'importe quel pantalon.`,
+          explanation: `${tops} × ${bottoms} = ${answer} tenues possibles.`
+        };
+      },
+      () => {
+        const entrees = rand(2, 5);
+        const plats = rand(3, 6);
+        const answer = entrees * plats;
+        return {
+          text: `À la cantine, il y a ${entrees} entrées et ${plats} plats. Combien de menus différents (1 entrée + 1 plat) peux-tu composer ?`,
+          answer,
+          hint: `C'est comme les tenues t-shirt + pantalon : chaque entrée peut aller avec chaque plat.`,
+          explanation: `${entrees} × ${plats} = ${answer} menus possibles.`
+        };
+      },
+      () => {
+        const a = rand(2, 4);
+        const b = rand(2, 5);
+        const answer = a * b;
+        return {
+          text: `Pour aller de chez toi à l'école, il y a ${a} chemins jusqu'à la boulangerie, puis ${b} chemins de la boulangerie à l'école. Combien d'itinéraires différents en tout ?`,
+          answer,
+          hint: `Comme un embranchement de routes : chacun des ${a} premiers chemins se prolonge par ${b} suites possibles.`,
+          explanation: `${a} × ${b} = ${answer} itinéraires.`
+        };
+      },
+      () => {
+        const q = pick([100, 150, 200, 250]);
+        const k = rand(2, 4);
+        const pers = 2 * k;
+        const answer = q * k;
+        return {
+          text: `Pour 2 personnes, il faut ${q} g de pâtes. Combien de grammes faut-il pour ${pers} personnes ?`,
+          answer,
+          hint: `${pers} personnes, c'est ${k} fois plus de monde que 2 — donc ${k} fois plus de pâtes, comme quand on double une recette.`,
+          explanation: `${pers} ÷ 2 = ${k}. ${q} × ${k} = ${answer} g.`,
+          ficheKey: 'proportionnalite'
+        };
+      }
+    ];
+    const s = pick(scenarios)();
+    return { category: 'ouvert', text: s.text, unit: '', answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: s.ficheKey };
 
   } else if (subLevel === 3) {
-    // Handshake problem: n(n-1)/2
-    const n = rand(4, 8);
-    const answer = n * (n - 1) / 2;
-    return {
-      category: 'ouvert',
-      text: `${n} amis se retrouvent et chacun fait une poignée de main à chacun des autres. Combien de poignées de main en tout ?`,
-      unit: '',
-      answer,
-      hint: `La première personne serre la main de ${n - 1} personnes, la deuxième de ${n - 2}…`,
-      explanation: `${n} × ${n - 1} ÷ 2 = ${answer} poignées de main.`
-    };
+    // 6e (11-12 ans): poignées de main, probabilités, contraintes, arrangements
+    const scenarios = [
+      () => {
+        const n = rand(4, 8);
+        const answer = (n * (n - 1)) / 2;
+        return {
+          text: `${n} amis se retrouvent et chacun fait une poignée de main à chacun des autres. Combien de poignées de main en tout ?`,
+          answer,
+          hint: `La première personne serre la main de ${n - 1} personnes, la deuxième de ${n - 2}…`,
+          explanation: `${n} × ${n - 1} ÷ 2 = ${answer} poignées de main.`
+        };
+      },
+      () => {
+        const pgcd = (u, v) => (v === 0 ? u : pgcd(v, u % v));
+        let r, b;
+        do {
+          r = rand(2, 6);
+          b = rand(2, 6);
+        } while (pgcd(r, r + b) !== 1);
+        return {
+          text: `Un sac contient ${r} billes rouges et ${b} billes bleues. Tu tires une bille sans regarder. Combien as-tu de chances sur ${r + b} de tirer une bille rouge ?`,
+          answer: r,
+          hint: `C'est une loterie : chaque bille est un ticket, et les tickets gagnants sont les billes rouges.`,
+          explanation: `Il y a ${r + b} billes en tout, dont ${r} rouges : ${r} chances sur ${r + b}.`
+        };
+      },
+      () => {
+        const x = rand(6, 12);
+        const d = pick([2, 4, 6]);
+        const s = 2 * x + d;
+        return {
+          text: `Léa et son petit frère ont ${s} ans à eux deux. Léa a ${d} ans de plus que lui. Quel âge a Léa ?`,
+          answer: x + d,
+          hint: `Enlève d'abord les ${d} ans d'écart du total : comme sur une balance, il reste deux âges égaux à partager.`,
+          explanation: `(${s} − ${d}) ÷ 2 = ${x} ans pour le frère. Léa : ${x} + ${d} = ${x + d} ans.`
+        };
+      },
+      () => {
+        const n = rand(3, 5);
+        const answer = n * (n - 1) * (n - 2);
+        return {
+          text: `${n} coureurs disputent une course. Combien de podiums différents (1er, 2e, 3e) sont possibles ?`,
+          answer,
+          hint: `Remplis le podium marche par marche : ${n} choix pour l'or, puis ${n - 1} pour l'argent, puis ${n - 2} pour le bronze.`,
+          explanation: `${n} × ${n - 1} × ${n - 2} = ${answer} podiums possibles.`
+        };
+      }
+    ];
+    const s = pick(scenarios)();
+    return { category: 'ouvert', text: s.text, unit: '', answer: s.answer, hint: s.hint, explanation: s.explanation, ficheKey: s.ficheKey };
 
   } else {
     // L4 Expert: problèmes à 3-4 étapes
@@ -1710,6 +1956,172 @@ const RIDDLE_BANK = [
     level: 3
   },
 
+  // LOGIQUE — Level 1 (PRD 2026-06-13, lot de 20)
+  {
+    category: 'logique',
+    text: 'Pour monter au 1er étage, Lina grimpe 12 marches. Combien de marches grimpe-t-elle pour atteindre le 3e étage (chaque étage a le même escalier) ?',
+    unit: '', answer: 36,
+    hint: 'Chaque étage, c\'est le même paquet de 12 marches empilé.',
+    explanation: '1 étage = 12 marches. Pour 3 étages : 12 × 3 = 36 marches.',
+    level: 1
+  },
+  {
+    category: 'logique',
+    text: 'Tom range ses billes deux par deux. À la fin, il lui reste toujours 1 bille toute seule. Son nombre de billes est-il pair ou impair ? (réponds « pair » ou « impair »)',
+    unit: '', answer: null, textAnswer: 'impair',
+    hint: 'Ranger 2 par 2, c\'est former des paires, comme des chaussures. S\'il en reste une seule…',
+    explanation: 'Un nombre pair se range exactement par paires. Comme il reste 1 bille seule, le nombre est impair.',
+    level: 1
+  },
+  {
+    category: 'logique',
+    text: 'Sur l\'étagère, le livre rouge est à gauche du bleu. Le vert est à droite du bleu. Quel livre est au milieu ?',
+    unit: '', answer: null, textAnswer: 'bleu',
+    hint: 'Range-les de gauche à droite, comme une file d\'attente.',
+    explanation: 'De gauche à droite : rouge, bleu, vert. Le bleu est au milieu.',
+    level: 1
+  },
+  {
+    category: 'logique',
+    text: 'Tu veux payer 7 € avec des pièces de 2 € et de 1 €. Quel est le plus petit nombre de pièces possible ?',
+    unit: '', answer: 4,
+    hint: 'Prends d\'abord les grosses pièces, comme on met les grosses billes dans le bocal avant les petites.',
+    explanation: '3 pièces de 2 € font 6 €, plus 1 pièce de 1 € = 7 €. Total : 4 pièces.',
+    level: 1
+  },
+  {
+    category: 'logique',
+    text: 'Dans 3 ans, Mia aura 10 ans. Quel âge a-t-elle aujourd\'hui ?',
+    unit: 'ans', answer: 7,
+    hint: 'Rembobine le temps en arrière, comme une vidéo qu\'on remet au début.',
+    explanation: '10 − 3 = 7. Mia a 7 ans aujourd\'hui.',
+    level: 1
+  },
+  {
+    category: 'logique',
+    text: 'Le long d\'une allée de 20 m, on plante un arbre tous les 5 m, du tout début jusqu\'à la fin. Combien d\'arbres plante-t-on ?',
+    unit: 'arbres', answer: 5,
+    hint: 'Pense aux barreaux d\'une échelle : il y a toujours un barreau de plus que d\'espaces entre eux.',
+    explanation: '20 ÷ 5 = 4 espaces. Mais on ajoute l\'arbre du tout début : 4 + 1 = 5 arbres.',
+    level: 1
+  },
+  {
+    category: 'logique',
+    text: 'Dans une boîte, il y a 2 fois plus de billes bleues que de rouges. Il y a 3 billes rouges. Combien de billes en tout ?',
+    unit: '', answer: 9,
+    hint: 'Les bleues, c\'est deux paquets de rouges mis côte à côte.',
+    explanation: 'Bleues = 2 × 3 = 6. Total = 3 rouges + 6 bleues = 9 billes.',
+    level: 1
+  },
+
+  // LOGIQUE — Level 2 (PRD 2026-06-13, lot de 20)
+  {
+    category: 'logique',
+    text: 'Sur une balance en équilibre : 2 cubes et 1 bille pèsent autant que 7 billes. Combien de billes pèse 1 cube ?',
+    unit: '', answer: 3,
+    hint: 'Une balance reste en équilibre si tu enlèves la même chose des deux côtés, comme sur une bascule.',
+    explanation: 'On enlève 1 bille de chaque côté : 2 cubes = 6 billes. Donc 1 cube = 3 billes.',
+    level: 2
+  },
+  {
+    category: 'logique',
+    text: 'Une horloge met 5 secondes pour sonner 6 coups (un coup au tout début). Combien de secondes met-elle pour sonner 12 coups ?',
+    unit: 'secondes', answer: 11,
+    hint: 'Les coups sont comme des poteaux, et les secondes comme les espaces entre eux : il y a un espace de moins que de coups.',
+    explanation: '6 coups = 5 espaces = 5 s, donc 1 espace = 1 s. 12 coups = 11 espaces = 11 secondes.',
+    level: 2
+  },
+  {
+    category: 'logique',
+    text: 'Avec les chiffres 1, 2 et 3, chacun utilisé une seule fois, combien de nombres différents à 3 chiffres peux-tu écrire ?',
+    unit: '', answer: 6,
+    hint: 'C\'est comme placer 3 invités sur 3 chaises : 3 choix pour la 1re place, puis 2, puis 1.',
+    explanation: '3 × 2 × 1 = 6 nombres : 123, 132, 213, 231, 312, 321.',
+    level: 2
+  },
+  {
+    category: 'logique',
+    text: 'Une corde de 24 m est coupée en 3 morceaux. Le 2e est le double du 1er, le 3e est le triple du 1er. Quelle est la longueur du 1er morceau ?',
+    unit: 'm', answer: 4,
+    hint: 'Le 1er morceau est l\'unité de mesure ; les autres sont des paquets de cette unité.',
+    explanation: '1 + 2 + 3 = 6 parts égales. 24 ÷ 6 = 4 m pour le 1er morceau.',
+    level: 2
+  },
+  {
+    category: 'logique',
+    text: 'On compte des enfants en cercle, encore et encore : 1, 2, 3, 4, 1, 2, 3, 4… Quel nombre dit le 30e enfant compté ?',
+    unit: '', answer: 2,
+    hint: 'Le compte tourne en rond, comme les saisons qui reviennent toujours dans le même ordre.',
+    explanation: '30 ÷ 4 = 7 tours complets, reste 2. Le 30e enfant dit « 2 ».',
+    level: 2
+  },
+  {
+    category: 'logique',
+    text: 'Dans un sac : 4 bonbons à la fraise, 5 au citron, 6 à la menthe. Les yeux fermés, combien dois-tu en prendre au minimum pour être SÛR d\'en avoir 3 du même parfum ?',
+    unit: '', answer: 7,
+    hint: 'Imagine la pire malchance : tu tires d\'abord 2 de chaque parfum avant d\'en réussir 3 pareils.',
+    explanation: 'Pire cas : 2 fraise + 2 citron + 2 menthe = 6 bonbons sans trio. Le 7e complète forcément un trio. Réponse : 7.',
+    level: 2
+  },
+
+  // LOGIQUE — Level 3 (PRD 2026-06-13, lot de 20)
+  {
+    category: 'logique',
+    text: 'Trois cartes en rang : un roi, une dame, un valet. Le roi n\'est pas tout à gauche. La dame est juste à droite du roi. Quelle carte est tout à gauche ?',
+    unit: '', answer: null, textAnswer: 'valet',
+    hint: 'Place d\'abord la carte la plus contrainte : le roi, qui doit avoir la dame juste à sa droite.',
+    explanation: 'Le roi a la dame à sa droite et n\'est pas à gauche → roi au milieu, dame à droite. Il reste le valet à gauche.',
+    level: 3
+  },
+  {
+    category: 'logique',
+    text: 'Il y a 5 ans, Papa avait 4 fois l\'âge de Sami. Aujourd\'hui, Papa a 3 fois l\'âge de Sami. Quel âge a Sami aujourd\'hui ?',
+    unit: 'ans', answer: 15,
+    hint: 'L\'écart d\'âge ne change jamais, comme deux coureurs qui gardent la même distance entre eux.',
+    explanation: 'Écart aujourd\'hui = 3x − x = 2x. Il y a 5 ans = 4(x−5) − (x−5) = 3(x−5). Donc 2x = 3(x−5) → x = 15. Sami a 15 ans (Papa 45 ; il y a 5 ans 40 = 4×10 ✓).',
+    level: 3
+  },
+  {
+    category: 'logique',
+    text: 'À une fête, chaque personne trinque une seule fois avec chacune des autres. On compte 21 « tchin » en tout. Combien de personnes y a-t-il ?',
+    unit: '', answer: 7,
+    hint: 'C\'est comme un tournoi où chaque équipe affronte chaque autre une fois : nombre × (nombre − 1) ÷ 2.',
+    explanation: 'n × (n − 1) ÷ 2 = 21 → n × (n − 1) = 42 = 7 × 6. Il y a 7 personnes.',
+    level: 3
+  },
+  {
+    category: 'logique',
+    text: 'Anna, Bob et Cléo ont chacun un animal : chat, chien ou oiseau. Anna a peur des chiens. L\'oiseau n\'est pas à Bob. Cléo promène son animal en laisse. Qui a le chat ?',
+    unit: '', answer: null, textAnswer: 'bob',
+    hint: 'Élimine case par case, comme dans une grille de sudoku : commence par celui qui se promène en laisse.',
+    explanation: 'En laisse = chien → Cléo a le chien. Bob n\'a pas l\'oiseau ni le chien (pris) → Bob a le chat. Anna a l\'oiseau.',
+    level: 3
+  },
+  {
+    category: 'logique',
+    text: 'Je suis un nombre à deux chiffres. Si j\'échange mes deux chiffres, j\'obtiens un nombre plus grand de 18. La somme de mes chiffres est 8. Qui suis-je ?',
+    unit: '', answer: 35,
+    hint: 'Échanger les chiffres, c\'est comme échanger les places de deux personnes dans une file.',
+    explanation: 'Échanger ajoute 18 → le chiffre des unités dépasse celui des dizaines de 2. Avec une somme de 8 : 3 et 5 → 35 (53 − 35 = 18 ✓).',
+    level: 3
+  },
+  {
+    category: 'logique',
+    text: 'Tu as 9 billes identiques, mais une est un peu plus lourde. Avec une balance à deux plateaux, quel est le nombre minimum de pesées pour être sûr de trouver la plus lourde ?',
+    unit: 'pesées', answer: 2,
+    hint: 'Sépare en 3 groupes : une pesée élimine les deux tiers d\'un coup, comme chercher un mot en coupant le dictionnaire en trois.',
+    explanation: '3 groupes de 3 : 1re pesée → on trouve le groupe lourd. 2e pesée sur 3 billes → on trouve la bille. 2 pesées suffisent.',
+    level: 3
+  },
+  {
+    category: 'logique',
+    text: 'Pour deviner un nombre entre 1 et 9, on te donne 3 indices dont UN SEUL est faux : (A) il est pair, (B) il est plus grand que 5, (C) c\'est 8. Quel est le nombre ?',
+    unit: '', answer: 6,
+    hint: 'Comme un détective qui sait qu\'un seul témoin ment : teste quel indice doit être le menteur.',
+    explanation: 'Si A et B sont vrais et C faux : pair, plus grand que 5, mais pas 8 → 6. Les autres cas se contredisent. Le nombre est 6.',
+    level: 3
+  },
+
   // ═══════════════════════════════════════════════════════════════════
   // GÉOMÉTRIE (~8 riddles)
   // ═══════════════════════════════════════════════════════════════════
@@ -2178,7 +2590,7 @@ const RIDDLE_BANK = [
   },
 
   // ═══════════════════════════════════════════════════════════════════
-  // FRACTIONS (~8 riddles)
+  // FRACTIONS (~68 riddles)
   // ═══════════════════════════════════════════════════════════════════
   {
     category: 'fractions',
@@ -2430,8 +2842,236 @@ const RIDDLE_BANK = [
     level: 2
   },
 
+  // ── Enrichissement CM2 (PRD 2026-06-20) : fraction d'une quantité,
+  //    comparaison, fractions décimales, droite graduée, complément à
+  //    l'unité, équivalences. ────────────────────────────────────────
+  // Fraction d'une quantité
+  {
+    category: 'fractions',
+    text: 'Quel est 2/5 de 35 ?',
+    unit: '',
+    answer: 14,
+    hint: '1/5 de 35, c\'est 35 ÷ 5. Multiplie ensuite par 2.',
+    explanation: '1/5 de 35 = 7. 2/5 = 2 × 7 = 14.',
+    ficheKey: 'fractions_lire',
+    level: 1
+  },
+  {
+    category: 'fractions',
+    text: 'Une équipe a gagné 3/4 de ses 20 matchs. Combien de matchs a-t-elle gagnés ?',
+    unit: '',
+    answer: 15,
+    hint: '1/4 de 20, puis multiplie par 3.',
+    explanation: '1/4 de 20 = 5. 3/4 = 3 × 5 = 15 matchs.',
+    ficheKey: 'fractions_lire',
+    level: 1
+  },
+  {
+    category: 'fractions',
+    text: 'Quel est 5/6 de 42 ?',
+    unit: '',
+    answer: 35,
+    hint: '1/6 de 42, c\'est 42 ÷ 6. Multiplie par 5.',
+    explanation: '1/6 de 42 = 7. 5/6 = 5 × 7 = 35.',
+    ficheKey: 'fractions_lire',
+    level: 2
+  },
+  // Comparaison de fractions
+  {
+    category: 'fractions',
+    text: 'Compare 3/7 et 5/7 : quelle est la plus grande ? Donne son numérateur.',
+    unit: '',
+    answer: 5,
+    hint: 'Même dénominateur : la plus grande est celle qui a le plus grand numérateur.',
+    explanation: 'Les parts sont des septièmes. 5 parts > 3 parts, donc 5/7 > 3/7. Numérateur = 5.',
+    ficheKey: 'fractions_comparer',
+    level: 1
+  },
+  {
+    category: 'fractions',
+    text: 'Quelle fraction est la plus petite : 4/9 ou 7/9 ? Donne son numérateur.',
+    unit: '',
+    answer: 4,
+    hint: 'Même dénominateur : moins de parts = plus petite fraction.',
+    explanation: '4 neuvièmes < 7 neuvièmes, donc 4/9 est la plus petite. Numérateur = 4.',
+    ficheKey: 'fractions_comparer',
+    level: 2
+  },
+  {
+    category: 'fractions',
+    text: 'Range 2/5, 4/5 et 1/5 du plus grand au plus petit. Donne le numérateur du plus grand.',
+    unit: '',
+    answer: 4,
+    hint: 'Même dénominateur partout : compare juste les numérateurs.',
+    explanation: '4/5 > 2/5 > 1/5. Le plus grand est 4/5, son numérateur est 4.',
+    ficheKey: 'fractions_comparer',
+    level: 2
+  },
+  {
+    category: 'fractions',
+    text: 'Compare 5/6 et 7/9 en les mettant sur 18. Donne le numérateur de la plus grande.',
+    unit: '',
+    answer: 5,
+    hint: '5/6 = ?/18 et 7/9 = ?/18, puis compare.',
+    explanation: '5/6 = 15/18 et 7/9 = 14/18. Comme 15/18 > 14/18, c\'est 5/6 la plus grande. Numérateur = 5.',
+    ficheKey: 'fractions_comparer',
+    level: 3
+  },
+  // Fractions équivalentes
+  {
+    category: 'fractions',
+    text: 'Complète : 1/2 = ?/8. Donne le numérateur manquant.',
+    unit: '',
+    answer: 4,
+    hint: 'On multiplie le dénominateur 2 par 4 pour obtenir 8 : fais pareil en haut.',
+    explanation: '2 × 4 = 8, donc 1 × 4 = 4. 1/2 = 4/8.',
+    ficheKey: 'fractions_lire',
+    level: 1
+  },
+  {
+    category: 'fractions',
+    text: 'Complète : 2/3 = ?/9. Donne le numérateur manquant.',
+    unit: '',
+    answer: 6,
+    hint: 'Pour passer de 3 à 9, on multiplie par 3 : fais pareil au numérateur.',
+    explanation: '3 × 3 = 9, donc 2 × 3 = 6. 2/3 = 6/9.',
+    ficheKey: 'fractions_lire',
+    level: 2
+  },
+  {
+    category: 'fractions',
+    text: 'Simplifie 6/8 au maximum. Écris la fraction simplifiée sous la forme a/b.',
+    unit: '',
+    answer: null,
+    textAnswer: '3/4',
+    hint: 'Divise le haut et le bas par le même nombre (ici 2).',
+    explanation: '6 ÷ 2 = 3 et 8 ÷ 2 = 4. Donc 6/8 = 3/4.',
+    ficheKey: 'fractions_lire',
+    level: 2
+  },
+  {
+    category: 'fractions',
+    text: 'Simplifie 10/15 au maximum. Écris la fraction simplifiée sous la forme a/b.',
+    unit: '',
+    answer: null,
+    textAnswer: '2/3',
+    hint: 'Cherche un nombre qui divise 10 et 15 (ici 5).',
+    explanation: '10 ÷ 5 = 2 et 15 ÷ 5 = 3. Donc 10/15 = 2/3.',
+    ficheKey: 'fractions_lire',
+    level: 3
+  },
+  // Fractions décimales (lien fraction ↔ décimal)
+  {
+    category: 'fractions',
+    text: 'Écris 7/10 sous forme de nombre décimal.',
+    unit: '',
+    answer: 0.7,
+    hint: 'Les dixièmes s\'écrivent avec un chiffre après la virgule.',
+    explanation: '7/10 = 7 dixièmes = 0,7.',
+    ficheKey: 'fractions_decimales',
+    level: 1
+  },
+  {
+    category: 'fractions',
+    text: 'Écris 3/100 sous forme de nombre décimal.',
+    unit: '',
+    answer: 0.03,
+    hint: 'Les centièmes s\'écrivent avec deux chiffres après la virgule.',
+    explanation: '3/100 = 3 centièmes = 0,03.',
+    ficheKey: 'fractions_decimales',
+    level: 2
+  },
+  {
+    category: 'fractions',
+    text: 'Combien font 1/10 + 3/10 ? Donne le résultat sous forme de nombre décimal.',
+    unit: '',
+    answer: 0.4,
+    hint: '1 dixième + 3 dixièmes = 4 dixièmes.',
+    explanation: '1/10 + 3/10 = 4/10 = 0,4.',
+    ficheKey: 'fractions_decimales',
+    level: 2
+  },
+  {
+    category: 'fractions',
+    text: 'Écris 25/100 sous forme de fraction simplifiée a/b.',
+    unit: '',
+    answer: null,
+    textAnswer: '1/4',
+    hint: '25/100 vaut 0,25, soit un quart.',
+    explanation: '25 ÷ 25 = 1 et 100 ÷ 25 = 4. Donc 25/100 = 1/4.',
+    ficheKey: 'fractions_decimales',
+    level: 2
+  },
+  {
+    category: 'fractions',
+    text: 'Quelle fraction décimale (dénominateur 10) vaut 0,9 ? Écris-la sous la forme a/b.',
+    unit: '',
+    answer: null,
+    textAnswer: '9/10',
+    hint: '0,9 = 9 dixièmes.',
+    explanation: '0,9 = 9/10.',
+    ficheKey: 'fractions_decimales',
+    level: 3
+  },
+  // Droite graduée
+  {
+    category: 'fractions',
+    text: 'Une droite va de 0 à 1, partagée en 5 parts égales. À quelle graduation se trouve 3/5 ? Donne le numéro de la graduation (en partant de 0).',
+    unit: '',
+    answer: 3,
+    hint: 'Chaque graduation vaut 1/5. Compte 1/5, 2/5, 3/5…',
+    explanation: '3/5 tombe sur la 3ᵉ graduation après le 0.',
+    ficheKey: 'fractions_lire',
+    level: 2
+  },
+  {
+    category: 'fractions',
+    text: 'Une droite va de 0 à 1, partagée en 10 parts égales. Quelle est l\'abscisse de la 7ᵉ graduation ? Écris-la sous la forme a/b.',
+    unit: '',
+    answer: null,
+    textAnswer: '7/10',
+    hint: 'Chaque graduation vaut 1/10.',
+    explanation: 'La 7ᵉ graduation après 0 est à 7 × 1/10 = 7/10.',
+    ficheKey: 'fractions_lire',
+    level: 3
+  },
+  // Complément à l'unité
+  {
+    category: 'fractions',
+    text: 'Sacha a bu 2/5 d\'une bouteille. Quelle fraction de la bouteille reste-t-il ? Écris ta réponse sous la forme a/b.',
+    unit: '',
+    answer: null,
+    textAnswer: '3/5',
+    hint: 'La bouteille entière, c\'est 5/5. Enlève ce qui est bu.',
+    explanation: '5/5 − 2/5 = 3/5. Il reste 3/5 de la bouteille.',
+    ficheKey: 'fractions_lire',
+    level: 1
+  },
+  {
+    category: 'fractions',
+    text: 'Léa a colorié 5/8 d\'un dessin. Quelle fraction n\'est pas coloriée ? Écris ta réponse sous la forme a/b.',
+    unit: '',
+    answer: null,
+    textAnswer: '3/8',
+    hint: 'Le dessin entier vaut 8/8.',
+    explanation: '8/8 − 5/8 = 3/8 non colorié.',
+    ficheKey: 'fractions_lire',
+    level: 2
+  },
+  {
+    category: 'fractions',
+    text: 'Combien manque-t-il à 7/10 pour faire 1 entier ? Écris la fraction manquante sous la forme a/b.',
+    unit: '',
+    answer: null,
+    textAnswer: '3/10',
+    hint: '1 entier vaut 10/10.',
+    explanation: '10/10 − 7/10 = 3/10. Il manque 3/10.',
+    ficheKey: 'fractions_additionner',
+    level: 3
+  },
+
   // ═══════════════════════════════════════════════════════════════════
-  // MESURES (~8 riddles)
+  // MESURES (~67 riddles)
   // ═══════════════════════════════════════════════════════════════════
   {
     category: 'mesures',
@@ -2680,6 +3320,211 @@ const RIDDLE_BANK = [
     explanation: '3 dL = 3 × 100 = 300 mL.',
     ficheKey: 'capacites',
     level: 2
+  },
+
+  // ─── Enrichissement PRD 2026-06-20 : +20 énigmes, niveaux L1/L2/L3 ───
+  // Niveau 1 — conversion ou opération unique simple (CE2 → début CM2)
+  {
+    category: 'mesures',
+    text: 'Un ruban mesure 4 mètres. Combien cela fait-il en centimètres ?',
+    unit: 'cm',
+    answer: 400,
+    hint: '1 mètre = 100 centimètres.',
+    explanation: '4 m = 4 × 100 = 400 cm.',
+    ficheKey: 'longueurs',
+    level: 1
+  },
+  {
+    category: 'mesures',
+    text: 'Un paquet de sucre pèse 2 kg. Combien de grammes cela représente-t-il ?',
+    unit: 'g',
+    answer: 2000,
+    hint: '1 kg = 1000 g.',
+    explanation: '2 kg = 2 × 1000 = 2000 g.',
+    ficheKey: 'masses',
+    level: 1
+  },
+  {
+    category: 'mesures',
+    text: 'Une bouteille contient 1 litre d\'eau. Combien de centilitres cela fait-il ?',
+    unit: 'cL',
+    answer: 100,
+    hint: '1 L = 100 cL.',
+    explanation: '1 litre = 100 centilitres.',
+    ficheKey: 'capacites',
+    level: 1
+  },
+  {
+    category: 'mesures',
+    text: 'Un carré a un côté de 6 cm. Quel est son périmètre ?',
+    unit: 'cm',
+    answer: 24,
+    hint: 'Le carré a 4 côtés égaux : périmètre = 4 × côté.',
+    explanation: '4 × 6 = 24 cm.',
+    ficheKey: 'perimetre',
+    level: 1
+  },
+  {
+    category: 'mesures',
+    text: 'Une récréation dure un quart d\'heure. Combien de minutes est-ce ?',
+    unit: 'min',
+    answer: 15,
+    hint: 'Une heure complète vaut 60 minutes.',
+    explanation: 'Un quart d\'heure = 60 ÷ 4 = 15 minutes.',
+    ficheKey: 'durees',
+    level: 1
+  },
+  {
+    category: 'mesures',
+    text: 'Combien y a-t-il de grammes dans un demi-kilogramme ?',
+    unit: 'g',
+    answer: 500,
+    hint: '1 kg = 1000 g, et tu en veux la moitié.',
+    explanation: 'La moitié de 1000 g = 500 g.',
+    ficheKey: 'masses',
+    level: 1
+  },
+  // Niveau 2 — une opération avec contexte CM2 (périmètre/aire, conversions, prix)
+  {
+    category: 'mesures',
+    text: 'Un terrain rectangulaire mesure 30 m de long et 20 m de large. Quel est son périmètre ?',
+    unit: 'm',
+    answer: 100,
+    hint: 'Périmètre du rectangle = 2 × (longueur + largeur).',
+    explanation: '2 × (30 + 20) = 2 × 50 = 100 m.',
+    ficheKey: 'perimetre',
+    level: 2
+  },
+  {
+    category: 'mesures',
+    text: 'Une affiche rectangulaire mesure 80 cm de long et 50 cm de large. Quelle est son aire en cm² ?',
+    unit: 'cm²',
+    answer: 4000,
+    hint: 'Aire du rectangle = longueur × largeur.',
+    explanation: '80 × 50 = 4000 cm².',
+    ficheKey: 'aire',
+    level: 2
+  },
+  {
+    category: 'mesures',
+    text: 'Un carrelage carré a un côté de 30 cm. Quelle est son aire en cm² ?',
+    unit: 'cm²',
+    answer: 900,
+    hint: 'Aire du carré = côté × côté.',
+    explanation: '30 × 30 = 900 cm².',
+    ficheKey: 'aire',
+    level: 2
+  },
+  {
+    category: 'mesures',
+    text: 'Une route mesure 4 km et 250 m. Combien de mètres cela fait-il en tout ?',
+    unit: 'm',
+    answer: 4250,
+    hint: '1 km = 1000 m.',
+    explanation: '4 km = 4000 m. 4000 + 250 = 4250 m.',
+    ficheKey: 'conversions',
+    level: 2
+  },
+  {
+    category: 'mesures',
+    text: 'Un camion transporte 3 tonnes de sable. Combien de kilogrammes cela fait-il ?',
+    unit: 'kg',
+    answer: 3000,
+    hint: '1 tonne = 1000 kg.',
+    explanation: '3 t = 3 × 1000 = 3000 kg.',
+    ficheKey: 'masses',
+    level: 2
+  },
+  {
+    category: 'mesures',
+    text: 'Un bidon contient 5 litres de sirop. Combien de verres de 25 cL peut-on remplir ?',
+    unit: '',
+    answer: 20,
+    hint: 'Convertis les 5 litres en centilitres avant de diviser.',
+    explanation: '5 L = 500 cL. 500 ÷ 25 = 20 verres.',
+    ficheKey: 'capacites',
+    level: 2
+  },
+  {
+    category: 'mesures',
+    text: 'Un spectacle commence à 20h15 et se termine à 22h00. Combien de minutes a-t-il duré ?',
+    unit: 'min',
+    answer: 105,
+    hint: 'Compte d\'abord les heures pleines, puis les minutes.',
+    explanation: 'De 20h15 à 22h15 ce serait 2 h, mais il finit à 22h00 : il a duré 1h45 = 60 + 45 = 105 minutes.',
+    ficheKey: 'durees',
+    level: 2
+  },
+  {
+    category: 'mesures',
+    text: '3 kg de tomates coûtent 6 €. Quel est le prix d\'un kilogramme ?',
+    unit: '€',
+    answer: 2,
+    hint: 'Prix au kilo = prix total ÷ nombre de kilos.',
+    explanation: '6 € ÷ 3 = 2 € le kilogramme.',
+    ficheKey: 'prix',
+    level: 2
+  },
+  // Niveau 3 — multi-étapes (convertir puis calculer, ou comparer)
+  {
+    category: 'mesures',
+    text: 'Une pièce rectangulaire mesure 5 m sur 4 m. On la carrelle avec des dalles carrées de 1 m de côté. Combien de dalles faut-il ?',
+    unit: '',
+    answer: 20,
+    hint: 'Calcule l\'aire de la pièce ; chaque dalle couvre 1 m².',
+    explanation: 'Aire = 5 × 4 = 20 m². Chaque dalle fait 1 m², il en faut donc 20.',
+    ficheKey: 'aire',
+    level: 3
+  },
+  {
+    category: 'mesures',
+    text: 'Une voiture roule à 90 km/h. Combien de mètres parcourt-elle en 1 minute ?',
+    unit: 'm',
+    answer: 1500,
+    hint: '90 km/h = 90 000 m en 1 heure, et 1 heure = 60 minutes.',
+    explanation: '90 km = 90 000 m parcourus en 60 min. En 1 min : 90 000 ÷ 60 = 1500 m.',
+    ficheKey: 'vitesse',
+    level: 3
+  },
+  {
+    category: 'mesures',
+    text: 'Un pack de 6 bouteilles coûte 9 €. À l\'unité, une bouteille coûte 1,80 €. Combien économise-t-on par bouteille en achetant le pack ?',
+    unit: '€',
+    answer: 0.3,
+    hint: 'Trouve le prix d\'une bouteille dans le pack, puis compare au prix à l\'unité.',
+    explanation: 'Dans le pack : 9 ÷ 6 = 1,50 € la bouteille. Économie : 1,80 − 1,50 = 0,30 €.',
+    ficheKey: 'prix',
+    level: 3
+  },
+  {
+    category: 'mesures',
+    text: 'Un train part à 8h45 et le trajet dure 3h20. À quelle heure arrive-t-il ? Donne uniquement le chiffre des heures.',
+    unit: '',
+    answer: 12,
+    hint: 'Ajoute d\'abord les heures, puis les minutes en surveillant le passage à 60.',
+    explanation: '8h45 + 3h = 11h45. 11h45 + 20 min = 12h05. Le chiffre des heures est 12.',
+    ficheKey: 'durees',
+    level: 3
+  },
+  {
+    category: 'mesures',
+    text: 'Une terrasse en forme de L est faite de deux rectangles : un de 4 m × 3 m et un de 2 m × 2 m. Quelle est l\'aire totale en m² ?',
+    unit: 'm²',
+    answer: 16,
+    hint: 'Calcule l\'aire de chaque rectangle, puis additionne.',
+    explanation: '4 × 3 = 12 m² et 2 × 2 = 4 m². Total : 12 + 4 = 16 m².',
+    ficheKey: 'aire',
+    level: 3
+  },
+  {
+    category: 'mesures',
+    text: 'Un cycliste parcourt 36 km en 1h30. Quelle est sa vitesse moyenne en km/h ?',
+    unit: 'km/h',
+    answer: 24,
+    hint: 'Convertis 1h30 en heures (décimal), puis vitesse = distance ÷ temps.',
+    explanation: '1h30 = 1,5 h. 36 ÷ 1,5 = 24 km/h.',
+    ficheKey: 'vitesse',
+    level: 3
   },
 
   // ═══════════════════════════════════════════════════════════════════
@@ -4177,6 +5022,201 @@ const RIDDLE_BANK = [
     explanation: '4 × 3 = 12 duos.',
     level: 2
   },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // OUVERT — rebalance 2026-06-07 : +20 énigmes
+  // (multi-étapes ×6, proportionnel ×4, partage ×4, estimation ×3, à rebours ×3)
+  // ═══════════════════════════════════════════════════════════════════
+
+  // — Problèmes multi-étapes —
+  {
+    category: 'ouvert',
+    text: 'Léa reçoit 5 € d\'argent de poche chaque semaine. Elle dépense 2 € en bonbons et économise le reste. Combien aura-t-elle économisé au bout de 4 semaines ?',
+    unit: '€',
+    answer: 12,
+    hint: 'Trouve d\'abord ce qu\'elle économise en 1 semaine, puis multiplie par 4.',
+    explanation: 'Comme une tirelire qui grossit chaque semaine : elle met de côté 5 − 2 = 3 € par semaine. Après 4 semaines : 3 × 4 = 12 €.',
+    level: 2
+  },
+  {
+    category: 'ouvert',
+    text: 'Pour un gâteau, il faut 3 œufs. Tu veux faire 4 gâteaux mais tu as déjà 2 œufs dans le frigo. Combien d\'œufs dois-tu encore acheter ?',
+    unit: '',
+    answer: 10,
+    hint: 'Calcule d\'abord le total d\'œufs nécessaires, puis enlève ceux que tu as déjà.',
+    explanation: '4 gâteaux × 3 œufs = 12 œufs au total. Tu en as déjà 2, donc il en manque 12 − 2 = 10.',
+    level: 2
+  },
+  {
+    category: 'ouvert',
+    text: 'Un coureur fait 3 tours de piste de 400 m le lundi et 5 tours le mardi. Combien de mètres a-t-il couru en tout sur les deux jours ?',
+    unit: 'm',
+    answer: 3200,
+    hint: 'Additionne d\'abord tous les tours, puis multiplie par la longueur d\'un tour.',
+    explanation: '3 + 5 = 8 tours en tout. Chaque tour fait 400 m, donc 8 × 400 = 3200 m.',
+    level: 2
+  },
+  {
+    category: 'ouvert',
+    text: 'Au marché, tu achètes 3 pommes à 2 € pièce et tu paies avec un billet de 10 €. Combien te rend-on ?',
+    unit: '€',
+    answer: 4,
+    hint: 'Trouve d\'abord le prix total des pommes, puis soustrais-le du billet.',
+    explanation: '3 pommes × 2 € = 6 €. Tu donnes 10 €, donc on te rend 10 − 6 = 4 €.',
+    level: 1
+  },
+  {
+    category: 'ouvert',
+    text: 'Une classe de 28 élèves part en sortie. On forme des groupes de 4 élèves, et chaque groupe a besoin d\'1 accompagnateur. Combien d\'accompagnateurs faut-il ?',
+    unit: '',
+    answer: 7,
+    hint: 'Compte d\'abord le nombre de groupes, puis associe un adulte à chacun.',
+    explanation: '28 ÷ 4 = 7 groupes. Comme chaque groupe a 1 adulte, il faut 7 accompagnateurs.',
+    level: 2
+  },
+  {
+    category: 'ouvert',
+    text: 'Un bus passe toutes les 15 minutes à partir de 8 h 00. Tu arrives à l\'arrêt à 8 h 50. Combien de minutes dois-tu attendre le prochain bus ?',
+    unit: 'min',
+    answer: 10,
+    hint: 'Liste les heures de passage du bus jusqu\'à dépasser 8 h 50.',
+    explanation: 'Les bus passent à 8 h 00, 8 h 15, 8 h 30, 8 h 45, 9 h 00. Après 8 h 50, le prochain est à 9 h 00 : tu attends 10 minutes.',
+    level: 2
+  },
+
+  // — Raisonnement proportionnel —
+  {
+    category: 'ouvert',
+    text: '3 croissants coûtent 6 €. Combien coûtent 5 croissants au même prix unitaire ?',
+    unit: '€',
+    answer: 10,
+    hint: 'Trouve d\'abord le prix d\'un seul croissant.',
+    explanation: 'Comme on ajuste une recette : un croissant coûte 6 ÷ 3 = 2 €. Pour 5 croissants : 5 × 2 = 10 €.',
+    level: 2
+  },
+  {
+    category: 'ouvert',
+    text: 'Une voiture parcourt 100 km avec 8 litres d\'essence. Combien de litres faut-il pour parcourir 300 km ?',
+    unit: 'L',
+    answer: 24,
+    hint: '300 km, c\'est combien de fois 100 km ?',
+    explanation: '300 km = 3 × 100 km. Il faut donc 3 × 8 = 24 litres.',
+    level: 2
+  },
+  {
+    category: 'ouvert',
+    text: 'Une recette pour 4 personnes demande 200 g de riz. Combien de grammes de riz faut-il pour 6 personnes ?',
+    unit: 'g',
+    answer: 300,
+    hint: 'Calcule d\'abord la quantité de riz pour 1 seule personne.',
+    explanation: 'Pour 1 personne : 200 ÷ 4 = 50 g. Pour 6 personnes : 6 × 50 = 300 g.',
+    level: 2
+  },
+  {
+    category: 'ouvert',
+    text: 'Sur une carte, 1 cm représente 5 km dans la réalité. Deux villes sont distantes de 7 cm sur la carte. Quelle distance les sépare réellement ?',
+    unit: 'km',
+    answer: 35,
+    hint: 'Chaque centimètre de la carte vaut 5 km en vrai. Multiplie.',
+    explanation: '1 cm = 5 km, donc 7 cm = 7 × 5 = 35 km.',
+    level: 1
+  },
+
+  // — Partage / distribution —
+  {
+    category: 'ouvert',
+    text: 'On partage équitablement 24 bonbons entre 6 enfants. Combien de bonbons reçoit chaque enfant ?',
+    unit: '',
+    answer: 4,
+    hint: 'Un partage équitable, c\'est une division.',
+    explanation: 'Comme on distribue des cartes une par une jusqu\'à la fin du paquet, chacun reçoit 24 ÷ 6 = 4 bonbons.',
+    level: 1
+  },
+  {
+    category: 'ouvert',
+    text: 'Maman a 14 cookies. Elle en garde 2 pour elle, puis partage le reste équitablement entre ses 4 enfants. Combien de cookies reçoit chaque enfant ?',
+    unit: '',
+    answer: 3,
+    hint: 'Enlève d\'abord ce que maman garde, puis partage ce qui reste.',
+    explanation: '14 − 2 = 12 cookies à partager. 12 ÷ 4 = 3 cookies par enfant.',
+    level: 2
+  },
+  {
+    category: 'ouvert',
+    text: 'Un trésor de 30 pièces d\'or est partagé entre 5 pirates. Le capitaine reçoit une part double des autres. Combien de pièces reçoit chaque pirate ordinaire ?',
+    unit: '',
+    answer: 5,
+    hint: 'Le capitaine compte pour 2 parts : combien de parts en tout ?',
+    explanation: 'Le capitaine compte pour 2 parts et les 4 autres pour 1 part : 2 + 4 = 6 parts. 30 ÷ 6 = 5 pièces par pirate ordinaire (et le capitaine en a 10).',
+    level: 3
+  },
+  {
+    category: 'ouvert',
+    text: 'Une boîte contient 50 crayons. On veut faire des paquets de 8 crayons. Combien de paquets complets peut-on faire ?',
+    unit: '',
+    answer: 6,
+    hint: 'Combien de fois 8 entre dans 50 ? Le reste ne forme pas un paquet complet.',
+    explanation: '8 × 6 = 48, et il reste 2 crayons (pas assez pour un 7e paquet). On fait donc 6 paquets complets.',
+    level: 2
+  },
+
+  // — Estimation / ordres de grandeur —
+  {
+    category: 'ouvert',
+    text: 'Un paquet de pâtes pèse environ 500 g. Environ combien de paquets faut-il pour atteindre 3 kg ?',
+    unit: '',
+    answer: 6,
+    hint: 'Convertis d\'abord les kg en grammes, puis divise.',
+    explanation: '3 kg = 3000 g. 3000 ÷ 500 = 6 paquets environ.',
+    level: 2
+  },
+  {
+    category: 'ouvert',
+    text: 'Une bouteille contient 1 litre d\'eau. Environ combien de verres de 25 cl peux-tu remplir avec ?',
+    unit: 'verres',
+    answer: 4,
+    hint: '1 litre = 100 cl. Combien de fois 25 cl tiennent dedans ?',
+    explanation: '1 litre = 100 cl. 100 ÷ 25 = 4 verres.',
+    level: 2
+  },
+  {
+    category: 'ouvert',
+    text: 'Une salle de cinéma a 12 rangées d\'environ 20 sièges chacune. Estime le nombre total de sièges.',
+    unit: 'sièges',
+    answer: 240,
+    hint: 'Multiplie le nombre de rangées par le nombre de sièges d\'une rangée.',
+    explanation: 'Comme un quadrillage de chaises : 12 rangées × 20 sièges ≈ 240 sièges.',
+    level: 2
+  },
+
+  // — Problèmes à rebours —
+  {
+    category: 'ouvert',
+    text: 'Je pense à un nombre. Je le multiplie par 3 et j\'obtiens 21. Quel est mon nombre de départ ?',
+    unit: '',
+    answer: 7,
+    hint: 'Fais l\'opération inverse : au lieu de multiplier, divise.',
+    explanation: 'Comme rembobiner un film, on fait l\'inverse : 21 ÷ 3 = 7.',
+    level: 1
+  },
+  {
+    category: 'ouvert',
+    text: 'Après avoir dépensé la moitié de mon argent de poche, il me reste 6 €. Combien avais-je au départ ?',
+    unit: '€',
+    answer: 12,
+    hint: 'S\'il te reste la moitié, l\'autre moitié valait exactement la même chose.',
+    explanation: 'Il te reste la moitié, soit 6 €. L\'autre moitié valait pareil, donc au départ : 6 + 6 = 12 €.',
+    level: 2
+  },
+  {
+    category: 'ouvert',
+    text: 'Tom donne 4 billes à son frère, puis en gagne 7 à la récré. Il en a maintenant 15. Combien de billes avait-il au début ?',
+    unit: '',
+    answer: 12,
+    hint: 'Remonte le temps : annule chaque étape dans l\'ordre inverse.',
+    explanation: 'On remonte le film : avant de gagner 7 → 15 − 7 = 8 ; avant de donner 4 → 8 + 4 = 12 billes au début.',
+    level: 3
+  },
 ];
 
 // ── Geography Data ──────────────────────────────────────────────────
@@ -4231,6 +5271,54 @@ const GEO_DATA = [
   { country: 'Nigeria',      flag: '🇳🇬', capital: 'Abuja',       continent: 'Afrique', level: 3 },
   { country: 'Kenya',        flag: '🇰🇪', capital: 'Nairobi',     continent: 'Afrique', level: 3 },
   { country: 'Nouvelle-Zélande', flag: '🇳🇿', capital: 'Wellington', continent: 'Océanie', level: 3 },
+
+  // === Extension banque pays — équilibrage 5 continents (82 au total) ===
+
+  // Europe — actualité / culture enfantine
+  { country: 'Ukraine',      flag: '🇺🇦', capital: 'Kiev',         continent: 'Europe',   level: 2 },
+  { country: 'Islande',      flag: '🇮🇸', capital: 'Reykjavik',    continent: 'Europe',   level: 3 },
+
+  // Amérique — Caraïbes + Amérique latine (football, voyages)
+  { country: 'Cuba',         flag: '🇨🇺', capital: 'La Havane',    continent: 'Amérique', level: 2 },
+  { country: 'Venezuela',    flag: '🇻🇪', capital: 'Caracas',      continent: 'Amérique', level: 2 },
+  { country: 'Uruguay',      flag: '🇺🇾', capital: 'Montevideo',   continent: 'Amérique', level: 2 },
+  { country: 'Paraguay',     flag: '🇵🇾', capital: 'Asuncion',     continent: 'Amérique', level: 3 },
+  { country: 'Équateur',     flag: '🇪🇨', capital: 'Quito',        continent: 'Amérique', level: 3 },
+  { country: 'Costa Rica',   flag: '🇨🇷', capital: 'San José',     continent: 'Amérique', level: 3 },
+  { country: 'Jamaïque',     flag: '🇯🇲', capital: 'Kingston',     continent: 'Amérique', level: 3 },
+  { country: 'République dominicaine', flag: '🇩🇴', capital: 'Saint-Domingue', continent: 'Amérique', level: 3 },
+
+  // Asie — Moyen-Orient + Asie du Sud-Est (Coupe du monde, voyages)
+  { country: 'Arabie saoudite', flag: '🇸🇦', capital: 'Riyad',     continent: 'Asie',     level: 2 },
+  { country: 'Émirats arabes unis', flag: '🇦🇪', capital: 'Abou Dabi', continent: 'Asie', level: 2 },
+  { country: 'Qatar',        flag: '🇶🇦', capital: 'Doha',         continent: 'Asie',     level: 2 },
+  { country: 'Pakistan',     flag: '🇵🇰', capital: 'Islamabad',    continent: 'Asie',     level: 2 },
+  { country: 'Iran',         flag: '🇮🇷', capital: 'Téhéran',      continent: 'Asie',     level: 3 },
+  { country: 'Malaisie',     flag: '🇲🇾', capital: 'Kuala Lumpur', continent: 'Asie',     level: 3 },
+  { country: 'Singapour',    flag: '🇸🇬', capital: 'Singapour',    continent: 'Asie',     level: 3 },
+  { country: 'Bangladesh',   flag: '🇧🇩', capital: 'Dacca',        continent: 'Asie',     level: 3 },
+
+  // Afrique — Maghreb + Afrique subsaharienne (football, francophonie)
+  { country: 'Algérie',      flag: '🇩🇿', capital: 'Alger',        continent: 'Afrique',  level: 2 },
+  { country: 'Tunisie',      flag: '🇹🇳', capital: 'Tunis',        continent: 'Afrique',  level: 2 },
+  { country: 'Sénégal',      flag: '🇸🇳', capital: 'Dakar',        continent: 'Afrique',  level: 2 },
+  { country: 'Cameroun',     flag: '🇨🇲', capital: 'Yaoundé',      continent: 'Afrique',  level: 2 },
+  { country: 'Ghana',        flag: '🇬🇭', capital: 'Accra',        continent: 'Afrique',  level: 3 },
+  { country: 'Côte d\'Ivoire', flag: '🇨🇮', capital: 'Yamoussoukro', continent: 'Afrique', level: 3 },
+  { country: 'Éthiopie',     flag: '🇪🇹', capital: 'Addis-Abeba',  continent: 'Afrique',  level: 3 },
+  { country: 'Tanzanie',     flag: '🇹🇿', capital: 'Dodoma',       continent: 'Afrique',  level: 3 },
+  { country: 'Madagascar',   flag: '🇲🇬', capital: 'Antananarivo', continent: 'Afrique',  level: 3 },
+  { country: 'Mali',         flag: '🇲🇱', capital: 'Bamako',       continent: 'Afrique',  level: 3 },
+  { country: 'RD Congo',     flag: '🇨🇩', capital: 'Kinshasa',     continent: 'Afrique',  level: 3 },
+  { country: 'Angola',       flag: '🇦🇴', capital: 'Luanda',       continent: 'Afrique',  level: 3 },
+
+  // Océanie — îles du Pacifique (peu de pays souverains, levels 3)
+  { country: 'Fidji',        flag: '🇫🇯', capital: 'Suva',         continent: 'Océanie',  level: 3 },
+  { country: 'Papouasie-Nouvelle-Guinée', flag: '🇵🇬', capital: 'Port Moresby', continent: 'Océanie', level: 3 },
+  { country: 'Samoa',        flag: '🇼🇸', capital: 'Apia',         continent: 'Océanie',  level: 3 },
+  { country: 'Tonga',        flag: '🇹🇴', capital: 'Nuku\'alofa',  continent: 'Océanie',  level: 3 },
+  { country: 'Vanuatu',      flag: '🇻🇺', capital: 'Port-Vila',    continent: 'Océanie',  level: 3 },
+  { country: 'Îles Salomon', flag: '🇸🇧', capital: 'Honiara',      continent: 'Océanie',  level: 3 },
 ];
 
 const GEO_CONTINENTS = ['Europe', 'Amérique', 'Asie', 'Afrique', 'Océanie'];
@@ -4293,44 +5381,87 @@ function generateGeographie(subLevel) {
 const CONJ_PRONOUNS = ['je', 'tu', 'il', 'nous', 'vous', 'ils'];
 
 const CONJ_VERBS = {
-  // ── Level 1: présent, 1er groupe + être/avoir ──
+  // ── Level 1: présent, 1er/2e groupe + être/avoir ──
   present: {
-    // 1er groupe
-    manger:   { group: 1, level: 1, forms: ['mange', 'manges', 'mange', 'mangeons', 'mangez', 'mangent'] },
-    jouer:    { group: 1, level: 1, forms: ['joue', 'joues', 'joue', 'jouons', 'jouez', 'jouent'] },
-    parler:   { group: 1, level: 1, forms: ['parle', 'parles', 'parle', 'parlons', 'parlez', 'parlent'] },
-    chanter:  { group: 1, level: 1, forms: ['chante', 'chantes', 'chante', 'chantons', 'chantez', 'chantent'] },
-    marcher:  { group: 1, level: 1, forms: ['marche', 'marches', 'marche', 'marchons', 'marchez', 'marchent'] },
-    regarder: { group: 1, level: 1, forms: ['regarde', 'regardes', 'regarde', 'regardons', 'regardez', 'regardent'] },
-    donner:   { group: 1, level: 1, forms: ['donne', 'donnes', 'donne', 'donnons', 'donnez', 'donnent'] },
-    aimer:    { group: 1, level: 1, forms: ['aime', 'aimes', 'aime', 'aimons', 'aimez', 'aiment'] },
+    // 1er groupe (-er)
+    manger:     { group: 1, level: 1, forms: ['mange', 'manges', 'mange', 'mangeons', 'mangez', 'mangent'] },
+    jouer:      { group: 1, level: 1, forms: ['joue', 'joues', 'joue', 'jouons', 'jouez', 'jouent'] },
+    parler:     { group: 1, level: 1, forms: ['parle', 'parles', 'parle', 'parlons', 'parlez', 'parlent'] },
+    chanter:    { group: 1, level: 1, forms: ['chante', 'chantes', 'chante', 'chantons', 'chantez', 'chantent'] },
+    marcher:    { group: 1, level: 1, forms: ['marche', 'marches', 'marche', 'marchons', 'marchez', 'marchent'] },
+    regarder:   { group: 1, level: 1, forms: ['regarde', 'regardes', 'regarde', 'regardons', 'regardez', 'regardent'] },
+    donner:     { group: 1, level: 1, forms: ['donne', 'donnes', 'donne', 'donnons', 'donnez', 'donnent'] },
+    aimer:      { group: 1, level: 1, forms: ['aime', 'aimes', 'aime', 'aimons', 'aimez', 'aiment'] },
+    trouver:    { group: 1, level: 1, forms: ['trouve', 'trouves', 'trouve', 'trouvons', 'trouvez', 'trouvent'] },
+    penser:     { group: 1, level: 1, forms: ['pense', 'penses', 'pense', 'pensons', 'pensez', 'pensent'] },
+    demander:   { group: 1, level: 1, forms: ['demande', 'demandes', 'demande', 'demandons', 'demandez', 'demandent'] },
+    travailler: { group: 1, level: 1, forms: ['travaille', 'travailles', 'travaille', 'travaillons', 'travaillez', 'travaillent'] },
+    écouter:    { group: 1, level: 1, forms: ['écoute', 'écoutes', 'écoute', 'écoutons', 'écoutez', 'écoutent'] },
+    habiter:    { group: 1, level: 1, forms: ['habite', 'habites', 'habite', 'habitons', 'habitez', 'habitent'] },
+    // 2e groupe (-ir, -issons)
+    finir:      { group: 2, level: 1, forms: ['finis', 'finis', 'finit', 'finissons', 'finissez', 'finissent'] },
+    choisir:    { group: 2, level: 1, forms: ['choisis', 'choisis', 'choisit', 'choisissons', 'choisissez', 'choisissent'] },
     // être / avoir
-    être:     { group: 3, level: 1, forms: ['suis', 'es', 'est', 'sommes', 'êtes', 'sont'] },
-    avoir:    { group: 3, level: 1, forms: ['ai', 'as', 'a', 'avons', 'avez', 'ont'] },
+    être:       { group: 3, level: 1, forms: ['suis', 'es', 'est', 'sommes', 'êtes', 'sont'] },
+    avoir:      { group: 3, level: 1, forms: ['ai', 'as', 'a', 'avons', 'avez', 'ont'] },
   },
-  // ── Level 2: passé composé + futur, 3 groupes ──
+  // ── Level 2 (+ irréguliers en level 3) : passé composé ──
   passe_compose: {
+    // auxiliaire avoir — pas d'accord avec le sujet
     manger:   { group: 1, level: 2, aux: 'avoir', forms: ['ai mangé', 'as mangé', 'a mangé', 'avons mangé', 'avez mangé', 'ont mangé'] },
-    finir:    { group: 2, level: 2, aux: 'avoir', forms: ['ai fini', 'as fini', 'a fini', 'avons fini', 'avez fini', 'ont fini'] },
     jouer:    { group: 1, level: 2, aux: 'avoir', forms: ['ai joué', 'as joué', 'a joué', 'avons joué', 'avez joué', 'ont joué'] },
+    parler:   { group: 1, level: 2, aux: 'avoir', forms: ['ai parlé', 'as parlé', 'a parlé', 'avons parlé', 'avez parlé', 'ont parlé'] },
+    chanter:  { group: 1, level: 2, aux: 'avoir', forms: ['ai chanté', 'as chanté', 'a chanté', 'avons chanté', 'avez chanté', 'ont chanté'] },
+    regarder: { group: 1, level: 2, aux: 'avoir', forms: ['ai regardé', 'as regardé', 'a regardé', 'avons regardé', 'avez regardé', 'ont regardé'] },
+    aimer:    { group: 1, level: 2, aux: 'avoir', forms: ['ai aimé', 'as aimé', 'a aimé', 'avons aimé', 'avez aimé', 'ont aimé'] },
+    finir:    { group: 2, level: 2, aux: 'avoir', forms: ['ai fini', 'as fini', 'a fini', 'avons fini', 'avez fini', 'ont fini'] },
     choisir:  { group: 2, level: 2, aux: 'avoir', forms: ['ai choisi', 'as choisi', 'a choisi', 'avons choisi', 'avez choisi', 'ont choisi'] },
+    faire:    { group: 3, level: 3, aux: 'avoir', forms: ['ai fait', 'as fait', 'a fait', 'avons fait', 'avez fait', 'ont fait'] },
+    voir:     { group: 3, level: 3, aux: 'avoir', forms: ['ai vu', 'as vu', 'a vu', 'avons vu', 'avez vu', 'ont vu'] },
+    prendre:  { group: 3, level: 3, aux: 'avoir', forms: ['ai pris', 'as pris', 'a pris', 'avons pris', 'avez pris', 'ont pris'] },
+    dire:     { group: 3, level: 3, aux: 'avoir', forms: ['ai dit', 'as dit', 'a dit', 'avons dit', 'avez dit', 'ont dit'] },
+    pouvoir:  { group: 3, level: 3, aux: 'avoir', forms: ['ai pu', 'as pu', 'a pu', 'avons pu', 'avez pu', 'ont pu'] },
+    vouloir:  { group: 3, level: 3, aux: 'avoir', forms: ['ai voulu', 'as voulu', 'a voulu', 'avons voulu', 'avez voulu', 'ont voulu'] },
+    // auxiliaire être — accord du participe avec le sujet (pluriel → -s)
     partir:   { group: 3, level: 2, aux: 'être', forms: ['suis parti', 'es parti', 'est parti', 'sommes partis', 'êtes partis', 'sont partis'] },
     aller:    { group: 3, level: 2, aux: 'être', forms: ['suis allé', 'es allé', 'est allé', 'sommes allés', 'êtes allés', 'sont allés'] },
     venir:    { group: 3, level: 2, aux: 'être', forms: ['suis venu', 'es venu', 'est venu', 'sommes venus', 'êtes venus', 'sont venus'] },
+    tomber:   { group: 1, level: 2, aux: 'être', forms: ['suis tombé', 'es tombé', 'est tombé', 'sommes tombés', 'êtes tombés', 'sont tombés'] },
+    arriver:  { group: 1, level: 2, aux: 'être', forms: ['suis arrivé', 'es arrivé', 'est arrivé', 'sommes arrivés', 'êtes arrivés', 'sont arrivés'] },
+    rester:   { group: 1, level: 2, aux: 'être', forms: ['suis resté', 'es resté', 'est resté', 'sommes restés', 'êtes restés', 'sont restés'] },
   },
   futur: {
+    // réguliers (1er / 2e groupe) — level 2
     manger:   { group: 1, level: 2, forms: ['mangerai', 'mangeras', 'mangera', 'mangerons', 'mangerez', 'mangeront'] },
-    finir:    { group: 2, level: 2, forms: ['finirai', 'finiras', 'finira', 'finirons', 'finirez', 'finiront'] },
+    jouer:    { group: 1, level: 2, forms: ['jouerai', 'joueras', 'jouera', 'jouerons', 'jouerez', 'joueront'] },
     parler:   { group: 1, level: 2, forms: ['parlerai', 'parleras', 'parlera', 'parlerons', 'parlerez', 'parleront'] },
-    grandir:  { group: 2, level: 2, forms: ['grandirai', 'grandiras', 'grandira', 'grandirons', 'grandirez', 'grandiront'] },
     chanter:  { group: 1, level: 2, forms: ['chanterai', 'chanteras', 'chantera', 'chanterons', 'chanterez', 'chanteront'] },
+    regarder: { group: 1, level: 2, forms: ['regarderai', 'regarderas', 'regardera', 'regarderons', 'regarderez', 'regarderont'] },
+    finir:    { group: 2, level: 2, forms: ['finirai', 'finiras', 'finira', 'finirons', 'finirez', 'finiront'] },
+    grandir:  { group: 2, level: 2, forms: ['grandirai', 'grandiras', 'grandira', 'grandirons', 'grandirez', 'grandiront'] },
+    choisir:  { group: 2, level: 2, forms: ['choisirai', 'choisiras', 'choisira', 'choisirons', 'choisirez', 'choisiront'] },
     être:     { group: 3, level: 2, forms: ['serai', 'seras', 'sera', 'serons', 'serez', 'seront'] },
     avoir:    { group: 3, level: 2, forms: ['aurai', 'auras', 'aura', 'aurons', 'aurez', 'auront'] },
+    // irréguliers (radical irrégulier, en -ir/-re notamment) — level 3
+    faire:    { group: 3, level: 3, forms: ['ferai', 'feras', 'fera', 'ferons', 'ferez', 'feront'] },
+    aller:    { group: 3, level: 3, forms: ['irai', 'iras', 'ira', 'irons', 'irez', 'iront'] },
+    voir:     { group: 3, level: 3, forms: ['verrai', 'verras', 'verra', 'verrons', 'verrez', 'verront'] },
+    venir:    { group: 3, level: 3, forms: ['viendrai', 'viendras', 'viendra', 'viendrons', 'viendrez', 'viendront'] },
+    prendre:  { group: 3, level: 3, forms: ['prendrai', 'prendras', 'prendra', 'prendrons', 'prendrez', 'prendront'] },
+    pouvoir:  { group: 3, level: 3, forms: ['pourrai', 'pourras', 'pourra', 'pourrons', 'pourrez', 'pourront'] },
+    vouloir:  { group: 3, level: 3, forms: ['voudrai', 'voudras', 'voudra', 'voudrons', 'voudrez', 'voudront'] },
+    dire:     { group: 3, level: 3, forms: ['dirai', 'diras', 'dira', 'dirons', 'direz', 'diront'] },
+    savoir:   { group: 3, level: 3, forms: ['saurai', 'sauras', 'saura', 'saurons', 'saurez', 'sauront'] },
   },
-  // ── Level 3: imparfait + impératif + irréguliers ──
+  // ── Level 3 : imparfait + impératif/conditionnel irréguliers + présent irrégulier ──
   imparfait: {
     manger:   { group: 1, level: 3, forms: ['mangeais', 'mangeais', 'mangeait', 'mangions', 'mangiez', 'mangeaient'] },
+    parler:   { group: 1, level: 3, forms: ['parlais', 'parlais', 'parlait', 'parlions', 'parliez', 'parlaient'] },
+    chanter:  { group: 1, level: 3, forms: ['chantais', 'chantais', 'chantait', 'chantions', 'chantiez', 'chantaient'] },
+    jouer:    { group: 1, level: 3, forms: ['jouais', 'jouais', 'jouait', 'jouions', 'jouiez', 'jouaient'] },
+    regarder: { group: 1, level: 3, forms: ['regardais', 'regardais', 'regardait', 'regardions', 'regardiez', 'regardaient'] },
     finir:    { group: 2, level: 3, forms: ['finissais', 'finissais', 'finissait', 'finissions', 'finissiez', 'finissaient'] },
+    choisir:  { group: 2, level: 3, forms: ['choisissais', 'choisissais', 'choisissait', 'choisissions', 'choisissiez', 'choisissaient'] },
     être:     { group: 3, level: 3, forms: ['étais', 'étais', 'était', 'étions', 'étiez', 'étaient'] },
     avoir:    { group: 3, level: 3, forms: ['avais', 'avais', 'avait', 'avions', 'aviez', 'avaient'] },
     faire:    { group: 3, level: 3, forms: ['faisais', 'faisais', 'faisait', 'faisions', 'faisiez', 'faisaient'] },
@@ -4341,6 +5472,7 @@ const CONJ_VERBS = {
     dire:     { group: 3, level: 3, forms: ['disais', 'disais', 'disait', 'disions', 'disiez', 'disaient'] },
     savoir:   { group: 3, level: 3, forms: ['savais', 'savais', 'savait', 'savions', 'saviez', 'savaient'] },
     vouloir:  { group: 3, level: 3, forms: ['voulais', 'voulais', 'voulait', 'voulions', 'vouliez', 'voulaient'] },
+    venir:    { group: 3, level: 3, forms: ['venais', 'venais', 'venait', 'venions', 'veniez', 'venaient'] },
   },
   present_irreg: {
     faire:    { group: 3, level: 3, forms: ['fais', 'fais', 'fait', 'faisons', 'faites', 'font'] },
@@ -4352,13 +5484,66 @@ const CONJ_VERBS = {
     dire:     { group: 3, level: 3, forms: ['dis', 'dis', 'dit', 'disons', 'dites', 'disent'] },
     savoir:   { group: 3, level: 3, forms: ['sais', 'sais', 'sait', 'savons', 'savez', 'savent'] },
     venir:    { group: 3, level: 3, forms: ['viens', 'viens', 'vient', 'venons', 'venez', 'viennent'] },
+    devoir:   { group: 3, level: 3, forms: ['dois', 'dois', 'doit', 'devons', 'devez', 'doivent'] },
+    mettre:   { group: 3, level: 3, forms: ['mets', 'mets', 'met', 'mettons', 'mettez', 'mettent'] },
+    partir:   { group: 3, level: 3, forms: ['pars', 'pars', 'part', 'partons', 'partez', 'partent'] },
+    sortir:   { group: 3, level: 3, forms: ['sors', 'sors', 'sort', 'sortons', 'sortez', 'sortent'] },
+    lire:     { group: 3, level: 3, forms: ['lis', 'lis', 'lit', 'lisons', 'lisez', 'lisent'] },
+    écrire:   { group: 3, level: 3, forms: ['écris', 'écris', 'écrit', 'écrivons', 'écrivez', 'écrivent'] },
+    boire:    { group: 3, level: 3, forms: ['bois', 'bois', 'boit', 'buvons', 'buvez', 'boivent'] },
+  },
+  // ── Impératif présent : seulement tu / nous / vous (pas de je/il/ils) ──
+  // forms[0]=je, [2]=il, [5]=ils sont null car l'impératif n'a pas ces personnes.
+  imperatif: {
+    manger:   { group: 1, level: 2, forms: [null, 'mange', null, 'mangeons', 'mangez', null] },
+    parler:   { group: 1, level: 2, forms: [null, 'parle', null, 'parlons', 'parlez', null] },
+    chanter:  { group: 1, level: 2, forms: [null, 'chante', null, 'chantons', 'chantez', null] },
+    jouer:    { group: 1, level: 2, forms: [null, 'joue', null, 'jouons', 'jouez', null] },
+    regarder: { group: 1, level: 2, forms: [null, 'regarde', null, 'regardons', 'regardez', null] },
+    écouter:  { group: 1, level: 2, forms: [null, 'écoute', null, 'écoutons', 'écoutez', null] },
+    donner:   { group: 1, level: 2, forms: [null, 'donne', null, 'donnons', 'donnez', null] },
+    aimer:    { group: 1, level: 2, forms: [null, 'aime', null, 'aimons', 'aimez', null] },
+    finir:    { group: 2, level: 2, forms: [null, 'finis', null, 'finissons', 'finissez', null] },
+    choisir:  { group: 2, level: 2, forms: [null, 'choisis', null, 'choisissons', 'choisissez', null] },
+    faire:    { group: 3, level: 3, forms: [null, 'fais', null, 'faisons', 'faites', null] },
+    aller:    { group: 3, level: 3, forms: [null, 'va', null, 'allons', 'allez', null] },
+    venir:    { group: 3, level: 3, forms: [null, 'viens', null, 'venons', 'venez', null] },
+    prendre:  { group: 3, level: 3, forms: [null, 'prends', null, 'prenons', 'prenez', null] },
+    dire:     { group: 3, level: 3, forms: [null, 'dis', null, 'disons', 'dites', null] },
+    être:     { group: 3, level: 3, forms: [null, 'sois', null, 'soyons', 'soyez', null] },
+    avoir:    { group: 3, level: 3, forms: [null, 'aie', null, 'ayons', 'ayez', null] },
+  },
+  // ── Conditionnel présent : radical du futur + terminaisons de l'imparfait ──
+  conditionnel: {
+    manger:   { group: 1, level: 3, forms: ['mangerais', 'mangerais', 'mangerait', 'mangerions', 'mangeriez', 'mangeraient'] },
+    parler:   { group: 1, level: 3, forms: ['parlerais', 'parlerais', 'parlerait', 'parlerions', 'parleriez', 'parleraient'] },
+    chanter:  { group: 1, level: 3, forms: ['chanterais', 'chanterais', 'chanterait', 'chanterions', 'chanteriez', 'chanteraient'] },
+    jouer:    { group: 1, level: 3, forms: ['jouerais', 'jouerais', 'jouerait', 'jouerions', 'joueriez', 'joueraient'] },
+    regarder: { group: 1, level: 3, forms: ['regarderais', 'regarderais', 'regarderait', 'regarderions', 'regarderiez', 'regarderaient'] },
+    finir:    { group: 2, level: 3, forms: ['finirais', 'finirais', 'finirait', 'finirions', 'finiriez', 'finiraient'] },
+    choisir:  { group: 2, level: 3, forms: ['choisirais', 'choisirais', 'choisirait', 'choisirions', 'choisiriez', 'choisiraient'] },
+    être:     { group: 3, level: 3, forms: ['serais', 'serais', 'serait', 'serions', 'seriez', 'seraient'] },
+    avoir:    { group: 3, level: 3, forms: ['aurais', 'aurais', 'aurait', 'aurions', 'auriez', 'auraient'] },
+    faire:    { group: 3, level: 3, forms: ['ferais', 'ferais', 'ferait', 'ferions', 'feriez', 'feraient'] },
+    aller:    { group: 3, level: 3, forms: ['irais', 'irais', 'irait', 'irions', 'iriez', 'iraient'] },
+    voir:     { group: 3, level: 3, forms: ['verrais', 'verrais', 'verrait', 'verrions', 'verriez', 'verraient'] },
+    venir:    { group: 3, level: 3, forms: ['viendrais', 'viendrais', 'viendrait', 'viendrions', 'viendriez', 'viendraient'] },
+    pouvoir:  { group: 3, level: 3, forms: ['pourrais', 'pourrais', 'pourrait', 'pourrions', 'pourriez', 'pourraient'] },
+    vouloir:  { group: 3, level: 3, forms: ['voudrais', 'voudrais', 'voudrait', 'voudrions', 'voudriez', 'voudraient'] },
+    prendre:  { group: 3, level: 3, forms: ['prendrais', 'prendrais', 'prendrait', 'prendrions', 'prendriez', 'prendraient'] },
+    dire:     { group: 3, level: 3, forms: ['dirais', 'dirais', 'dirait', 'dirions', 'diriez', 'diraient'] },
+    savoir:   { group: 3, level: 3, forms: ['saurais', 'saurais', 'saurait', 'saurions', 'sauriez', 'sauraient'] },
   },
 };
 
 const CONJ_TENSE_LABELS = {
   present: 'présent', passe_compose: 'passé composé', futur: 'futur',
   imparfait: 'imparfait', present_irreg: 'présent',
+  imperatif: 'impératif', conditionnel: 'conditionnel présent',
 };
+
+// Temps sans pronom sujet dans la réponse (on donne l'ordre directement).
+const CONJ_NO_PRONOUN_TENSES = new Set(['imperatif']);
 
 function generateConjugaison(subLevel) {
   // Collect tenses available at this level
@@ -4372,10 +5557,34 @@ function generateConjugaison(subLevel) {
   }
 
   const entry = pick(availableTenses);
-  const pronounIdx = rand(0, 5);
+  // Only the persons that actually exist for this verb/tense — the impératif has
+  // no je/il/ils (those slots are null), the others have all six.
+  const validIndices = [];
+  for (let i = 0; i < entry.data.forms.length; i++) {
+    if (entry.data.forms[i] != null) validIndices.push(i);
+  }
+  const pronounIdx = pick(validIndices);
   const pronoun = CONJ_PRONOUNS[pronounIdx];
   const form = entry.data.forms[pronounIdx];
   const tenseLabel = CONJ_TENSE_LABELS[entry.tense];
+  const hintLetters = form.slice(0, 2);
+
+  // Impératif : on donne un ordre, sans pronom sujet dans la réponse.
+  if (CONJ_NO_PRONOUN_TENSES.has(entry.tense)) {
+    const acceptedAnswers = [form, form + ' !', form + '!'];
+    return {
+      category: 'conjugaison',
+      text: `Conjugue le verbe « ${entry.verb} » à l'${tenseLabel} pour « ${pronoun} ».`,
+      answer: null,
+      textAnswer: form,
+      acceptedAnswers: acceptedAnswers,
+      unit: '',
+      hint: `La réponse commence par "${hintLetters}..."`,
+      // Analogy-first : l'impératif = un ordre crié par un coach (« Cours ! »,
+      // « Mangeons ! ») — on donne l'action directement, sans dire le pronom.
+      explanation: `« ${form} ! » — à l'impératif on donne un ordre direct, sans écrire le pronom (verbe ${entry.verb}).`,
+    };
+  }
 
   // Build display pronoun (je → j' before vowel)
   const displayPronoun = (pronoun === 'je' && /^[aeéèêiîoôuûyhà]/i.test(form)) ? "j'" : pronoun + ' ';
@@ -4383,8 +5592,6 @@ function generateConjugaison(subLevel) {
   const fullAnswer = displayPronoun + form;
   const acceptedAnswers = [form, fullAnswer];
   // Also accept without accents via the normalizer in app.js
-
-  const hintLetters = form.slice(0, 2);
 
   return {
     category: 'conjugaison',

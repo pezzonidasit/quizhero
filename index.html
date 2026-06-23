@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QuizHero</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧮</text></svg>">
-  <meta name="theme-color" content="#1a1a2e">
+  <meta name="theme-color" content="#0d0e12">
   <meta name="description" content="QuizHero — jeu de quiz gamifié pour enfants">
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -77,6 +78,7 @@
         <span id="profile-rank-icon" class="rank-icon">🥉</span>
         <div class="profile-text">
           <span id="profile-name-display" class="profile-name"></span>
+          <span id="profile-title-display" class="player-title" style="display:none"></span>
           <div class="xp-bar-container">
             <div id="xp-bar" class="xp-bar"></div>
             <span id="xp-text" class="xp-text"></span>
@@ -246,7 +248,7 @@
 
       <div id="answer-section" class="answer-section">
         <div id="qcm-choices" class="qcm-choices" style="display:none"></div>
-        <input type="number" id="answer-input" class="answer-input" placeholder="Ta réponse...">
+        <input type="text" inputmode="decimal" id="answer-input" class="answer-input" placeholder="Ta réponse...">
         <button id="btn-validate" class="btn-primary">Valider</button>
       </div>
 
@@ -404,7 +406,7 @@
         </div>
 
         <div id="boss-answer-section" class="answer-section">
-          <input type="number" id="boss-answer-input" class="answer-input" placeholder="Ta réponse...">
+          <input type="text" inputmode="decimal" id="boss-answer-input" class="answer-input" placeholder="Ta réponse...">
           <button id="btn-boss-validate" class="btn-primary">Valider</button>
         </div>
 
@@ -573,7 +575,7 @@
     <button id="btn-duel-launch" class="btn-primary" style="width:100%">⚔️ Lancer le défi !</button>
     <div id="duel-waiting" style="display:none;text-align:center;margin-top:2rem">
       <p style="font-size:1.2rem;font-weight:600">Code du duel :</p>
-      <p id="duel-code-display" style="font-size:3rem;font-family:'Fredoka';letter-spacing:0.3em;color:var(--accent-gold, #ffd700)"></p>
+      <p id="duel-code-display" style="font-size:3rem;font-family:'JetBrains Mono';letter-spacing:0.3em;color:var(--accent-gold, #ffd700)"></p>
       <p style="color:var(--text-secondary)">En attente de l'adversaire...</p>
       <button id="btn-duel-cancel" class="btn-secondary" style="margin-top:1rem">Annuler</button>
     </div>
@@ -660,7 +662,7 @@
   <div id="screen-duel-end" class="screen">
     <div id="duel-end-icon" style="font-size:4rem;text-align:center"></div>
     <h2 id="duel-end-title" style="text-align:center"></h2>
-    <p id="duel-end-score" style="text-align:center;font-size:1.5rem;font-family:'Fredoka'"></p>
+    <p id="duel-end-score" style="text-align:center;font-size:1.5rem;font-family:'JetBrains Mono'"></p>
     <div id="duel-end-coins" class="rewards-section" style="margin-top:1.5rem"></div>
     <div class="end-buttons" style="margin-top:2rem">
       <button id="btn-duel-rematch" class="btn-primary">🔄 Revanche</button>

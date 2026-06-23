@@ -598,6 +598,13 @@ function updateProfileHeader() {
   const coins = ProfileManager.get('coins', 0);
   const rp = getRankProgress(xp);
   document.getElementById('profile-name-display').textContent = profile.name;
+  // V5: équipped boss title under the name (caché si aucun)
+  const titleEl = document.getElementById('profile-title-display');
+  if (titleEl) {
+    const eq = getEquippedTitle();
+    if (eq) { titleEl.textContent = '🏅 ' + eq.name; titleEl.style.display = ''; }
+    else { titleEl.textContent = ''; titleEl.style.display = 'none'; }
+  }
   document.getElementById('profile-rank-icon').textContent = rp.current.icon;
   document.getElementById('home-coins').textContent = coins;
   document.getElementById('xp-bar').style.width = (rp.progress * 100) + '%';
@@ -1231,12 +1238,14 @@ function showQuestion() {
     });
   } else if (q.textAnswer !== undefined || q.acceptedAnswers) {
     input.type = 'text';
+    input.inputMode = 'text';
     input.placeholder = 'Ta réponse...';
     input.style.display = '';
     validateBtn.style.display = '';
     qcmDiv.style.display = 'none';
   } else {
-    input.type = 'number';
+    input.type = 'text';
+    input.inputMode = 'decimal';
     input.placeholder = 'Ta réponse...';
     input.style.display = '';
     validateBtn.style.display = '';
@@ -2917,10 +2926,12 @@ async function renderProfileDetail() {
   const gamesPlayed = ProfileManager.get('gamesPlayed', 0);
   const rp = getRankProgress(xp);
   const badges = ProfileManager.get('badges', []);
+  const equippedTitle = getEquippedTitle();
 
   document.getElementById('profile-card').innerHTML = `
     <span class="rank-icon">${rp.current.icon}</span>
     <span class="profile-name">${escapeHtml(profile.name)}</span>
+    ${equippedTitle ? `<span class="player-title profile-equipped-title">🏅 ${escapeHtml(equippedTitle.name)}</span>` : ''}
     <span class="rank-name">${rp.current.name}</span>
     <div class="xp-bar-container" style="width:100%;height:12px">
       <div class="xp-bar" style="width:${rp.progress * 100}%"></div>
@@ -3032,19 +3043,33 @@ async function renderProfileDetail() {
   visualHtml += '</div>';
   document.getElementById('profile-card').innerHTML += visualHtml;
 
-  // V5: Title selector
-  const ownedTitles = ProfileManager.get('bossTitles', []) || [];
-  if (ownedTitles.length > 0) {
-    const activeTitle = ProfileManager.get('activeTitle', null);
-    let titleHtml = '<div class="title-section"><h3>🏆 Titres</h3><div class="title-chips">';
-    titleHtml += '<button class="title-chip ' + (!activeTitle ? 'active' : '') + '" data-title="">Aucun</button>';
-    ownedTitles.forEach(t => {
-      const name = TITLE_NAMES[t] || t;
-      titleHtml += '<button class="title-chip ' + (activeTitle === t ? 'active' : '') + '" data-title="' + t + '">' + name + '</button>';
+  // V5: Title selector — catalogue complet des titres de boss
+  // (débloqués = équipables, verrouillés = condition affichée pour motiver).
+  const titleCatalog = getTitleCatalog();
+  const unlockedIds = getUnlockedTitleIds();
+  const activeTitle = ProfileManager.get('activeTitle', null);
+  const unlockedTitleList = titleCatalog.filter(t => unlockedIds.has(t.id));
+  const lockedTitleList = titleCatalog.filter(t => !unlockedIds.has(t.id));
+
+  let titleHtml = '<div class="title-section"><h3>🏆 Titres de boss</h3>';
+  titleHtml += '<div class="title-chips">';
+  titleHtml += '<button class="title-chip ' + (!activeTitle ? 'active' : '') + '" data-title="">Aucun</button>';
+  unlockedTitleList.forEach(t => {
+    titleHtml += '<button class="title-chip ' + (activeTitle === t.id ? 'active' : '') + '" data-title="' + t.id + '">' + escapeHtml(t.name) + '</button>';
+  });
+  titleHtml += '</div>';
+  if (lockedTitleList.length > 0) {
+    titleHtml += '<div class="title-locked-label">🔒 À débloquer</div><div class="title-locked-grid">';
+    lockedTitleList.forEach(t => {
+      titleHtml += '<div class="title-locked-item">' +
+        '<span class="title-locked-name">🔒 ' + escapeHtml(t.name) + '</span>' +
+        '<span class="title-locked-cond">' + escapeHtml(t.condition) + '</span>' +
+        '</div>';
     });
-    titleHtml += '</div></div>';
-    document.getElementById('profile-card').innerHTML += titleHtml;
+    titleHtml += '</div>';
   }
+  titleHtml += '</div>';
+  document.getElementById('profile-card').innerHTML += titleHtml;
 
   // V4: Groups + Riddle creation buttons
   document.getElementById('profile-card').innerHTML += `
@@ -3102,12 +3127,13 @@ async function renderProfileDetail() {
     });
   });
 
-  // V5: Title chip click handlers
-  document.querySelectorAll('.title-chip').forEach(chip => {
+  // V5: Title chip click handlers — seuls les chips débloqués (data-title) sont
+  // équipables ; equipTitle() refuse tout titre non débloqué (zéro fantôme).
+  document.querySelectorAll('.title-chip[data-title]').forEach(chip => {
     chip.addEventListener('click', () => {
-      const titleId = chip.dataset.title;
-      ProfileManager.set('activeTitle', titleId || null);
+      equipTitle(chip.dataset.title); // '' = retirer
       renderProfileDetail();
+      updateProfileHeader();
     });
   });
 
@@ -3537,7 +3563,8 @@ function showBossQuestion() {
   document.getElementById('boss-feedback-section').style.display = 'none';
   const input = document.getElementById('boss-answer-input');
   input.value = '';
-  input.type = q.textAnswer !== undefined ? 'text' : 'number';
+  input.type = 'text';
+  input.inputMode = q.textAnswer !== undefined ? 'text' : 'decimal';
   input.placeholder = 'Ta réponse...';
   startBossTimer(timerDuration);
   const card = document.getElementById('boss-question-card');
@@ -3973,13 +4000,14 @@ async function renderLeaderboard() {
     const isChampion = i === 0;
     const rankNum = i + 1;
     const rankDisplay = rankNum <= 3 ? ['👑', '🥈', '🥉'][i] : rankNum;
-    // V5: Show active title
+    // V5: Show active title (toutes sources : arène, aventure, compagnon)
     let titleDisplay = '';
     if (isMe) {
-      const myTitle = ProfileManager.get('activeTitle', null);
-      if (myTitle && TITLE_NAMES[myTitle]) titleDisplay = '<div class="player-title">' + TITLE_NAMES[myTitle] + '</div>';
-    } else if (e.activeTitle && TITLE_NAMES[e.activeTitle]) {
-      titleDisplay = '<div class="player-title">' + TITLE_NAMES[e.activeTitle] + '</div>';
+      const eq = getEquippedTitle();
+      if (eq) titleDisplay = '<div class="player-title">' + escapeHtml(eq.name) + '</div>';
+    } else {
+      const remoteName = getTitleName(e.activeTitle);
+      if (remoteName) titleDisplay = '<div class="player-title">' + escapeHtml(remoteName) + '</div>';
     }
     return '<div class="lb-entry ' + (isMe ? 'me' : '') + ' ' + (isChampion ? 'champion' : '') + '">' +
       '<span class="lb-rank">' + rankDisplay + '</span>' +
@@ -4126,10 +4154,11 @@ async function renderGroupDetail(code) {
           const rankDisplay = rankNum <= 3 ? ['👑', '🥈', '🥉'][i] : rankNum;
           let gTitleDisplay = '';
           if (isMe) {
-            const myT = ProfileManager.get('activeTitle', null);
-            if (myT && TITLE_NAMES[myT]) gTitleDisplay = '<div class="player-title">' + TITLE_NAMES[myT] + '</div>';
-          } else if (e.activeTitle && TITLE_NAMES[e.activeTitle]) {
-            gTitleDisplay = '<div class="player-title">' + TITLE_NAMES[e.activeTitle] + '</div>';
+            const eq = getEquippedTitle();
+            if (eq) gTitleDisplay = '<div class="player-title">' + escapeHtml(eq.name) + '</div>';
+          } else {
+            const remoteName = getTitleName(e.activeTitle);
+            if (remoteName) gTitleDisplay = '<div class="player-title">' + escapeHtml(remoteName) + '</div>';
           }
           return '<div class="lb-entry ' + (isMe ? 'me' : '') + ' ' + (i === 0 ? 'champion' : '') + '">' +
             '<span class="lb-rank">' + rankDisplay + '</span>' +
@@ -5279,7 +5308,7 @@ function openDailyQuestion(data) {
   document.getElementById('daily-result').style.display = 'none';
   const input = document.getElementById('daily-answer-input');
   const isTextQuestion = q.textAnswer !== undefined || q.acceptedAnswers || ['conjugaison', 'geographie'].includes(q.category);
-  input.type = isTextQuestion ? 'text' : 'number';
+  input.type = 'text';
   input.inputMode = isTextQuestion ? 'text' : 'decimal';
   input.value = '';
   setTimeout(() => input.focus(), 100);
@@ -5330,6 +5359,8 @@ document.getElementById('btn-daily-back')?.addEventListener('click', () => showS
 // Debug helper — accessible from browser console
 window._debug = { triggerBoss, state, showBossAppear, BOSS_POOL, renderLeaderboard, renderGroupsScreen, showCreateRiddleScreen, renderAdminDashboard };
 window.showScreen = showScreen;
+// Exposé pour les scripts frères (duel.js post-duel) et le QA — refresh du header profil.
+window.updateProfileHeader = updateProfileHeader;
 
 async function addRewardToGroup(groupCode) {
   const name = prompt('Nom de la récompense (ex: 30 min de jeux, bowling...) :');
